@@ -6,6 +6,8 @@
 struct GameState
 {
     Bool initialized;
+    
+    GLFWwindow *window;
 };
 
 #endif //GAME_H

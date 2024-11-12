@@ -125,4 +125,6 @@ int main()
     }
     
     println("Exiting");
+    
+    return 0;
 }

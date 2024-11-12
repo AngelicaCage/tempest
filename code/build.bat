@@ -1,12 +1,13 @@
 @echo off
 cls
 
-@set common_compiler_flags=/std:c++20 /Zi /DEBUG:FULL /WX /nologo /utf-8
+@set COMMON_COMPILER_FLAGS=/std:c++20 /Zi /DEBUG:FULL /WX /nologo /utf-8
+@set INCLUDES=/I..\code\glfw\include /I..\code\glad\include
 
 pushd ..\build\
 
-cl %common_compiler_flags% /Fe"game_loader.exe" ../code/game_loader_windows.cpp
+cl %COMMON_COMPILER_FLAGS% /Fe"game_loader.exe" ../code/game_loader_windows.cpp
 
-cl %common_compiler_flags% /LD /Fe"game.dll" ../code/game.cpp
+cl %COMMON_COMPILER_FLAGS% %INCLUDES% /LD /MDd /Fe"game.dll" ../code/game.cpp /link glfw/glfw3.lib user32.lib gdi32.lib shell32.lib
 
 popd
