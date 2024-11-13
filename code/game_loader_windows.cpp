@@ -90,9 +90,8 @@ load_game_dll(GameCode *game_code, HINSTANCE *module_handle)
     return 0;
 }
 
-int main()
+int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-    println("Starting");
     Bool running = true;
     
     GameCode game_code = {0};
@@ -118,13 +117,10 @@ int main()
     zero_memory(game_memory.memory, game_memory.size);
     game_memory.allocated = true;
     
-    println("Entering loop");
     while(game_memory.game_running)
     {
         (game_code.update_and_render)(&game_memory);
     }
-    
-    println("Exiting");
     
     return 0;
 }

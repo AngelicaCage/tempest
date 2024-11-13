@@ -27,6 +27,7 @@ typedef void Void;
 typedef B32 Bool;
 typedef char Char;
 typedef I32 Int;
+typedef U32 UInt;
 typedef F32 Float;
 
 #define kilobytes(x) (x * 1000)
@@ -101,7 +102,7 @@ if(Logging_StopOnError) { _assert(false); }\
 }
 
 
-#define assert(X) {\
+#define ASSERT(X) {\
 if(!X)\
 {\
 print_error("assert called by: %s, %s, line %d", __FILE__, __func__, __LINE__);\
