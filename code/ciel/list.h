@@ -10,19 +10,20 @@
 #define CIEL_LIST_H
 
 template <typename t>
-struct list {
+struct List {
     public:
-    b32 allocated;
-    u64 length;
-    u64 length_allocated;
+    
+    Bool allocated;
+    U64 length;
+    U64 length_allocated;
     t* data;
     
-    list()
+    List()
     {
         allocated = false;
     }
     
-    void allocate(u64 size)
+    void allocate(U64 size)
     {
         if(allocated)
         {
@@ -40,7 +41,7 @@ struct list {
         allocate(32);
     }
     
-    t operator[](u64 index)
+    t operator[](U64 index)
     {
         if(index >= length)
         {
@@ -50,7 +51,7 @@ struct list {
         return data[index];
     }
     
-    t element_at(u64 index)
+    t element_at(U64 index)
     {
         return data[index];
     }
@@ -71,11 +72,11 @@ struct list {
         return &(data[length - 1]);
     }
     
-    int remove_at(u64 index)
+    int remove_at(U64 index)
     {
         if(index >= 0 && index < length)
         {
-            for(u64 i = index; i < length; i++)
+            for(U64 i = index; i < length; i++)
             {
                 data[i] = data[i+1];
             }
@@ -85,7 +86,7 @@ struct list {
         return 0;
     }
     
-    int insert(u64 index, t new_element)
+    int insert(U64 index, t new_element)
     {
         if(index < 0 || index > length)
         {
@@ -97,7 +98,7 @@ struct list {
             double_size();
         }
         
-        for(u64 i = length; i > index; i--)
+        for(U64 i = length; i > index; i--)
         {
             data[i] = data[i-1];
         }
@@ -119,9 +120,9 @@ struct list {
 };
 
 template <typename t>
-list<t> create_list()
+List<t> create_list()
 {
-    list<t> res;
+    List<t> res;
     res.allocate();
     return res;
 }

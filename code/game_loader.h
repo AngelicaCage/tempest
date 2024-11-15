@@ -8,6 +8,7 @@
 struct GameMemory
 {
     Bool game_running;
+    Bool opengl_functions_loaded;
     
     Void *memory;
     U64 size;

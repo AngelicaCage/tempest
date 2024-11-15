@@ -3,30 +3,18 @@
 #ifndef GAME_H
 #define GAME_H
 
-enum class ShaderType
-{
-    vertex,
-    geometry,
-    fragment,
-};
-
-struct Shader
-{
-    ShaderType type;
-    UInt id;
-};
-
 struct GameState
 {
     Bool initialized;
     
-    GLFWwindow *window;
+    //GLFWwindow *window;
     
-    Shader shaders[10];
+    List<Shader> shaders;
     
-    UInt shader_program;
+    UInt shader_program1;
+    UInt shader_program2;
     
-    UInt VAO;
+    UInt VAO1, VAO2;
 };
 
 #endif //GAME_H
