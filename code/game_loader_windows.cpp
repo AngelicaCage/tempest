@@ -8,7 +8,6 @@
 #include "game_loader.h"
 
 #include "gpu.h"
-#include "gpu.cpp"
 
 #define GAME_DLL_PATH "game.dll"
 #define GAME_DLL_COPY_PATH "game_temp_copy.dll"
@@ -29,6 +28,20 @@ print_windows_error(DWORD error_code)
     printf(message_buffer);
 }
 
+U64 get_file_last_write_time(const Char *path)
+{
+    WIN32_FILE_ATTRIBUTE_DATA Data;
+    if(GetFileAttributesEx(GAME_DLL_PATH, GetFileExInfoStandard, &Data))
+    {
+        U64 result = Data.ftLastWriteTime.dwLowDateTime;
+        result = result | ((U64)(Data.ftLastWriteTime.dwHighDateTime) << 32);
+        return result;
+    }
+    
+    return 0;
+    
+}
+
 Int
 get_game_dll_last_write_time(LPFILETIME time)
 {
@@ -43,27 +56,6 @@ get_game_dll_last_write_time(LPFILETIME time)
     }
     
     return 0;
-    
-#if 0
-    HANDLE file_handle = CreateFileA(TEXT(GAME_DLL_PATH),
-                                     GENERIC_READ,
-                                     FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                     NULL,
-                                     OPEN_EXISTING,
-                                     FILE_ATTRIBUTE_NORMAL,
-                                     NULL);
-    
-    if(file_handle == INVALID_HANDLE_VALUE)
-        return 1;
-    
-    if(!GetFileTime(file_handle,
-                    NULL,
-                    NULL,
-                    time))
-        return 1;
-    
-    return 0;
-#endif
 }
 
 
@@ -113,26 +105,76 @@ load_game_dll(GameCode *game_code, HINSTANCE *module_handle)
     return 0;
 }
 
+FileContents
+read_file_contents(const Char *path)
+{
+    FileContents result = {0};
+    
+    HANDLE file_handle = CreateFileA(path,
+                                     GENERIC_READ,
+                                     FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                     NULL,
+                                     OPEN_EXISTING,
+                                     FILE_ATTRIBUTE_NORMAL,
+                                     NULL);
+    
+    if(file_handle == INVALID_HANDLE_VALUE)
+    {
+        print_error("couldn't open file");
+        return result;
+    }
+    
+    LARGE_INTEGER file_size;
+    Bool get_file_size_result = GetFileSizeEx(file_handle,
+                                              &file_size);
+    if(!get_file_size_result)
+    {
+        print_error("couldn't get file size");
+        return result;
+    }
+    
+    result.size = file_size.QuadPart;
+    result.data = (Char *)alloc(result.size);
+    result.allocated = true;
+    
+    DWORD bytes_read;
+    Bool read_file_result = ReadFile(file_handle,
+                                     (Void *)result.data,
+                                     result.size,
+                                     &bytes_read,
+                                     NULL);
+    
+    if(!read_file_result)
+    {
+        print_error("couldn't read file");
+        return result;
+    }
+    
+    result.contains_proper_data = true;
+    return result;
+};
 
-void error_callback( Int error, const Char *msg ) {
+
+Void error_callback( Int error, const Char *msg ) {
     print_error("%d: %s", error, msg);
     ASSERT(false);
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+Void framebuffer_size_callback(GLFWwindow* window, Int width, Int height)
 {
     glViewport(0, 0, width, height);
 }
 
-void processInput(GLFWwindow *window)
+Void processInput(GLFWwindow *window)
 {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 }
 
+#include "gpu.cpp"
 
 
-int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
     Bool running = true;
     
@@ -214,7 +256,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         ASSERT(false);
     }
     
+    Shader frag_shader_1 = gpu_create_shader("data/shaders/basic_fragment_shader.fs", ShaderType::fragment);
     
+#if 0
     const Char *fragmentShaderSource = "#version 330 core\n"
         "out vec4 FragColor;\n"
         "void main()\n"
@@ -232,6 +276,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
         ASSERT(false);
     }
+#endif
     
     
     const Char *fragmentShaderSource2 = "#version 330 core\n"
@@ -256,7 +301,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     unsigned int shaderProgram;
     shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertex_shader);
-    glAttachShader(shaderProgram, fragmentShader);
+    glAttachShader(shaderProgram, frag_shader_1.id);
     glLinkProgram(shaderProgram);
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
     if(!success) {
@@ -282,7 +327,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     
     
     glDeleteShader(vertex_shader);
-    glDeleteShader(fragmentShader);
+    glDeleteShader(frag_shader_1.id);
     
     
     
@@ -333,11 +378,11 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     {
         FILETIME old_dll_last_write_time = dll_last_write_time;
         get_game_dll_last_write_time(&dll_last_write_time);
-        if(dll_last_write_time.dwLowDateTime != old_dll_last_write_time.dwLowDateTime ||
-           dll_last_write_time.dwHighDateTime != old_dll_last_write_time.dwHighDateTime)
+        if(CompareFileTime(&dll_last_write_time, &old_dll_last_write_time) != 0)
         {
             unload_game_dll(&game_code, &module_handle);
             
+            // TODO: use a better system, like a lock file
             Sleep(500);
             
             Int dll_load_result = load_game_dll(&game_code, &module_handle);

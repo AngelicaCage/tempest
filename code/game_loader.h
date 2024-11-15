@@ -5,6 +5,15 @@
 
 #include "ciel/base.h"
 
+struct
+FileContents
+{
+    Bool allocated;
+    Bool contains_proper_data;
+    Char *data;
+    U64 size;
+};
+
 struct GameMemory
 {
     Bool game_running;
@@ -21,5 +30,6 @@ struct GameCode
     
     Void (*update_and_render)(GameMemory*);
 };
+
 
 #endif //WINDOWS_GAME_LOADER_H

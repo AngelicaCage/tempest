@@ -12,14 +12,16 @@ enum class ShaderType
 
 struct Shader
 {
+    Bool loaded;
+    U64 file_last_write_time;
+    const Char *path;
+    
     ShaderType type;
     UInt id;
-    
-    const Char *path;
 };
 
-typedef UInt VBufferID;
-typedef UInt GPU;
+typedef UInt VBuffer;
+typedef UInt VAttributes;
 
 
 #endif //GPU_H
