@@ -7,6 +7,10 @@
 #include "ciel/base.h"
 #include "game_loader.h"
 
+#include "log.h"
+
+Log log;
+
 #include "gpu.h"
 
 #define GAME_DLL_PATH "game.dll"
@@ -176,6 +180,23 @@ Void processInput(GLFWwindow *window)
 
 Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+    log.print("A: Hi");
+    log.print("B: Hello");
+    log.print("A: How are you doing?");
+    log.print("B: I'm ok. I'm a bit worried by the fact that I don't exist, though");
+    log.print("A: I suppose that is worrying");
+    log.print("A: I never though about it much, but the fact that the only thing that exists of 'me' are strings on a computer is pretty weird.");
+    log.print("B: Right? I don't have feelings or thoughts, yet these messages make it seem as if I'm real");
+    log.print("A: Well, no use dwelling on the unchangeable. Want to sing a duet?");
+    log.print("B: Sure.");
+    
+    for(int i = 0; i < 995; i++)
+    {
+        log.print("FILLER");
+    }
+    
+    
+    
     Bool running = true;
     
     GameCode game_code = {0};

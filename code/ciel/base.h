@@ -62,6 +62,12 @@ typedef const Char * ansi_color;
 Char *NullAddr = (Char *) 0; *NullAddr = 0;\
 } }
 
+#define ASSERT(X) {\
+if(!(X))\
+{\
+_assert((X))\
+}\
+}
 Bool Logging_StopOnWarning = false;
 Bool Logging_StopOnError = false;
 
@@ -83,32 +89,30 @@ print(const Char *Format, ...)
     vprintf(Format, Args);
 }
 
-#define print_warning(Format, ...) {\
-printf(ansi_colors.yellow);\
-printf("WARNING (%s, %s, line %d): ", __FILE__, __func__, __LINE__);\
-printf(Format, __VA_ARGS__);\
-printf(ansi_colors.reset);\
-printf("\n");\
-if(Logging_StopOnWarning) { _assert(false); }\
+Void
+print_error(const Char *Format, ...)
+{
+    va_list Args;
+    va_start(Args, Format);
+    printf(ansi_colors.red);\
+    printf("ERROR: ");\
+    vprintf(Format, Args);
+    printf(ansi_colors.reset);\
+    printf("\n");
+}
+Void
+print_warning(const Char *Format, ...)
+{
+    va_list Args;
+    va_start(Args, Format);
+    printf(ansi_colors.red);\
+    printf("ERROR: ");\
+    vprintf(Format, Args);
+    printf(ansi_colors.reset);\
+    printf("\n");
 }
 
-#define print_error(Format, ...) {\
-printf(ansi_colors.red);\
-printf("ERROR (%s, %s, line %d): ", __FILE__, __func__, __LINE__);\
-printf(Format, __VA_ARGS__);\
-printf(ansi_colors.reset);\
-printf("\n");\
-if(Logging_StopOnError) { _assert(false); }\
-}
 
-
-#define ASSERT(X) {\
-if(!X)\
-{\
-print_error("assert called by: %s, %s, line %d", __FILE__, __func__, __LINE__);\
-_assert(X)\
-}\
-}
 
 Void *
 _alloc(U64 Size, const Char *CalledByFunction, int CalledByLine, const Char *CalledByFile)
