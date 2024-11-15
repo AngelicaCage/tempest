@@ -57,7 +57,7 @@ Log
         return entries[index];
     }
     
-    Void _print(const Char *format, va_list args, LogEntryType type)
+    Void _log(const Char *format, va_list args, LogEntryType type)
     {
         LogEntry new_entry;
         new_entry.type = type;
@@ -77,27 +77,50 @@ Log
         }
     }
     
-    Void print(const Char *format, ...)
+    Void log(const Char *format, ...)
     {
         va_list args;
         va_start(args, format);
-        _print(format, args, LogEntryType::info);
+        _log(format, args, LogEntryType::info);
     }
     
-    Void print_warning(const Char *format, ...)
+    Void log_warning(const Char *format, ...)
     {
         va_list args;
         va_start(args, format);
-        _print(format, args, LogEntryType::warning);
+        _log(format, args, LogEntryType::warning);
     }
     
-    Void print_error(const Char *format, ...)
+    Void log_error(const Char *format, ...)
     {
         va_list args;
         va_start(args, format);
-        _print(format, args, LogEntryType::error);
+        _log(format, args, LogEntryType::error);
     }
     
 };
+
+Log *global_log; // This must be set to reference a log
+
+Void log(const Char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    global_log->_log(format, args, LogEntryType::info);
+}
+
+Void log_warning(const Char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    global_log->_log(format, args, LogEntryType::warning);
+}
+
+Void log_error(const Char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    global_log->_log(format, args, LogEntryType::error);
+}
 
 #endif //LOG_H

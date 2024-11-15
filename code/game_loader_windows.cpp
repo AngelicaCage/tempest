@@ -5,12 +5,8 @@
 #include "glfw/glfw3.h"
 
 #include "ciel/base.h"
-#include "game_loader.h"
-
 #include "log.h"
-
-Log log;
-
+#include "game_loader.h"
 #include "gpu.h"
 
 #define GAME_DLL_PATH "game.dll"
@@ -180,24 +176,9 @@ Void processInput(GLFWwindow *window)
 
 Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-    log.print("A: Hi");
-    log.print("B: Hello");
-    log.print("A: How are you doing?");
-    log.print("B: I'm ok. I'm a bit worried by the fact that I don't exist, though");
-    log.print("A: I suppose that is worrying");
-    log.print("A: I never though about it much, but the fact that the only thing that exists of 'me' are strings on a computer is pretty weird.");
-    log.print("B: Right? I don't have feelings or thoughts, yet these messages make it seem as if I'm real");
-    log.print("A: Well, no use dwelling on the unchangeable. Want to sing a duet?");
-    log.print("B: Sure.");
+    Log _global_log;
+    global_log = &_global_log;
     
-    for(int i = 0; i < 995; i++)
-    {
-        log.print("FILLER");
-    }
-    
-    
-    
-    Bool running = true;
     
     GameCode game_code = {0};
     HINSTANCE module_handle = 0;
@@ -222,6 +203,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     game_memory.size = megabytes(1);
     game_memory.memory = alloc(game_memory.size);
     zero_memory(game_memory.memory, game_memory.size);
+    game_memory.global_log = global_log;
     game_memory.allocated = true;
     
     
@@ -412,8 +394,6 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
                 print_error("issue with dll loading");
                 return 1;
             }
-            
-            game_memory.opengl_functions_loaded = false;
         }
         
         processInput(window);

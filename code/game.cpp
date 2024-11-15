@@ -3,6 +3,7 @@
 #include "ciel/base.h"
 #include "ciel/list.h"
 
+#include "log.h"
 #include "game_loader.h"
 
 #include "gpu.h"
@@ -18,6 +19,7 @@ extern "C" __declspec(dllexport) void __cdecl
 update_and_render(GameMemory *game_memory)
 {
     GameState *game_state = (GameState *)game_memory->memory;
+    global_log = game_memory->global_log;
     
     if(!game_state->initialized)
     {
