@@ -32,7 +32,7 @@ print_windows_error(DWORD error_code)
 U64 get_file_last_write_time(const Char *path)
 {
     WIN32_FILE_ATTRIBUTE_DATA Data;
-    if(GetFileAttributesEx(GAME_DLL_PATH, GetFileExInfoStandard, &Data))
+    if(GetFileAttributesEx(path, GetFileExInfoStandard, &Data))
     {
         U64 result = Data.ftLastWriteTime.dwLowDateTime;
         result = result | ((U64)(Data.ftLastWriteTime.dwHighDateTime) << 32);
@@ -234,13 +234,12 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     glViewport(0, 0, 800, 600);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     
+    ShaderProgram shader_programs[10];
     
-    Shader vertex_shader_1 = gpu_create_shader("data/shaders/basic_vertex_shader.vs", ShaderType::vertex);
-    
-    Shader frag_shader_1 = gpu_create_shader("data/shaders/basic_fragment_shader_1.fs", ShaderType::fragment);
-    Shader frag_shader_2 = gpu_create_shader("data/shaders/basic_fragment_shader_2.fs", ShaderType::fragment);
-    ShaderProgram shader_program_1 = gpu_create_shader_program(&vertex_shader_1, &frag_shader_1);
-    ShaderProgram shader_program_2 = gpu_create_shader_program(&vertex_shader_1, &frag_shader_2);
+    shader_programs[0] = gpu_create_shader_program("data/shaders/basic_vertex_shader_1.vs",
+                                                   "data/shaders/basic_fragment_shader_1.fs");
+    shader_programs[1] = gpu_create_shader_program("data/shaders/basic_vertex_shader_1.vs",
+                                                   "data/shaders/basic_fragment_shader_2.fs");
     
     float vertices1[] = {
         -1.0f, -0.5f, 0.0f,
@@ -304,6 +303,21 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
             }
         }
         
+        for(int i = 0; i < 2; i++)
+        {
+            ShaderProgram *program = &(shader_programs[i]);
+            
+            U64 vs_last_write_time = get_file_last_write_time(program->vertex_shader.path);
+            U64 fs_last_write_time = get_file_last_write_time(program->fragment_shader.path);
+            
+            if(vs_last_write_time != program->vertex_shader.file_last_write_time ||
+               fs_last_write_time != program->fragment_shader.file_last_write_time)
+            {
+                gpu_delete_shader_program(program);
+                *program = gpu_create_shader_program(program->vertex_shader.path, program->fragment_shader.path);
+            }
+        }
+        
         processInput(window);
         if(glfwWindowShouldClose(window))
             break;
@@ -314,11 +328,11 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         glClear(GL_COLOR_BUFFER_BIT);
         
         
-        glUseProgram(shader_program_1.id);
+        glUseProgram(shader_programs[0].id);
         glBindVertexArray(VAO1);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         
-        glUseProgram(shader_program_2.id);
+        glUseProgram(shader_programs[1].id);
         glBindVertexArray(VAO2);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         

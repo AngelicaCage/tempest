@@ -3,29 +3,7 @@
 #ifndef DIAGNOSTICS_H
 #define DIAGNOSTICS_H
 
-inline Void
-_check(Bool condition, const Char *file, Int line, const Char *function)
-{
-    if(!condition)
-    {
-        log_warning("Check failed at %s, %d, %s", file, line, function);
-        ASSERT(false);
-    }
-}
-
-inline Void
-_check_vital(Bool condition, const Char *message_if_false)
-{
-    if(!condition)
-    {
-        log_warning(message_if_false);
-        ASSERT(false);
-    }
-}
-
-
-#define check(condition) _check((condition) != NULL, __FILE__, __LINE__, __func__);
-
-
+#define check(condition) if((condition) == NULL) { log_warning("Check failed at %s, %d, %s", __FILE__, __LINE__, __func__); ASSERT(false)};
+#define check_vital(condition) if((condition) == NULL) { log_error("Check failed at %s, %d, %s", __FILE__, __LINE__, __func__); ASSERT(false)};
 
 #endif //DIAGNOSTICS_H

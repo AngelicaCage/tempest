@@ -1,10 +1,3 @@
-#if 0
-Void
-gpu_upload_vertices_static(Float v[])
-{
-}
-#endif
-
 Void
 gpu_compile_shader_from_path(Shader *shader)
 {
@@ -61,35 +54,32 @@ gpu_create_shader(const Char *path, ShaderType type)
 }
 
 Void
-gpu_reload_shader(Shader *shader)
+gpu_delete_shader(UInt program_id, Shader *shader)
 {
-    // TODO: re-create any programs that use this
     check(shader);
-    check(shader->loaded);
     
-    shader->loaded = false;
+    glDetachShader(program_id, shader->id);
     glDeleteShader(shader->id);
-    
-    gpu_compile_shader_from_path(shader);
-    
-    check(shader->loaded);
+    shader->loaded = false;
 }
 
 ShaderProgram
-gpu_create_shader_program(Shader *fs, Shader *vs)
+gpu_create_shader_program(const Char *vs_path, const Char *fs_path)
 {
-    check(fs);
-    check(vs);
-    check(fs->loaded);
-    check(vs->loaded);
+    check(fs_path);
+    check(vs_path);
     
     ShaderProgram result = {0};
-    result.fragment_shader = fs;
-    result.vertex_shader = vs;
+    
+    result.vertex_shader = gpu_create_shader(vs_path, ShaderType::vertex);
+    result.fragment_shader = gpu_create_shader(fs_path, ShaderType::fragment);
+    
+    check(result.vertex_shader.loaded);
+    check(result.fragment_shader.loaded);
     
     result.id = glCreateProgram();
-    glAttachShader(result.id, fs->id);
-    glAttachShader(result.id, vs->id);
+    glAttachShader(result.id, result.vertex_shader.id);
+    glAttachShader(result.id, result.fragment_shader.id);
     glLinkProgram(result.id);
     
     Int linking_succeeded;
@@ -109,3 +99,18 @@ gpu_create_shader_program(Shader *fs, Shader *vs)
     
     return result;
 }
+
+Void
+gpu_delete_shader_program(ShaderProgram *program)
+{
+    glDeleteProgram(program->id);
+    program->linked = false;
+}
+
+#if 0
+Void
+gpu_upload_vertices_static(Float v[])
+{
+}
+#endif
+

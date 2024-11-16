@@ -26,9 +26,8 @@ struct
 ShaderProgram
 {
     Bool linked;
-    Shader *fragment_shader;
-    Shader *vertex_shader;
-    
+    Shader vertex_shader;
+    Shader fragment_shader;
     UInt id;
 };
 
