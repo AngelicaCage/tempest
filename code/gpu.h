@@ -3,20 +3,32 @@
 #ifndef GPU_H
 #define GPU_H
 
-enum class ShaderType
+enum class
+ShaderType
 {
     vertex,
     geometry,
     fragment,
 };
 
-struct Shader
+struct
+Shader
 {
     Bool loaded;
     U64 file_last_write_time;
     const Char *path;
     
     ShaderType type;
+    UInt id;
+};
+
+struct
+ShaderProgram
+{
+    Bool linked;
+    Shader *fragment_shader;
+    Shader *vertex_shader;
+    
     UInt id;
 };
 

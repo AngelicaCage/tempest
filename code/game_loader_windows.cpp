@@ -6,6 +6,7 @@
 
 #include "ciel/base.h"
 #include "log.h"
+#include "diagnostics.h"
 #include "game_loader.h"
 #include "gpu.h"
 
@@ -39,7 +40,6 @@ U64 get_file_last_write_time(const Char *path)
     }
     
     return 0;
-    
 }
 
 Int
@@ -234,105 +234,13 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     glViewport(0, 0, 800, 600);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     
-    //game_state->shaders = create_list<Shader>();
     
-    //game_state->shaders.add(gpu_create_shader("data/basic_fragment_shader.fs", ShaderType::fragment));
+    Shader vertex_shader_1 = gpu_create_shader("data/shaders/basic_vertex_shader.vs", ShaderType::vertex);
     
-    const Char *vertex_shader_source = "#version 330 core\n"
-        "layout (location = 0) in vec3 aPos;\n"
-        "void main()\n"
-        "{\n"
-        "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-        "}\0";
-    
-    UInt vertex_shader;
-    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
-    glCompileShader(vertex_shader);
-    
-    int  success;
-    char infoLog[512];
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-    if(!success)
-    {
-        glGetShaderInfoLog(vertex_shader, 512, NULL, infoLog);
-        ASSERT(false);
-    }
-    
-    Shader frag_shader_1 = gpu_create_shader("data/shaders/basic_fragment_shader.fs", ShaderType::fragment);
-    
-#if 0
-    const Char *fragmentShaderSource = "#version 330 core\n"
-        "out vec4 FragColor;\n"
-        "void main()\n"
-        "{\n"
-        "FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-        "}\n";
-    UInt fragmentShader;
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if(!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        ASSERT(false);
-    }
-#endif
-    
-    
-    const Char *fragmentShaderSource2 = "#version 330 core\n"
-        "out vec4 FragColor;\n"
-        "void main()\n"
-        "{\n"
-        "FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n"
-        "}\n";
-    UInt fragmentShader2;
-    fragmentShader2 = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader2, 1, &fragmentShaderSource2, NULL);
-    glCompileShader(fragmentShader2);
-    
-    glGetShaderiv(fragmentShader2, GL_COMPILE_STATUS, &success);
-    if(!success)
-    {
-        glGetShaderInfoLog(fragmentShader2, 512, NULL, infoLog);
-        ASSERT(false);
-    }
-    
-    
-    unsigned int shaderProgram;
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertex_shader);
-    glAttachShader(shaderProgram, frag_shader_1.id);
-    glLinkProgram(shaderProgram);
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if(!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        ASSERT(false);
-    }
-    
-    UInt shader_program1 = shaderProgram;
-    
-    
-    unsigned int shaderProgram2;
-    shaderProgram2 = glCreateProgram();
-    glAttachShader(shaderProgram2, vertex_shader);
-    glAttachShader(shaderProgram2, fragmentShader2);
-    glLinkProgram(shaderProgram2);
-    glGetProgramiv(shaderProgram2, GL_LINK_STATUS, &success);
-    if(!success) {
-        glGetProgramInfoLog(shaderProgram2, 512, NULL, infoLog);
-        ASSERT(false);
-    }
-    
-    UInt shader_program2 = shaderProgram2;
-    
-    
-    glDeleteShader(vertex_shader);
-    glDeleteShader(frag_shader_1.id);
-    
-    
+    Shader frag_shader_1 = gpu_create_shader("data/shaders/basic_fragment_shader_1.fs", ShaderType::fragment);
+    Shader frag_shader_2 = gpu_create_shader("data/shaders/basic_fragment_shader_2.fs", ShaderType::fragment);
+    ShaderProgram shader_program_1 = gpu_create_shader_program(&vertex_shader_1, &frag_shader_1);
+    ShaderProgram shader_program_2 = gpu_create_shader_program(&vertex_shader_1, &frag_shader_2);
     
     float vertices1[] = {
         -1.0f, -0.5f, 0.0f,
@@ -406,11 +314,11 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         glClear(GL_COLOR_BUFFER_BIT);
         
         
-        glUseProgram(shader_program1);
+        glUseProgram(shader_program_1.id);
         glBindVertexArray(VAO1);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         
-        glUseProgram(shader_program2);
+        glUseProgram(shader_program_2.id);
         glBindVertexArray(VAO2);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         
