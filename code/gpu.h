@@ -15,6 +15,7 @@ struct
 Shader
 {
     Bool loaded;
+    Bool using_fallback;
     U64 file_last_write_time;
     const Char *path;
     

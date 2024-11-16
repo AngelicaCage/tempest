@@ -29,9 +29,14 @@ gpu_compile_shader_from_path(Shader *shader)
         log_warning("shader compilation error: %s", info_log);
         free(info_log);
         
-        ASSERT(false);
+        //ASSERT(false);
         
-        return;
+        if(shader->type == ShaderType::fragment)
+            shader->id = fragment_shader_fallback_id;
+        else if(shader->type == ShaderType::vertex)
+            shader->id = vertex_shader_fallback_id;
+        
+        shader->using_fallback = true;
     }
     
     shader->loaded = true;
@@ -96,6 +101,11 @@ gpu_create_shader_program(const Char *vs_path, const Char *fs_path)
     }
     
     result.linked = true;
+    
+    if(!result.vertex_shader.using_fallback)
+        gpu_delete_shader(result.id, &result.vertex_shader);
+    if(!result.fragment_shader.using_fallback)
+        gpu_delete_shader(result.id, &result.fragment_shader);
     
     return result;
 }
