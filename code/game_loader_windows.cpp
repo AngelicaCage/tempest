@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <stdio.h>
+#include <math.h>
 
 #include "glad/glad.c"
 #include "glfw/glfw3.h"
@@ -12,6 +13,7 @@
 
 #define GAME_DLL_PATH "game.dll"
 #define GAME_DLL_COPY_PATH "game_temp_copy.dll"
+#define GAME_DATA_DIRECTORY "../data"
 
 
 void
@@ -281,15 +283,17 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     
     ShaderProgram shader_programs[10];
     
-    shader_programs[0] = gpu_create_shader_program("data/shaders/basic_vertex_shader_1.vs",
-                                                   "data/shaders/basic_fragment_shader_1.fs");
-    shader_programs[1] = gpu_create_shader_program("data/shaders/basic_vertex_shader_1.vs",
-                                                   "data/shaders/basic_fragment_shader_2.fs");
+    shader_programs[0] = gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/basic_vertex_shader_1.vs",
+                                                   GAME_DATA_DIRECTORY "/shaders/basic_fragment_shader_1.fs");
+    shader_programs[1] = gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/basic_vertex_shader_1.vs",
+                                                   GAME_DATA_DIRECTORY "/shaders/basic_fragment_shader_2.fs");
+    
     
     float vertices1[] = {
-        -1.0f, -0.5f, 0.0f,
-        -0.5f, 0.5f, 0.0f,
-        0.0f, -0.5f, 0.0f,
+        // positions         // colors
+        0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
+        -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
+        0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top 
     };
     
     float vertices2[] = {
@@ -299,13 +303,10 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     };
     
     
-    UInt EBO;
-    glGenBuffers(1, &EBO);
     UInt VBO1, VBO2;
     glGenBuffers(1, &VBO1);
     glGenBuffers(1, &VBO2);
-    UInt VAO1;
-    UInt VAO2;
+    UInt VAO1, VAO2;
     glGenVertexArrays(1, &VAO1);
     glGenVertexArrays(1, &VAO2);
     
@@ -315,8 +316,10 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     glBindBuffer(GL_ARRAY_BUFFER, VBO1);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices1), vertices1, GL_STATIC_DRAW);
     
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), NULL);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), NULL);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3* sizeof(float)));
+    glEnableVertexAttribArray(1);
     
     
     glBindVertexArray(VAO2);
@@ -373,13 +376,16 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         glClear(GL_COLOR_BUFFER_BIT);
         
         
+        
         glUseProgram(shader_programs[0].id);
         glBindVertexArray(VAO1);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         
+#if 0
         glUseProgram(shader_programs[1].id);
         glBindVertexArray(VAO2);
         glDrawArrays(GL_TRIANGLES, 0, 3);
+#endif
         
         
         glfwSwapBuffers(window);

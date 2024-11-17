@@ -29,7 +29,7 @@ gpu_compile_shader_from_path(Shader *shader)
         log_warning("shader compilation error: %s", info_log);
         free(info_log);
         
-        //ASSERT(false);
+        ASSERT(false);
         
         if(shader->type == ShaderType::fragment)
             shader->id = fragment_shader_fallback_id;
