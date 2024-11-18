@@ -20,6 +20,7 @@ FileContents
 struct GameMemory
 {
     Bool game_running;
+    Bool functions_loaded;
     
     Void *memory;
     U64 size;

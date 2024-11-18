@@ -23,6 +23,9 @@ struct GameState
     UInt field_vbo;
     UInt field_vao;
     UInt *field_ebos;
+    
+    UInt axis_vbo;
+    UInt axis_vao;
 };
 
 #endif //GAME_H

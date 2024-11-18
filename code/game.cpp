@@ -2,6 +2,9 @@
 
 #include "glad/glad.c"
 #include "glfw/glfw3.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
 #include "ciel/base.h"
 #include "ciel/list.h"
@@ -68,7 +71,7 @@ return;\
 }
 
 VertexField
-create_vertex_field(Int width, Int height)
+create_vertex_field(Int width, Int height, Float left_x, Float left_z, Float coordinate_width)
 {
     VertexField result;
     result.width = width;
@@ -113,33 +116,50 @@ update_and_render(GameMemory *game_memory)
     GameState *game_state = (GameState *)game_memory->memory;
     global_log = game_memory->global_log;
     
-    
-    
-    if(!game_state->initialized)
+    if(!game_memory->functions_loaded)
     {
-        // Initialize memory
         get_file_last_write_time = game_memory->get_file_last_write_time;
         read_file_contents = game_memory->read_file_contents;
         
-        game_state->initialized = true;
-        game_state->shader_programs = create_list<ShaderProgram>();
-        
-#if 1
         glfwMakeContextCurrent(game_memory->window);
         if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
         {
             log_error("failed to initialize GLAD");
             ASSERT(false);
         }
-#endif
+    }
+    
+    
+    if(!game_state->initialized)
+    {
+        // Initialize memory
+        game_state->initialized = true;
+        game_state->shader_programs = create_list<ShaderProgram>();
         
         compile_fallback_shaders();
         
-        game_state->shader_programs.add(gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/basic_vertex_shader_1.vs",
-                                                                  GAME_DATA_DIRECTORY "/shaders/basic_fragment_shader_2.fs"));
+        game_state->shader_programs.add(gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/3d_vertex_shader.vs",
+                                                                  GAME_DATA_DIRECTORY "/shaders/field_fragment_shader.fs"));
+        game_state->shader_programs.add(gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/2d_vertex_shader.vs",
+                                                                  GAME_DATA_DIRECTORY "/shaders/line_fragment_shader.fs"));
         
         
-        game_state->field = create_vertex_field(6, 5);
+        // Axes
+        glGenVertexArrays(1, &game_state->axis_vao);
+        glGenBuffers(1, &game_state->axis_vbo);
+        
+        glBindVertexArray(game_state->axis_vao);
+        
+        glBindBuffer(GL_ARRAY_BUFFER, game_state->axis_vbo);
+        Float axis_vertices[6] = {-10, 0, 0, 10, 0, 0};
+        glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * 6, axis_vertices, GL_STATIC_DRAW);
+        
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*3, (Void *)0);
+        glEnableVertexAttribArray(0);
+        
+        
+        // Field
+        game_state->field = create_vertex_field(6, 5, 0, 0, 10);
         game_state->field_ebos = (UInt *)alloc(sizeof(UInt) * (game_state->field.height-1));
         
         glGenVertexArrays(1, &game_state->field_vao);
@@ -171,6 +191,8 @@ update_and_render(GameMemory *game_memory)
     
     for(int i = 0; i < game_state->shader_programs.length; i++)
     {
+        if(i >= 1)
+            break;
         ShaderProgram *program = &(game_state->shader_programs.data[i]);
         
         U64 vs_last_write_time = get_file_last_write_time(program->vertex_shader.path);
@@ -186,6 +208,45 @@ update_and_render(GameMemory *game_memory)
     
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+    
+    
+#if 0
+    glm::vec3 camera_pos = glm::vec3(0.0f, 0.0f, 3.0f);  
+    glm::vec3 camera_target = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 camera_direction = glm::normalize(camera_pos - camera_target);
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f); 
+    glm::vec3 camera_right = glm::normalize(glm::cross(up, camera_direction));
+    glm::vec3 camera_up = glm::cross(camera_direction, camera_right);
+#endif
+    
+    glm::mat4 model = glm::mat4(1.0f);
+    
+    for(int i = 0; i < game_state->shader_programs.length; i++)
+    {
+        glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 1.0f, 3.0f),
+                                     glm::vec3(0.0f, 0.0f, 0.0f),
+                                     glm::vec3(0.0f, 1.0f, 0.0f));
+        int view_loc = glGetUniformLocation(game_state->shader_programs[i].id, "view");
+        glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
+        
+        
+        glm::mat4 proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
+        int proj_loc = glGetUniformLocation(game_state->shader_programs[i].id, "projection");
+        glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm::value_ptr(proj));
+    }
+    
+    // Draw axes
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    
+    //model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f)); 
+    Int color_loc = glGetUniformLocation(game_state->shader_programs[1].id, "lineColor");
+    Float line_color[4] = {1.0f, 0.0f, 0.0f, 1.0f};
+    glUniform4fv(color_loc, 1, line_color);
+    
+    glUseProgram(game_state->shader_programs[1].id);
+    glBindVertexArray(game_state->field_vao);
+    glDrawArrays(GL_LINES, 0, 2);
+    
     
     
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

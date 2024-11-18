@@ -1,5 +1,6 @@
 build
 code/glfw
 code/glad
+code/glm
 devenv.bat
 debugging_session.rdbg

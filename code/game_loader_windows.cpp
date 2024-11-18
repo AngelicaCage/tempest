@@ -200,6 +200,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     }
     GameMemory game_memory = {0};
     game_memory.game_running = true;
+    game_memory.functions_loaded = false;
     game_memory.size = megabytes(1);
     game_memory.memory = alloc(game_memory.size);
     zero_memory(game_memory.memory, game_memory.size);
@@ -215,7 +216,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Game", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(800, 800, "Game", NULL, NULL);
     if (window == NULL)
     {
         print_error("failed to create GLFW window");
@@ -242,6 +243,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     while(game_memory.game_running)
     {
         FILETIME old_dll_last_write_time = dll_last_write_time;
+        get_game_dll_last_write_time(&dll_last_write_time);
         if(CompareFileTime(&dll_last_write_time, &old_dll_last_write_time) != 0)
         {
             unload_game_dll(&game_code, &module_handle);
@@ -255,6 +257,8 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
                 print_error("issue with dll loading");
                 return 1;
             }
+            
+            game_memory.functions_loaded = false;
         }
         
         
