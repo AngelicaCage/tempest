@@ -3,18 +3,26 @@
 #ifndef GAME_H
 #define GAME_H
 
+struct VertexField
+{
+    Int width, height;
+    // array of rows
+    Float *vertices;
+    UInt *indices;
+};
+
 struct GameState
 {
     Bool initialized;
     
     //GLFWwindow *window;
     
-    List<Shader> shaders;
+    List<ShaderProgram> shader_programs;
     
-    UInt shader_program1;
-    UInt shader_program2;
-    
-    UInt VAO1, VAO2;
+    VertexField field;
+    UInt field_vbo;
+    UInt field_vao;
+    UInt *field_ebos;
 };
 
 #endif //GAME_H

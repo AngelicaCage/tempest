@@ -11,57 +11,9 @@
 #include "diagnostics.h"
 #include "game_loader.h"
 #include "gpu.h"
+
 #define GAME_DLL_PATH "game.dll"
 #define GAME_DLL_COPY_PATH "game_temp_copy.dll"
-#define GAME_DATA_DIRECTORY "../data"
-
-struct VertexField
-{
-    Int width, height;
-    // array of rows
-    Float *vertices;
-    UInt *indices;
-};
-
-VertexField
-create_vertex_field(Int width, Int height)
-{
-    VertexField result;
-    result.width = width;
-    result.height = height;
-    
-    result.vertices = (Float *)alloc(sizeof(Float) * width*3 * height);
-    for(Int y = 0; y < height; y++)
-    {
-        for(Int x = 0; x < width; x++)
-        {
-            Int stride = 3;
-            result.vertices[y*width*stride + x*stride + 0] = ((Float)x) / ((Float)width) - 0.5f;
-            result.vertices[y*width*stride + x*stride + 1] = ((Float)y) / ((Float)height) - 0.5f;
-            result.vertices[y*width*stride + x*stride + 2] = 0;
-        }
-    }
-    
-    result.indices = (UInt *)alloc(sizeof(UInt) * (width-1)*6 * (height-1));
-    for(Int y = 0; y < height - 1; y++)
-    {
-        for(Int x = 0; x < width - 1; x++)
-        {
-            Int stride = 6;
-            
-            result.indices[y*stride*(width-1) + x*stride + 0] = x + y*width;
-            result.indices[y*stride*(width-1) + x*stride + 1] = x + (y+1)*width;
-            result.indices[y*stride*(width-1) + x*stride + 2] = x + 1 + (y+1)*width;
-            
-            result.indices[y*stride*(width-1) + x*stride + 3] = x + y*width;
-            result.indices[y*stride*(width-1) + x*stride + 4] = x + 1 + (y+1)*width;
-            result.indices[y*stride*(width-1) + x*stride + 5] = x + 1 + y*width;
-        }
-    }
-    
-    return result;
-}
-
 
 
 void
@@ -222,50 +174,6 @@ Void processInput(GLFWwindow *window)
         glfwSetWindowShouldClose(window, true);
 }
 
-UInt vertex_shader_fallback_id = 0;
-UInt fragment_shader_fallback_id = 0;
-
-void
-compile_fallback_shaders()
-{
-    const Char *vs_source = "#version 330 core\n"
-        "layout (location = 0) in vec3 aPos;\n"
-        "void main()\n"
-        "{\n"
-        "gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-        "}";
-    Int vs_source_length = strlen(vs_source);
-    
-    const Char *fs_source = "#version 330 core\n"
-        "out vec4 FragColor;\n"
-        "void main()\n"
-        "{\n"
-        "FragColor = vec4(1.0f, 0.0f, 1.0f, 1.0f);\n"
-        "}";
-    Int fs_source_length = strlen(vs_source);
-    
-    vertex_shader_fallback_id = glCreateShader(GL_VERTEX_SHADER);
-    fragment_shader_fallback_id = glCreateShader(GL_FRAGMENT_SHADER);
-    
-    
-    glShaderSource(vertex_shader_fallback_id, 1, &vs_source, &vs_source_length);
-    glCompileShader(vertex_shader_fallback_id);
-    
-    Int compilation_succeeded;
-    glGetShaderiv(vertex_shader_fallback_id, GL_COMPILE_STATUS, &compilation_succeeded);
-    ASSERT(compilation_succeeded == GL_TRUE);
-    
-    
-    glShaderSource(fragment_shader_fallback_id, 1, &fs_source, &fs_source_length);
-    glCompileShader(fragment_shader_fallback_id);
-    
-    glGetShaderiv(fragment_shader_fallback_id, GL_COMPILE_STATUS, &compilation_succeeded);
-    ASSERT(compilation_succeeded == GL_TRUE);
-    
-}
-
-#include "gpu.cpp"
-
 
 Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
@@ -317,6 +225,8 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     glfwMakeContextCurrent(window);
     
     game_memory.window = window;
+    game_memory.get_file_last_write_time = get_file_last_write_time;
+    game_memory.read_file_contents = read_file_contents;
     
     
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -328,99 +238,10 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     glViewport(0, 0, 800, 600);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     
-    compile_fallback_shaders();
-    
-    ShaderProgram shader_programs[10];
-    
-    shader_programs[0] = gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/basic_vertex_shader_1.vs",
-                                                   GAME_DATA_DIRECTORY "/shaders/basic_fragment_shader_1.fs");
-    shader_programs[1] = gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/basic_vertex_shader_1.vs",
-                                                   GAME_DATA_DIRECTORY "/shaders/basic_fragment_shader_2.fs");
-    
-    
-    VertexField field = create_vertex_field(6, 5);
-    UInt field_vbo;
-    UInt field_vao;
-    UInt *field_ebos = (UInt *)alloc(sizeof(UInt) * (field.height-1));
-    
-    glGenVertexArrays(1, &field_vao);
-    glGenBuffers(1, &field_vbo);
-    for(Int i = 0; i < field.height-1; i++)
-    {
-        glGenBuffers(1, &(field_ebos[i]));
-    }
-    
-    glBindVertexArray(field_vao);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, field_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * field.width*3 * field.height, field.vertices, GL_STATIC_DRAW);
-    
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field_ebos[0]);
-    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(UInt) * (field.width-1)*6, field.indices, GL_STATIC_DRAW);
-#if 1
-    for(Int i = 0; i < field.height-1; i++)
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field_ebos[i]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(UInt) * (field.width-1)*6, &(field.indices[i*(field.width-1)*6]), GL_STATIC_DRAW);
-        //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(UInt) * (field.width-1)*6, &(field.indices[0]), GL_STATIC_DRAW);
-    }
-#endif
-    
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*3, (Void *)0);
-    glEnableVertexAttribArray(0);
-    
-    glBindVertexArray(0); 
-    glBindBuffer(GL_ARRAY_BUFFER, 0); 
-    
-    
-    
-    float vertices1[] = {
-        // positions         // colors
-        0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
-        -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
-        0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top 
-    };
-    
-    float vertices2[] = {
-        1.0f, -0.5f, 0.0f,
-        0.5f, 0.5f, 0.0f,
-        0.0f, -0.5f, 0.0f,
-    };
-    
-    
-    UInt VBO1, VBO2;
-    glGenBuffers(1, &VBO1);
-    glGenBuffers(1, &VBO2);
-    UInt VAO1, VAO2;
-    glGenVertexArrays(1, &VAO1);
-    glGenVertexArrays(1, &VAO2);
-    
-    
-    glBindVertexArray(VAO1);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, VBO1);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices1), vertices1, GL_STATIC_DRAW);
-    
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), NULL);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3* sizeof(float)));
-    glEnableVertexAttribArray(1);
-    
-    
-    glBindVertexArray(VAO2);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), vertices2, GL_STATIC_DRAW);
-    
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), NULL);
-    glEnableVertexAttribArray(0);
-    
-    
     
     while(game_memory.game_running)
     {
         FILETIME old_dll_last_write_time = dll_last_write_time;
-        get_game_dll_last_write_time(&dll_last_write_time);
         if(CompareFileTime(&dll_last_write_time, &old_dll_last_write_time) != 0)
         {
             unload_game_dll(&game_code, &module_handle);
@@ -436,20 +257,6 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
             }
         }
         
-        for(int i = 0; i < 2; i++)
-        {
-            ShaderProgram *program = &(shader_programs[i]);
-            
-            U64 vs_last_write_time = get_file_last_write_time(program->vertex_shader.path);
-            U64 fs_last_write_time = get_file_last_write_time(program->fragment_shader.path);
-            
-            if(vs_last_write_time != program->vertex_shader.file_last_write_time ||
-               fs_last_write_time != program->fragment_shader.file_last_write_time)
-            {
-                gpu_delete_shader_program(program);
-                *program = gpu_create_shader_program(program->vertex_shader.path, program->fragment_shader.path);
-            }
-        }
         
         processInput(window);
         if(glfwWindowShouldClose(window))
@@ -457,30 +264,6 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         
         (game_code.update_and_render)(&game_memory);
         
-        
-#if 0
-        Int offset_uniform_location = glGetUniformLocation(shader_programs[0].id, "offset");
-        glUseProgram(shader_programs[0].id);
-        glUniform3f(offset_uniform_location, 0.0f, 0.0f, 0.0f);
-        glBindVertexArray(VAO1);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-#endif
-        
-        
-        
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glUseProgram(shader_programs[1].id);
-        glBindVertexArray(field_vao);
-#if 1
-        for(Int i = 0; i < field.height-1; i++)
-        {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field_ebos[i]);
-            glDrawElements(GL_TRIANGLES, (field.width-1)*6, GL_UNSIGNED_INT, (Void *)0);
-        }
-#else
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field_ebos[0]);
-        glDrawElements(GL_TRIANGLES, (field.width-1)*6, GL_UNSIGNED_INT, (Void *)0);
-#endif
         
         
         glfwSwapBuffers(window);

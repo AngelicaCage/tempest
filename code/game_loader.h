@@ -26,15 +26,17 @@ struct GameMemory
     Bool allocated;
     
     Log *global_log;
-    
     GLFWwindow *window;
+    
+    U64 (*get_file_last_write_time)(const Char *);
+    FileContents (*read_file_contents)(const Char *);
 };
 
 struct GameCode
 {
     Bool loaded;
     
-    Void (*update_and_render)(GameMemory*);
+    Void (*update_and_render)(GameMemory *);
 };
 
 

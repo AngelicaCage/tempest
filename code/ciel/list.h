@@ -46,7 +46,7 @@ struct List {
         if(index >= length)
         {
             print_warning("index out of bounds");
-            return -1;
+            return {0};
         }
         return data[index];
     }
