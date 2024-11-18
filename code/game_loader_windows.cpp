@@ -36,8 +36,8 @@ create_vertex_field(Int width, Int height)
         for(Int x = 0; x < width; x++)
         {
             Int stride = 3;
-            result.vertices[y*width*stride + x*stride + 0] = ((Float)x) / ((Float)width);
-            result.vertices[y*width*stride + x*stride + 1] = ((Float)y) / ((Float)height);
+            result.vertices[y*width*stride + x*stride + 0] = ((Float)x) / ((Float)width) - 0.5f;
+            result.vertices[y*width*stride + x*stride + 1] = ((Float)y) / ((Float)height) - 0.5f;
             result.vertices[y*width*stride + x*stride + 2] = 0;
         }
     }
@@ -338,7 +338,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
                                                    GAME_DATA_DIRECTORY "/shaders/basic_fragment_shader_2.fs");
     
     
-    VertexField field = create_vertex_field(4, 3);
+    VertexField field = create_vertex_field(6, 5);
     UInt field_vbo;
     UInt field_vao;
     UInt *field_ebos = (UInt *)alloc(sizeof(UInt) * (field.height-1));
@@ -347,7 +347,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     glGenBuffers(1, &field_vbo);
     for(Int i = 0; i < field.height-1; i++)
     {
-        glGenBuffers(1, &(field_ebos[0]));
+        glGenBuffers(1, &(field_ebos[i]));
     }
     
     glBindVertexArray(field_vao);
@@ -355,14 +355,14 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     glBindBuffer(GL_ARRAY_BUFFER, field_vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * field.width*3 * field.height, field.vertices, GL_STATIC_DRAW);
     
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field_ebos[0]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(UInt) * (field.width-1)*6, field.indices, GL_STATIC_DRAW);
-#if 0
-    for(Int i = 0; i < 1/*field.height-1*/; i++)
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field_ebos[0]);
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(UInt) * (field.width-1)*6, field.indices, GL_STATIC_DRAW);
+#if 1
+    for(Int i = 0; i < field.height-1; i++)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field_ebos[i]);
-        //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Int) * (field.width-1)*6, &field.indices[(field.width-1)*6*i], GL_STATIC_DRAW); 
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(UInt) * (field.width-1)*6, field.indices, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(UInt) * (field.width-1)*6, &(field.indices[i*(field.width-1)*6]), GL_STATIC_DRAW);
+        //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(UInt) * (field.width-1)*6, &(field.indices[0]), GL_STATIC_DRAW);
     }
 #endif
     
@@ -371,6 +371,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     
     glBindVertexArray(0); 
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
+    
     
     
     float vertices1[] = {
@@ -469,23 +470,19 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 #endif
         
         
+        
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glUseProgram(shader_programs[1].id);
         glBindVertexArray(field_vao);
-        for(Int i = 0; i < 1/*field.height-1*/; i++)
+#if 1
+        for(Int i = 0; i < field.height-1; i++)
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field_ebos[i]);
-            glDrawElements(GL_TRIANGLES, (field.width-1)*6, GL_UNSIGNED_INT, &field.indices);
+            glDrawElements(GL_TRIANGLES, (field.width-1)*6, GL_UNSIGNED_INT, (Void *)0);
         }
-        
+#else
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field_ebos[0]);
         glDrawElements(GL_TRIANGLES, (field.width-1)*6, GL_UNSIGNED_INT, (Void *)0);
-        
-        
-#if 0
-        glUseProgram(shader_programs[1].id);
-        glBindVertexArray(VAO2);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
 #endif
         
         
