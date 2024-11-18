@@ -3,6 +3,7 @@
 #include <math.h>
 
 #include "glad/glad.c"
+#define GLFW_DLL
 #include "glfw/glfw3.h"
 
 #include "ciel/base.h"
@@ -10,7 +11,6 @@
 #include "diagnostics.h"
 #include "game_loader.h"
 #include "gpu.h"
-
 #define GAME_DLL_PATH "game.dll"
 #define GAME_DLL_COPY_PATH "game_temp_copy.dll"
 #define GAME_DATA_DIRECTORY "../data"
@@ -456,9 +456,6 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
             break;
         
         (game_code.update_and_render)(&game_memory);
-        
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
         
         
 #if 0

@@ -30,7 +30,7 @@ update_and_render(GameMemory *game_memory)
         // Initialize memory
         game_state->initialized = true;
         
-#if 0
+#if 1
         glfwMakeContextCurrent(game_memory->window);
         if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
         {
@@ -40,4 +40,9 @@ update_and_render(GameMemory *game_memory)
 #endif
         
     }
+    
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    
 }
