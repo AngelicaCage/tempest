@@ -1,8 +1,10 @@
 #include <windows.h>
 
+#include "glad/glad.c"
+#include "glfw/glfw3.h"
+
 #include "ciel/base.h"
 #include "ciel/list.h"
-
 #include "log.h"
 #include "game_loader.h"
 
@@ -21,9 +23,21 @@ update_and_render(GameMemory *game_memory)
     GameState *game_state = (GameState *)game_memory->memory;
     global_log = game_memory->global_log;
     
+    
+    
     if(!game_state->initialized)
     {
         // Initialize memory
         game_state->initialized = true;
+        
+#if 0
+        glfwMakeContextCurrent(game_memory->window);
+        if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+        {
+            log_error("failed to initialize GLAD");
+            ASSERT(false);
+        }
+#endif
+        
     }
 }

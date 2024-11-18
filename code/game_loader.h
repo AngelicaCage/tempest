@@ -3,6 +3,8 @@
 #ifndef WINDOWS_GAME_LOADER_H
 #define WINDOWS_GAME_LOADER_H
 
+#include "glfw/glfw3.h"
+
 #include "ciel/base.h"
 #include "log.h"
 
@@ -24,6 +26,8 @@ struct GameMemory
     Bool allocated;
     
     Log *global_log;
+    
+    GLFWwindow *window;
 };
 
 struct GameCode

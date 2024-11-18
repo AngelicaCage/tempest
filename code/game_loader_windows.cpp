@@ -15,6 +15,54 @@
 #define GAME_DLL_COPY_PATH "game_temp_copy.dll"
 #define GAME_DATA_DIRECTORY "../data"
 
+struct VertexField
+{
+    Int width, height;
+    // array of rows
+    Float *vertices;
+    UInt *indices;
+};
+
+VertexField
+create_vertex_field(Int width, Int height)
+{
+    VertexField result;
+    result.width = width;
+    result.height = height;
+    
+    result.vertices = (Float *)alloc(sizeof(Float) * width*3 * height);
+    for(Int y = 0; y < height; y++)
+    {
+        for(Int x = 0; x < width; x++)
+        {
+            Int stride = 3;
+            result.vertices[y*width*stride + x*stride + 0] = ((Float)x) / ((Float)width);
+            result.vertices[y*width*stride + x*stride + 1] = ((Float)y) / ((Float)height);
+            result.vertices[y*width*stride + x*stride + 2] = 0;
+        }
+    }
+    
+    result.indices = (UInt *)alloc(sizeof(UInt) * (width-1)*6 * (height-1));
+    for(Int y = 0; y < height - 1; y++)
+    {
+        for(Int x = 0; x < width - 1; x++)
+        {
+            Int stride = 6;
+            
+            result.indices[y*stride*(width-1) + x*stride + 0] = x + y*width;
+            result.indices[y*stride*(width-1) + x*stride + 1] = x + (y+1)*width;
+            result.indices[y*stride*(width-1) + x*stride + 2] = x + 1 + (y+1)*width;
+            
+            result.indices[y*stride*(width-1) + x*stride + 3] = x + y*width;
+            result.indices[y*stride*(width-1) + x*stride + 4] = x + 1 + (y+1)*width;
+            result.indices[y*stride*(width-1) + x*stride + 5] = x + 1 + y*width;
+        }
+    }
+    
+    return result;
+}
+
+
 
 void
 print_windows_error(DWORD error_code)
@@ -224,7 +272,6 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     Log _global_log;
     global_log = &_global_log;
     
-    
     GameCode game_code = {0};
     HINSTANCE module_handle = 0;
     
@@ -269,6 +316,8 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     }
     glfwMakeContextCurrent(window);
     
+    game_memory.window = window;
+    
     
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -287,6 +336,41 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
                                                    GAME_DATA_DIRECTORY "/shaders/basic_fragment_shader_1.fs");
     shader_programs[1] = gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/basic_vertex_shader_1.vs",
                                                    GAME_DATA_DIRECTORY "/shaders/basic_fragment_shader_2.fs");
+    
+    
+    VertexField field = create_vertex_field(4, 3);
+    UInt field_vbo;
+    UInt field_vao;
+    UInt *field_ebos = (UInt *)alloc(sizeof(UInt) * (field.height-1));
+    
+    glGenVertexArrays(1, &field_vao);
+    glGenBuffers(1, &field_vbo);
+    for(Int i = 0; i < field.height-1; i++)
+    {
+        glGenBuffers(1, &(field_ebos[0]));
+    }
+    
+    glBindVertexArray(field_vao);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, field_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * field.width*3 * field.height, field.vertices, GL_STATIC_DRAW);
+    
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field_ebos[0]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(UInt) * (field.width-1)*6, field.indices, GL_STATIC_DRAW);
+#if 0
+    for(Int i = 0; i < 1/*field.height-1*/; i++)
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field_ebos[i]);
+        //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Int) * (field.width-1)*6, &field.indices[(field.width-1)*6*i], GL_STATIC_DRAW); 
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(UInt) * (field.width-1)*6, field.indices, GL_STATIC_DRAW);
+    }
+#endif
+    
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*3, (Void *)0);
+    glEnableVertexAttribArray(0);
+    
+    glBindVertexArray(0); 
+    glBindBuffer(GL_ARRAY_BUFFER, 0); 
     
     
     float vertices1[] = {
@@ -376,10 +460,27 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         glClear(GL_COLOR_BUFFER_BIT);
         
         
-        
+#if 0
+        Int offset_uniform_location = glGetUniformLocation(shader_programs[0].id, "offset");
         glUseProgram(shader_programs[0].id);
+        glUniform3f(offset_uniform_location, 0.0f, 0.0f, 0.0f);
         glBindVertexArray(VAO1);
         glDrawArrays(GL_TRIANGLES, 0, 3);
+#endif
+        
+        
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glUseProgram(shader_programs[1].id);
+        glBindVertexArray(field_vao);
+        for(Int i = 0; i < 1/*field.height-1*/; i++)
+        {
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field_ebos[i]);
+            glDrawElements(GL_TRIANGLES, (field.width-1)*6, GL_UNSIGNED_INT, &field.indices);
+        }
+        
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field_ebos[0]);
+        glDrawElements(GL_TRIANGLES, (field.width-1)*6, GL_UNSIGNED_INT, (Void *)0);
+        
         
 #if 0
         glUseProgram(shader_programs[1].id);
