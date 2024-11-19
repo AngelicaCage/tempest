@@ -22,6 +22,8 @@ UInt fragment_shader_fallback_id = 0;
 
 U64 (*get_file_last_write_time)(const Char *);
 FileContents (*read_file_contents)(const Char *);
+F64 (*get_time_ms)();
+Void (*sleep)(F64);
 
 #include "gpu.cpp"
 
@@ -156,6 +158,8 @@ update_and_render(GameMemory *game_memory)
     {
         get_file_last_write_time = game_memory->get_file_last_write_time;
         read_file_contents = game_memory->read_file_contents;
+        get_time_ms = game_memory->get_time_ms;
+        sleep = game_memory->sleep;
         
         glfwMakeContextCurrent(game_memory->window);
         if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -165,11 +169,13 @@ update_and_render(GameMemory *game_memory)
         }
     }
     
+    F64 frame_start_ms = get_time_ms();
     
     if(!game_state->initialized)
     {
         // Initialize memory
         game_state->initialized = true;
+        game_state->target_frame_time_ms = ((F64)1000) / ((F64)144);
         
         glfwSetScrollCallback(game_memory->window, scroll_callback);
         
@@ -402,4 +408,9 @@ update_and_render(GameMemory *game_memory)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, game_state->field_ebos[i]);
         glDrawElements(GL_TRIANGLES, (game_state->field.width-1)*6, GL_UNSIGNED_INT, (Void *)0);
     }
+    
+    F64 frame_end_ms = get_time_ms();
+    F64 frame_time_ms = frame_end_ms - frame_start_ms;
+    F64 time_to_sleep = game_state->target_frame_time_ms - frame_time_ms;
+    sleep(time_to_sleep);
 }

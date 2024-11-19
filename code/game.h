@@ -25,6 +25,8 @@ struct GameState
 {
     Bool initialized;
     
+    F64 target_frame_time_ms;
+    
     V2 mouse_pos;
     V2 d_mouse_pos;
     
@@ -41,6 +43,7 @@ struct GameState
     
     UInt axis_vbo;
     UInt axis_vao;
+    
 };
 
 #endif //GAME_H

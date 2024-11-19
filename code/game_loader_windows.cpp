@@ -17,7 +17,7 @@
 
 
 void
-print_windows_error(DWORD error_code)
+log_windows_error(DWORD error_code)
 {
     LPSTR message_buffer;
     FormatMessage(
@@ -29,7 +29,31 @@ print_windows_error(DWORD error_code)
                   MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
                   (LPTSTR) &message_buffer,
                   0, NULL );
-    printf(message_buffer);
+    log(message_buffer);
+}
+
+Void
+sleep(F64 ms)
+{
+    Sleep((DWORD)ms);
+}
+
+F64
+get_time_ms()
+{
+    LARGE_INTEGER ticks;
+    LARGE_INTEGER freq;
+    if (!QueryPerformanceCounter(&ticks))
+    {
+        log_windows_error(GetLastError());
+        ASSERT(false);
+    }
+    if (!QueryPerformanceFrequency(&freq))
+    {
+        log_windows_error(GetLastError());
+        ASSERT(false);
+    }
+    return (F64)(ticks.QuadPart) / (F64)(freq.QuadPart * 1000);
 }
 
 U64 get_file_last_write_time(const Char *path)
@@ -99,7 +123,7 @@ load_game_dll(GameCode *game_code, HINSTANCE *module_handle)
     {
         print_error("functions didn't load correctly");
         
-        print_windows_error(GetLastError());
+        log_windows_error(GetLastError());
         
         FreeLibrary(*module_handle);
         return 1;
@@ -230,6 +254,8 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     game_memory.window = window;
     game_memory.get_file_last_write_time = get_file_last_write_time;
     game_memory.read_file_contents = read_file_contents;
+    game_memory.get_time_ms = get_time_ms;
+    game_memory.sleep = sleep;
     
     
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -241,6 +267,8 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     framebuffer_size_callback(window, 1920, 1080);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     
+    // Set schedular granularity to 1ms
+    timeBeginPeriod(1);
     
     while(game_memory.game_running)
     {
@@ -269,8 +297,6 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
             break;
         
         (game_code.update_and_render)(&game_memory);
-        
-        
         
         glfwSwapBuffers(window);
         glfwPollEvents();
