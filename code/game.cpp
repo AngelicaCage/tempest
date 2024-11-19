@@ -5,6 +5,8 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#define STB_PERLIN_IMPLEMENTATION
+#include "stb/stb_perlin.h"
 
 #include "ciel/base.h"
 #include "ciel/list.h"
@@ -108,26 +110,6 @@ reload_changed_shaders(GameState *game_state)
     }
 }
 
-Field
-create_field(Int width, Int height)
-{
-    Field result;
-    result.width = width;
-    result.height = height;
-    
-    result.points = (FieldPoint **)alloc(sizeof(FieldPoint *) * height);
-    for(Int i = 0; i < result.height; i++)
-    {
-        result.points[i] = (FieldPoint *)alloc(sizeof(FieldPoint) * width);
-    }
-    
-    return result;
-}
-
-Void
-update_field_data(GameState *game_state, Field *field)
-{
-}
 
 Void
 fill_vertex_field_display_data(FieldDisplayData *data, Field *field, Float left_x, Float left_z, Float coordinate_width)
@@ -161,7 +143,7 @@ fill_vertex_field_display_data(FieldDisplayData *data, Field *field, Float left_
             Int stride = 3;
             
             data->vertices[y*data->width*stride + x*stride + 0] = ((Float)x) / ((Float)data->width) * coordinate_width + left_x;
-            data->vertices[y*data->width*stride + x*stride + 1] = 0 + random_float(-0.1, 0.1);
+            data->vertices[y*data->width*stride + x*stride + 1] = field->points[y][x].height;
             data->vertices[y*data->width*stride + x*stride + 2] = ((Float)y) / ((Float)data->height) *
                 coordinate_width * ((Float)data->height / (Float)data->width) - left_z;
         }
@@ -201,6 +183,37 @@ fill_vertex_field_display_data(FieldDisplayData *data, Field *field, Float left_
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+}
+
+Field
+create_field(Int width, Int height)
+{
+    Field result;
+    result.width = width;
+    result.height = height;
+    
+    result.points = (FieldPoint **)alloc(sizeof(FieldPoint *) * height);
+    for(Int i = 0; i < result.height; i++)
+    {
+        result.points[i] = (FieldPoint *)alloc(sizeof(FieldPoint) * width);
+    }
+    
+    return result;
+}
+
+Void
+update_field_data(GameState *game_state, Field *field)
+{
+    srand(0);
+    for(Int y = 0; y < field->height; y++)
+    {
+        for(Int x = 0; x < field->width; x++)
+        {
+            //field->points[y][x].height = stb_perlin_noise3(x, y, 0, 0, 0, 0);
+            field->points[y][x].height = random_float(-0.1, 0.1);
+            //field->points[y][x].height = stb_perlin_ridge_noise3(x, y, 0, 1, 1, 0, 2);
+        }
+    }
 }
 
 extern "C" __declspec(dllexport) void __cdecl
@@ -287,6 +300,7 @@ update_and_render(GameMemory *game_memory)
     game_state->mouse_pos = v2(new_mouse_pos[0], new_mouse_pos[1]);
     
     
+    update_field_data(game_state, &(game_state->field));
     fill_vertex_field_display_data(&(game_state->field_display_data), &(game_state->field), -30, 18, 60);
     
     
