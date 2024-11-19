@@ -5,8 +5,8 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
-#define STB_PERLIN_IMPLEMENTATION
-#include "stb/stb_perlin.h"
+//#define STB_PERLIN_IMPLEMENTATION
+//#include "stb/stb_perlin.h"
 
 #include "ciel/base.h"
 #include "ciel/list.h"
@@ -120,7 +120,7 @@ fill_vertex_field_display_data(FieldDisplayData *data, Field *field, Float left_
     if(!data->allocated)
     {
         // cpu
-        data->vertices = (Float *)alloc(sizeof(Float) * data->width*3 * data->height);
+        data->vertices = (Float *)alloc(sizeof(Float) * data->width*6 * data->height);
         data->indices = (UInt *)alloc(sizeof(UInt) * (data->width-1)*6 * (data->height-1));
         
         // gpu
@@ -140,12 +140,16 @@ fill_vertex_field_display_data(FieldDisplayData *data, Field *field, Float left_
     {
         for(Int x = 0; x < data->width; x++)
         {
-            Int stride = 3;
+            Int stride = 6;
             
             data->vertices[y*data->width*stride + x*stride + 0] = ((Float)x) / ((Float)data->width) * coordinate_width + left_x;
             data->vertices[y*data->width*stride + x*stride + 1] = field->points[y][x].height;
             data->vertices[y*data->width*stride + x*stride + 2] = ((Float)y) / ((Float)data->height) *
                 coordinate_width * ((Float)data->height / (Float)data->width) - left_z;
+            
+            data->vertices[y*data->width*stride + x*stride + 3] = field->points[y][x].color.r;
+            data->vertices[y*data->width*stride + x*stride + 4] = field->points[y][x].color.g;
+            data->vertices[y*data->width*stride + x*stride + 5] = field->points[y][x].color.b;
         }
     }
     
@@ -169,7 +173,7 @@ fill_vertex_field_display_data(FieldDisplayData *data, Field *field, Float left_
     glBindVertexArray(data->vao);
     
     glBindBuffer(GL_ARRAY_BUFFER, data->vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * data->width*3 * data->height, data->vertices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * data->width*6 * data->height, data->vertices, GL_DYNAMIC_DRAW);
     
     for(Int i = 0; i < data->height-1; i++)
     {
@@ -178,8 +182,11 @@ fill_vertex_field_display_data(FieldDisplayData *data, Field *field, Float left_
                      &(data->indices[i*(data->width-1)*6]), GL_STATIC_DRAW);
     }
     
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*3, (Void *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*6, (Void *)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*6, (Void *)(sizeof(Float)*3));
+    glEnableVertexAttribArray(1);
+    
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -205,13 +212,24 @@ Void
 update_field_data(GameState *game_state, Field *field)
 {
     srand(0);
+    V2I center = v2i(field->width/2, field->height/2);
+    V2I raised_area_size = v2i(76, 40);
     for(Int y = 0; y < field->height; y++)
     {
         for(Int x = 0; x < field->width; x++)
         {
-            //field->points[y][x].height = stb_perlin_noise3(x, y, 0, 0, 0, 0);
-            field->points[y][x].height = random_float(-0.1, 0.1);
-            //field->points[y][x].height = stb_perlin_ridge_noise3(x, y, 0, 1, 1, 0, 2);
+            FieldPoint *point = &(field->points[y][x]);
+            point->height = 0;
+            point->color = color(38.0/255.0, 65.0/255.0, 107.0/255.0, 1);
+            
+            if(x > center.x-raised_area_size.x/2 && x < center.x+raised_area_size.x/2 &&
+               y > center.y-raised_area_size.y/2 && y < center.y+raised_area_size.y/2)
+            {
+                point->height += 1;
+                point->color = color(0.21, 0.71, 0.07, 1);
+            }
+            point->height += random_float(-0.1, 0.1);
+            
         }
     }
 }
@@ -301,7 +319,7 @@ update_and_render(GameMemory *game_memory)
     
     
     update_field_data(game_state, &(game_state->field));
-    fill_vertex_field_display_data(&(game_state->field_display_data), &(game_state->field), -30, 18, 60);
+    fill_vertex_field_display_data(&(game_state->field_display_data), &(game_state->field), -30, 15, 60);
     
     
     if(camera->orbiting)
@@ -386,6 +404,11 @@ update_and_render(GameMemory *game_memory)
         glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm::value_ptr(proj));
     }
     
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable( GL_BLEND );
+    
     // Draw axes
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     Int positive_line_width = 3;
@@ -444,11 +467,39 @@ update_and_render(GameMemory *game_memory)
     
     
     // Draw field
-    glLineWidth(positive_line_width);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glUseProgram(game_state->shader_programs[0].id);
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
     model_loc = glGetUniformLocation(game_state->shader_programs[0].id, "model");
+    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
+    
+    Int ambient_light_color_loc = glGetUniformLocation(game_state->shader_programs[0].id, "ambientLightColor");
+    Int ambient_light_strength_loc = glGetUniformLocation(game_state->shader_programs[0].id, "ambientLightStrength");
+    glUniform3f(ambient_light_color_loc, 1.0f, 1.0f, 1.0f);
+    glUniform1f(ambient_light_strength_loc, 1.0f);
+    
+    glBindVertexArray(game_state->field_display_data.vao);
+    for(Int i = 0; i < game_state->field_display_data.height-1; i++)
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, game_state->field_display_data.ebos[i]);
+        glDrawElements(GL_TRIANGLES, (game_state->field_display_data.width-1)*6, GL_UNSIGNED_INT, (Void *)0);
+    }
+    
+    
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glLineWidth(1);
+    glUseProgram(game_state->shader_programs[1].id);
+    
+    line_color[0] = 0.0f;
+    line_color[1] = 0.0f;
+    line_color[2] = 0.0f;
+    line_color[3] = 0.3f;
+    glUniform4fv(color_loc, 1, line_color);
+    
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0f, 0.01f, 0.0f));
+    model_loc = glGetUniformLocation(game_state->shader_programs[1].id, "model");
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
     
     glBindVertexArray(game_state->field_display_data.vao);

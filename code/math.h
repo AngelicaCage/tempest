@@ -41,6 +41,26 @@ V2 v2(Float x, Float y)
     return result;
 }
 
+struct V2I
+{
+    union
+    {
+        struct
+        {
+            Int x, y;
+        };
+        struct
+        {
+            Int data[2];
+        };
+    };
+};
+V2I v2i(Int x, Int y)
+{
+    V2I result = {x, y};
+    return result;
+}
+
 struct V3
 {
     union

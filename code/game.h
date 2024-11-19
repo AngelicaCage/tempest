@@ -25,6 +25,10 @@ struct Color
         };
     };
 };
+Color color(Float r, Float g, Float b, Float a)
+{
+    return {r, g, b, a};
+};
 
 struct FieldPoint
 {

@@ -1,8 +1,15 @@
 #version 330 core
 
+in vec3 vertexColor;
+
 out vec4 FragColor;
+
+uniform vec3 ambientLightColor;
+uniform float ambientLightStrength;
 
 void main()
 {
-	FragColor = vec4(0.8f, 0.4f, 0.8f, 1.0f);
+	vec3 ambient = ambientLightStrength * ambientLightColor;
+
+	FragColor = vec4(vertexColor * ambient, 1.0f);
 }
