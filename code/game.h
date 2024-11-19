@@ -11,13 +11,26 @@ struct VertexField
     UInt *indices;
 };
 
+
+
+struct Camera
+{
+    V3 pos, target, up;
+    Bool orbiting;
+    Float orbit_distance;
+    V2 orbit_angles; // rotate x, then y
+};
+
 struct GameState
 {
     Bool initialized;
     
-    //GLFWwindow *window;
+    V2 mouse_pos;
     
     List<ShaderProgram> shader_programs;
+    
+    Camera camera;
+    
     
     VertexField field;
     UInt field_vbo;

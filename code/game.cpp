@@ -12,6 +12,7 @@
 #include "diagnostics.h"
 #include "game_loader.h"
 
+#include "math.h"
 #include "gpu.h"
 #include "game.h"
 
@@ -25,6 +26,8 @@ FileContents (*read_file_contents)(const Char *);
 #include "gpu.cpp"
 
 #define GAME_DATA_DIRECTORY "../data"
+
+#define KEYDOWN(key) (glfwGetKey(game_memory->window, (key)) == GLFW_PRESS)
 
 void
 compile_fallback_shaders()
@@ -136,6 +139,7 @@ update_and_render(GameMemory *game_memory)
 {
     GameState *game_state = (GameState *)game_memory->memory;
     global_log = game_memory->global_log;
+    Camera *camera = &game_state->camera;
     
     if(!game_memory->functions_loaded)
     {
@@ -164,6 +168,12 @@ update_and_render(GameMemory *game_memory)
         game_state->shader_programs.add(gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/3d_vertex_shader.vs",
                                                                   GAME_DATA_DIRECTORY "/shaders/line_fragment_shader.fs", true));
         
+        camera->pos = v3(1, 1, 3);
+        camera->target = v3(0, 0, 0);
+        camera->up = v3(0, 1, 0);
+        camera->orbit_angles = v2(pi/4.0f, 0);
+        camera->orbiting = true;
+        
         
         // Axes
         glGenVertexArrays(1, &game_state->axis_vao);
@@ -172,7 +182,7 @@ update_and_render(GameMemory *game_memory)
         glBindVertexArray(game_state->axis_vao);
         
         Float axis_vertices[] = {
-            -100, 0, 0,
+            0, 0, 0,
             100, 0, 0,
         };
         glBindBuffer(GL_ARRAY_BUFFER, game_state->axis_vbo);
@@ -215,6 +225,38 @@ update_and_render(GameMemory *game_memory)
         glBindVertexArray(0);
     }
     
+    
+    
+    if(camera->orbiting)
+    {
+        Float camera_orbit_speed = 0.02f;
+        if(KEYDOWN(GLFW_KEY_RIGHT))
+            camera->orbit_angles.x -= camera_orbit_speed;
+        if(KEYDOWN(GLFW_KEY_LEFT))
+            camera->orbit_angles.x += camera_orbit_speed;
+        if(KEYDOWN(GLFW_KEY_UP))
+            camera->orbit_angles.y += camera_orbit_speed;
+        if(KEYDOWN(GLFW_KEY_DOWN))
+            camera->orbit_angles.y -= camera_orbit_speed;
+        
+        Float angle_y_min = -1*pi/2.2f;
+        if(camera->orbit_angles.y < angle_y_min)
+            camera->orbit_angles.y = angle_y_min;
+        if(camera->orbit_angles.y > -angle_y_min)
+            camera->orbit_angles.y = -angle_y_min;
+        
+        
+        camera->orbit_distance = 3.0f;
+        
+        camera->pos.x = camera->orbit_distance * cos(camera->orbit_angles.y) * cos(camera->orbit_angles.x);
+        camera->pos.y = camera->orbit_distance * sin(camera->orbit_angles.y);
+        camera->pos.z = camera->orbit_distance * cos(camera->orbit_angles.y) * sin(camera->orbit_angles.x);
+    }
+    
+    
+    
+    
+    
     reload_changed_shaders(game_state);
     
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -224,59 +266,93 @@ update_and_render(GameMemory *game_memory)
     
     for(Int i = 0; i < game_state->shader_programs.length; i++)
     {
-        glUseProgram(game_state->shader_programs[i].id);
+        ShaderProgram *shader_program = &(game_state->shader_programs.data[i]);
+        if(!shader_program->is_3d)
+            continue;
+        
+        glUseProgram(shader_program->id);
         
         glm::mat4 model = glm::mat4(1.0f);
-        Int model_loc = glGetUniformLocation(game_state->shader_programs[i].id, "model");
+        Int model_loc = glGetUniformLocation(shader_program->id, "model");
         glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
         
-        glm::mat4 view = glm::lookAt(glm::vec3(1.0f, 1.0f, 3.0f),
-                                     glm::vec3(0.0f, 0.0f, 0.0f),
-                                     glm::vec3(0.0f, 1.0f, 0.0f));
-        Int view_loc = glGetUniformLocation(game_state->shader_programs[i].id, "view");
+        glm::mat4 view = glm::lookAt(camera->pos.to_glm(),
+                                     camera->target.to_glm(),
+                                     camera->up.to_glm());
+        Int view_loc = glGetUniformLocation(shader_program->id, "view");
         glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
         
         
         glm::mat4 proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 1000.0f);
-        Int proj_loc = glGetUniformLocation(game_state->shader_programs[i].id, "projection");
+        Int proj_loc = glGetUniformLocation(shader_program->id, "projection");
         glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm::value_ptr(proj));
     }
     
     // Draw axes
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    Int positive_line_width = 3;
+    Int negative_line_width = 1;
     
-    //model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f)); 
     Float line_color[4] = {1.0f, 0.0f, 0.0f, 1.0f};
     Int color_loc = glGetUniformLocation(game_state->shader_programs[1].id, "lineColor");
-    ASSERT(color_loc != -1);
+    glm::mat4 model = glm::mat4(1.0f);
+    Int model_loc = glGetUniformLocation(game_state->shader_programs[1].id, "model");
     glUseProgram(game_state->shader_programs[1].id);
     glBindVertexArray(game_state->axis_vao);
     
+    { // x axis
+        glUniform4fv(color_loc, 1, line_color);
+        glLineWidth(positive_line_width);
+        glDrawArrays(GL_LINES, 0, 2);
+        
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(-100, 0, 0));
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
+        glLineWidth(negative_line_width);
+        glDrawArrays(GL_LINES, 0, 2);
+    }
     
-    glUniform4fv(color_loc, 1, line_color);
-    glDrawArrays(GL_LINES, 0, 2);
+    { // z axis
+        line_color[0] = 0.0f;
+        line_color[2] = 1.0f;
+        glUniform4fv(color_loc, 1, line_color);
+        model = glm::mat4(1.0f);
+        model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
+        glLineWidth(positive_line_width);
+        glDrawArrays(GL_LINES, 0, 2);
+        
+        model = glm::translate(model, glm::vec3(-100, 0, 0));
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
+        glLineWidth(negative_line_width);
+        glDrawArrays(GL_LINES, 0, 2);
+    }
     
-    glm::mat4 model = glm::mat4(1.0f);
-    Int model_loc = glGetUniformLocation(game_state->shader_programs[1].id, "model");
-    
-    line_color[0] = 0.0f;
-    line_color[2] = 1.0f;
-    glUniform4fv(color_loc, 1, line_color);
-    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
-    glDrawArrays(GL_LINES, 0, 2);
-    
-    line_color[2] = 0.0f;
-    line_color[1] = 1.0f;
-    glUniform4fv(color_loc, 1, line_color);
-    model = glm::mat4(1.0f);
-    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
-    glDrawArrays(GL_LINES, 0, 2);
+    { // y axis
+        line_color[2] = 0.0f;
+        line_color[1] = 1.0f;
+        glUniform4fv(color_loc, 1, line_color);
+        model = glm::mat4(1.0f);
+        model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
+        glLineWidth(positive_line_width);
+        glDrawArrays(GL_LINES, 0, 2);
+        
+        model = glm::translate(model, glm::vec3(-100, 0, 0));
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
+        glLineWidth(negative_line_width);
+        glDrawArrays(GL_LINES, 0, 2);
+    }
     
     
-    
+    // Draw field
+    glLineWidth(positive_line_width);
     glUseProgram(game_state->shader_programs[0].id);
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model_loc = glGetUniformLocation(game_state->shader_programs[0].id, "model");
+    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
+    
     glBindVertexArray(game_state->field_vao);
     for(Int i = 0; i < game_state->field.height-1; i++)
     {
