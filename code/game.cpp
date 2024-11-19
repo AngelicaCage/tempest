@@ -208,9 +208,17 @@ create_field(Int width, Int height)
     return result;
 }
 
+V2
+coords_game_to_field(Field *field, V2 game_coords)
+{
+    return v2(game_coords.x + field->width/2, game_coords.y + field->height/2);
+}
+
 Void
 update_field_data(GameState *game_state, Field *field)
 {
+    Player *player = &game_state->player;
+    
     srand(0);
     V2I center = v2i(field->width/2, field->height/2);
     V2I raised_area_size = v2i(76, 40);
@@ -229,9 +237,14 @@ update_field_data(GameState *game_state, Field *field)
                 point->color = color(0.21, 0.71, 0.07, 1);
             }
             point->height += random_float(-0.1, 0.1);
-            
         }
     }
+    
+    V2I player_pos = v2i(coords_game_to_field(field, player->pos));
+    field->points[player_pos.y][player_pos.x].height += 0.4f;
+    field->points[player_pos.y][player_pos.x].color = player->color;
+    
+    
 }
 
 extern "C" __declspec(dllexport) void __cdecl
@@ -240,6 +253,7 @@ update_and_render(GameMemory *game_memory)
     GameState *game_state = (GameState *)game_memory->memory;
     global_log = game_memory->global_log;
     Camera *camera = &game_state->target_camera;
+    Player *player = &game_state->player;
     
     if(!game_memory->functions_loaded)
     {
@@ -307,6 +321,11 @@ update_and_render(GameMemory *game_memory)
         // Field
         game_state->field = create_field(400, 200);
         game_state->field_display_data.allocated = false;
+        
+        player->pos = v2(0, 0);
+        player->vel = v2(0, 0);
+        player->max_speed = 1;
+        player->color = color(1, 0, 0, 1);
     }
     
     F32 d_time = game_state->d_time;
@@ -316,6 +335,17 @@ update_and_render(GameMemory *game_memory)
     game_state->d_mouse_pos = v2((Float)new_mouse_pos[0] - game_state->mouse_pos.x,
                                  (Float)new_mouse_pos[1] - game_state->mouse_pos.y);
     game_state->mouse_pos = v2(new_mouse_pos[0], new_mouse_pos[1]);
+    
+    Float player_speed = 0.01f;
+    if(KEYDOWN(GLFW_KEY_D))
+        player->pos.x += player_speed * d_time;
+    if(KEYDOWN(GLFW_KEY_A))
+        player->pos.x -= player_speed * d_time;
+    if(KEYDOWN(GLFW_KEY_W))
+        player->pos.y -= player_speed * d_time;
+    if(KEYDOWN(GLFW_KEY_S))
+        player->pos.y += player_speed * d_time;
+    
     
     
     update_field_data(game_state, &(game_state->field));

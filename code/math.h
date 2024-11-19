@@ -60,6 +60,11 @@ V2I v2i(Int x, Int y)
     V2I result = {x, y};
     return result;
 }
+V2I v2i(V2 vec)
+{
+    V2I result = {(Int)vec.x, (Int)vec.y};
+    return result;
+}
 
 struct V3
 {

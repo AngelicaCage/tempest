@@ -56,6 +56,13 @@ struct FieldDisplayData
     UInt *ebos;
 };
 
+struct Player
+{
+    V2 pos;
+    V2 vel;
+    Float max_speed;
+    Color color;
+};
 
 
 struct GameState
@@ -78,6 +85,8 @@ struct GameState
     
     UInt axis_vbo;
     UInt axis_vao;
+    
+    Player player;
 };
 
 #endif //GAME_H
