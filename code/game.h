@@ -26,9 +26,11 @@ struct GameState
     Bool initialized;
     
     V2 mouse_pos;
+    V2 d_mouse_pos;
     
     List<ShaderProgram> shader_programs;
     
+    Camera target_camera;
     Camera camera;
     
     

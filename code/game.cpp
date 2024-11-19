@@ -16,7 +16,7 @@
 #include "gpu.h"
 #include "game.h"
 
-// TODO: move to gpu.h
+// Later: move to gpu.h
 UInt vertex_shader_fallback_id = 0;
 UInt fragment_shader_fallback_id = 0;
 
@@ -28,6 +28,17 @@ FileContents (*read_file_contents)(const Char *);
 #define GAME_DATA_DIRECTORY "../data"
 
 #define KEYDOWN(key) (glfwGetKey(game_memory->window, (key)) == GLFW_PRESS)
+
+// Later: get a better solution (sending input from platform layer)
+Float d_scroll;
+Bool just_scrolled;
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    just_scrolled = true;
+    d_scroll = (Float)yoffset;
+    //ASSERT(false);
+}
 
 void
 compile_fallback_shaders()
@@ -139,7 +150,7 @@ update_and_render(GameMemory *game_memory)
 {
     GameState *game_state = (GameState *)game_memory->memory;
     global_log = game_memory->global_log;
-    Camera *camera = &game_state->camera;
+    Camera *camera = &game_state->target_camera;
     
     if(!game_memory->functions_loaded)
     {
@@ -159,6 +170,9 @@ update_and_render(GameMemory *game_memory)
     {
         // Initialize memory
         game_state->initialized = true;
+        
+        glfwSetScrollCallback(game_memory->window, scroll_callback);
+        
         game_state->shader_programs = create_list<ShaderProgram>();
         
         compile_fallback_shaders();
@@ -171,8 +185,10 @@ update_and_render(GameMemory *game_memory)
         camera->pos = v3(1, 1, 3);
         camera->target = v3(0, 0, 0);
         camera->up = v3(0, 1, 0);
-        camera->orbit_angles = v2(pi/4.0f, 0);
         camera->orbiting = true;
+        camera->orbit_angles = v2(pi/4.0f, 0);
+        camera->orbit_distance = 3.0f;
+        
         
         
         // Axes
@@ -226,6 +242,12 @@ update_and_render(GameMemory *game_memory)
     }
     
     
+    F64 new_mouse_pos[2];
+    glfwGetCursorPos(game_memory->window, &new_mouse_pos[0], &new_mouse_pos[1]);
+    game_state->d_mouse_pos = v2((Float)new_mouse_pos[0] - game_state->mouse_pos.x,
+                                 (Float)new_mouse_pos[1] - game_state->mouse_pos.y);
+    game_state->mouse_pos = v2(new_mouse_pos[0], new_mouse_pos[1]);
+    
     
     if(camera->orbiting)
     {
@@ -239,6 +261,19 @@ update_and_render(GameMemory *game_memory)
         if(KEYDOWN(GLFW_KEY_DOWN))
             camera->orbit_angles.y -= camera_orbit_speed;
         
+        // LATER: adjust by window resolution
+        if(glfwGetMouseButton(game_memory->window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+        {
+            camera->orbit_angles.y += game_state->d_mouse_pos.y * 0.01f;
+            camera->orbit_angles.x += game_state->d_mouse_pos.x * 0.01f;
+        }
+        
+        if(just_scrolled)
+        {
+            just_scrolled = false;
+            camera->orbit_distance -= d_scroll * 0.5 * (camera->orbit_distance);
+        }
+        
         Float angle_y_min = -1*pi/2.2f;
         if(camera->orbit_angles.y < angle_y_min)
             camera->orbit_angles.y = angle_y_min;
@@ -246,13 +281,22 @@ update_and_render(GameMemory *game_memory)
             camera->orbit_angles.y = -angle_y_min;
         
         
-        camera->orbit_distance = 3.0f;
-        
         camera->pos.x = camera->orbit_distance * cos(camera->orbit_angles.y) * cos(camera->orbit_angles.x);
         camera->pos.y = camera->orbit_distance * sin(camera->orbit_angles.y);
         camera->pos.z = camera->orbit_distance * cos(camera->orbit_angles.y) * sin(camera->orbit_angles.x);
     }
     
+    {
+        Camera *real_camera = &game_state->camera;
+        Float interp_speed = 0.15f;
+        real_camera->pos.interpolate_to(camera->pos, interp_speed);
+        real_camera->target.interpolate_to(camera->target, interp_speed);
+        real_camera->up.interpolate_to(camera->up, interp_speed);
+        real_camera->orbit_angles.interpolate_to(camera->orbit_angles, interp_speed);
+        real_camera->orbit_distance = interpolate(real_camera->orbit_distance,
+                                                  camera->orbit_distance,
+                                                  interp_speed);
+    }
     
     
     
@@ -276,9 +320,9 @@ update_and_render(GameMemory *game_memory)
         Int model_loc = glGetUniformLocation(shader_program->id, "model");
         glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
         
-        glm::mat4 view = glm::lookAt(camera->pos.to_glm(),
-                                     camera->target.to_glm(),
-                                     camera->up.to_glm());
+        glm::mat4 view = glm::lookAt(game_state->camera.pos.to_glm(),
+                                     game_state->camera.target.to_glm(),
+                                     game_state->camera.up.to_glm());
         Int view_loc = glGetUniformLocation(shader_program->id, "view");
         glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
         

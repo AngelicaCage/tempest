@@ -5,6 +5,11 @@
 
 Float pi = 3.141582f;
 
+Float interpolate(Float a, Float b, Float speed)
+{
+    return a + (b - a) * speed;
+}
+
 struct V2
 {
     union
@@ -23,6 +28,12 @@ struct V2
     {
         return glm::vec2(x, y);
     }
+    Void interpolate_to(V2 target, Float speed)
+    {
+        x = interpolate(x, target.x, speed);
+        y = interpolate(y, target.y, speed);
+    }
+    
 };
 V2 v2(Float x, Float y)
 {
@@ -47,6 +58,12 @@ struct V3
     glm::vec3 to_glm()
     {
         return glm::vec3(x, y, z);
+    }
+    Void interpolate_to(V3 target, Float speed)
+    {
+        x = interpolate(x, target.x, speed);
+        y = interpolate(y, target.y, speed);
+        z = interpolate(z, target.z, speed);
     }
 };
 V3 v3(Float x, Float y, Float z)
