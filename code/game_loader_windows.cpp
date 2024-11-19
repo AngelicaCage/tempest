@@ -236,7 +236,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         ASSERT(false);
     }
     
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, 800, 800);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     
     

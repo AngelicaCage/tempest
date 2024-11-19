@@ -30,6 +30,7 @@ ShaderProgram
     Shader vertex_shader;
     Shader fragment_shader;
     UInt id;
+    Bool is_3d;
 };
 
 typedef UInt VBuffer;

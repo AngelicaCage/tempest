@@ -69,12 +69,13 @@ gpu_delete_shader(UInt program_id, Shader *shader)
 }
 
 ShaderProgram
-gpu_create_shader_program(const Char *vs_path, const Char *fs_path)
+gpu_create_shader_program(const Char *vs_path, const Char *fs_path, Bool is_3d)
 {
     check(fs_path);
     check(vs_path);
     
     ShaderProgram result = {0};
+    result.is_3d = is_3d;
     
     result.vertex_shader = gpu_create_shader(vs_path, ShaderType::vertex);
     result.fragment_shader = gpu_create_shader(fs_path, ShaderType::fragment);
