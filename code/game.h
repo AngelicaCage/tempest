@@ -11,14 +11,38 @@ struct VertexField
     UInt *indices;
 };
 
-
-
 struct Camera
 {
     V3 pos, target, up;
     Bool orbiting;
     Float orbit_distance;
     V2 orbit_angles; // rotate x, then y
+};
+
+struct Color
+{
+    union
+    {
+        struct
+        {
+            Float r, g, b, a;
+        };
+        struct
+        {
+            Float data[4];
+        };
+    };
+};
+
+struct FieldPoint
+{
+    Float height;
+    Color color;
+};
+
+struct Field
+{
+    FieldPoint **points;
 };
 
 struct GameState

@@ -231,7 +231,7 @@ update_and_render(GameMemory *game_memory)
         glBindVertexArray(game_state->field_vao);
         
         glBindBuffer(GL_ARRAY_BUFFER, game_state->field_vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * game_state->field.width*3 * game_state->field.height, game_state->field.vertices, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * game_state->field.width*3 * game_state->field.height, game_state->field.vertices, GL_DYNAMIC_DRAW);
         
         for(Int i = 0; i < game_state->field.height-1; i++)
         {
@@ -248,6 +248,15 @@ update_and_render(GameMemory *game_memory)
     }
     
     F32 d_time = game_state->d_time;
+    
+    
+    game_state->field = create_vertex_field(400, 200, -30.0f, 18.0f, 60);
+    glBindBuffer(GL_ARRAY_BUFFER, game_state->field_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * game_state->field.width*3 * game_state->field.height, game_state->field.vertices, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    
+    
     
     F64 new_mouse_pos[2];
     glfwGetCursorPos(game_memory->window, &new_mouse_pos[0], &new_mouse_pos[1]);
