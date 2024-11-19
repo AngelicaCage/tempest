@@ -227,7 +227,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     GameMemory game_memory = {0};
     game_memory.game_running = true;
     game_memory.functions_loaded = false;
-    game_memory.size = megabytes(1);
+    game_memory.size = megabytes(10);
     game_memory.memory = alloc(game_memory.size);
     zero_memory(game_memory.memory, game_memory.size);
     game_memory.global_log = global_log;

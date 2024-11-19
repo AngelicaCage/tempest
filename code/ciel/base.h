@@ -125,6 +125,7 @@ _alloc(U64 Size, const Char *CalledByFunction, int CalledByLine, const Char *Cal
     else
     {
         print_error("Failed malloc. Called by: %s, %s, line %d", CalledByFile, CalledByFunction, CalledByLine);
+        ASSERT(false);
         return NULL;
     }
 }

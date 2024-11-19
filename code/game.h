@@ -3,14 +3,6 @@
 #ifndef GAME_H
 #define GAME_H
 
-struct VertexField
-{
-    Int width, height;
-    // array of rows
-    Float *vertices;
-    UInt *indices;
-};
-
 struct Camera
 {
     V3 pos, target, up;
@@ -42,8 +34,25 @@ struct FieldPoint
 
 struct Field
 {
+    Int width, height;
+    // array of rows
     FieldPoint **points;
 };
+
+struct FieldDisplayData
+{
+    Int width, height;
+    Bool allocated;
+    // array of rows
+    Float *vertices;
+    UInt *indices;
+    
+    UInt vbo;
+    UInt vao;
+    UInt *ebos;
+};
+
+
 
 struct GameState
 {
@@ -60,15 +69,11 @@ struct GameState
     Camera target_camera;
     Camera camera;
     
-    
-    VertexField field;
-    UInt field_vbo;
-    UInt field_vao;
-    UInt *field_ebos;
+    Field field;
+    FieldDisplayData field_display_data;
     
     UInt axis_vbo;
     UInt axis_vao;
-    
 };
 
 #endif //GAME_H

@@ -86,45 +86,6 @@ game_memory->game_running = false;\
 return;\
 }
 
-VertexField
-create_vertex_field(Int width, Int height, Float left_x, Float left_z, Float coordinate_width)
-{
-    VertexField result;
-    result.width = width;
-    result.height = height;
-    
-    result.vertices = (Float *)alloc(sizeof(Float) * width*3 * height);
-    for(Int y = 0; y < height; y++)
-    {
-        for(Int x = 0; x < width; x++)
-        {
-            Int stride = 3;
-            result.vertices[y*width*stride + x*stride + 0] = ((Float)x) / ((Float)width) * coordinate_width + left_x;
-            result.vertices[y*width*stride + x*stride + 1] = 0 + random_float(-0.1, 0.1);
-            result.vertices[y*width*stride + x*stride + 2] = ((Float)y) / ((Float)height) *
-                coordinate_width * ((Float)height / (Float)width) - left_z;
-        }
-    }
-    
-    result.indices = (UInt *)alloc(sizeof(UInt) * (width-1)*6 * (height-1));
-    for(Int y = 0; y < height - 1; y++)
-    {
-        for(Int x = 0; x < width - 1; x++)
-        {
-            Int stride = 6;
-            
-            result.indices[y*stride*(width-1) + x*stride + 0] = x + y*width;
-            result.indices[y*stride*(width-1) + x*stride + 1] = x + (y+1)*width;
-            result.indices[y*stride*(width-1) + x*stride + 2] = x + 1 + (y+1)*width;
-            
-            result.indices[y*stride*(width-1) + x*stride + 3] = x + y*width;
-            result.indices[y*stride*(width-1) + x*stride + 4] = x + 1 + (y+1)*width;
-            result.indices[y*stride*(width-1) + x*stride + 5] = x + 1 + y*width;
-        }
-    }
-    
-    return result;
-}
 
 Void
 reload_changed_shaders(GameState *game_state)
@@ -145,6 +106,101 @@ reload_changed_shaders(GameState *game_state)
             *program = gpu_create_shader_program(program->vertex_shader.path, program->fragment_shader.path, program->is_3d);
         }
     }
+}
+
+Field
+create_field(Int width, Int height)
+{
+    Field result;
+    result.width = width;
+    result.height = height;
+    
+    result.points = (FieldPoint **)alloc(sizeof(FieldPoint *) * height);
+    for(Int i = 0; i < result.height; i++)
+    {
+        result.points[i] = (FieldPoint *)alloc(sizeof(FieldPoint) * width);
+    }
+    
+    return result;
+}
+
+Void
+update_field_data(GameState *game_state, Field *field)
+{
+}
+
+Void
+fill_vertex_field_display_data(FieldDisplayData *data, Field *field, Float left_x, Float left_z, Float coordinate_width)
+{
+    data->width = field->width;
+    data->height = field->height;
+    
+    if(!data->allocated)
+    {
+        // cpu
+        data->vertices = (Float *)alloc(sizeof(Float) * data->width*3 * data->height);
+        data->indices = (UInt *)alloc(sizeof(UInt) * (data->width-1)*6 * (data->height-1));
+        
+        // gpu
+        data->ebos = (UInt *)alloc(sizeof(UInt) * (data->height-1));
+        
+        glGenVertexArrays(1, &data->vao);
+        glGenBuffers(1, &data->vbo);
+        for(Int i = 0; i < data->height-1; i++)
+        {
+            glGenBuffers(1, &(data->ebos[i]));
+        }
+        
+        data->allocated = true;
+    }
+    
+    for(Int y = 0; y < data->height; y++)
+    {
+        for(Int x = 0; x < data->width; x++)
+        {
+            Int stride = 3;
+            
+            data->vertices[y*data->width*stride + x*stride + 0] = ((Float)x) / ((Float)data->width) * coordinate_width + left_x;
+            data->vertices[y*data->width*stride + x*stride + 1] = 0 + random_float(-0.1, 0.1);
+            data->vertices[y*data->width*stride + x*stride + 2] = ((Float)y) / ((Float)data->height) *
+                coordinate_width * ((Float)data->height / (Float)data->width) - left_z;
+        }
+    }
+    
+    for(Int y = 0; y < data->height - 1; y++)
+    {
+        for(Int x = 0; x < data->width - 1; x++)
+        {
+            Int stride = 6;
+            
+            data->indices[y*stride*(data->width-1) + x*stride + 0] = x + y*data->width;
+            data->indices[y*stride*(data->width-1) + x*stride + 1] = x + (y+1)*data->width;
+            data->indices[y*stride*(data->width-1) + x*stride + 2] = x + 1 + (y+1)*data->width;
+            
+            data->indices[y*stride*(data->width-1) + x*stride + 3] = x + y*data->width;
+            data->indices[y*stride*(data->width-1) + x*stride + 4] = x + 1 + (y+1)*data->width;
+            data->indices[y*stride*(data->width-1) + x*stride + 5] = x + 1 + y*data->width;
+        }
+    }
+    
+    
+    glBindVertexArray(data->vao);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, data->vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * data->width*3 * data->height, data->vertices, GL_DYNAMIC_DRAW);
+    
+    for(Int i = 0; i < data->height-1; i++)
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, data->ebos[i]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(UInt) * (data->width-1)*6,
+                     &(data->indices[i*(data->width-1)*6]), GL_STATIC_DRAW);
+    }
+    
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*3, (Void *)0);
+    glEnableVertexAttribArray(0);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 }
 
 extern "C" __declspec(dllexport) void __cdecl
@@ -218,51 +274,20 @@ update_and_render(GameMemory *game_memory)
         
         
         // Field
-        game_state->field = create_vertex_field(400, 200, -30.0f, 18.0f, 60);
-        game_state->field_ebos = (UInt *)alloc(sizeof(UInt) * (game_state->field.height-1));
-        
-        glGenVertexArrays(1, &game_state->field_vao);
-        glGenBuffers(1, &game_state->field_vbo);
-        for(Int i = 0; i < game_state->field.height-1; i++)
-        {
-            glGenBuffers(1, &(game_state->field_ebos[i]));
-        }
-        
-        glBindVertexArray(game_state->field_vao);
-        
-        glBindBuffer(GL_ARRAY_BUFFER, game_state->field_vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * game_state->field.width*3 * game_state->field.height, game_state->field.vertices, GL_DYNAMIC_DRAW);
-        
-        for(Int i = 0; i < game_state->field.height-1; i++)
-        {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, game_state->field_ebos[i]);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(UInt) * (game_state->field.width-1)*6,
-                         &(game_state->field.indices[i*(game_state->field.width-1)*6]), GL_STATIC_DRAW);
-        }
-        
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*3, (Void *)0);
-        glEnableVertexAttribArray(0);
-        
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
+        game_state->field = create_field(400, 200);
+        game_state->field_display_data.allocated = false;
     }
     
     F32 d_time = game_state->d_time;
-    
-    
-    game_state->field = create_vertex_field(400, 200, -30.0f, 18.0f, 60);
-    glBindBuffer(GL_ARRAY_BUFFER, game_state->field_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * game_state->field.width*3 * game_state->field.height, game_state->field.vertices, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-    
-    
     
     F64 new_mouse_pos[2];
     glfwGetCursorPos(game_memory->window, &new_mouse_pos[0], &new_mouse_pos[1]);
     game_state->d_mouse_pos = v2((Float)new_mouse_pos[0] - game_state->mouse_pos.x,
                                  (Float)new_mouse_pos[1] - game_state->mouse_pos.y);
     game_state->mouse_pos = v2(new_mouse_pos[0], new_mouse_pos[1]);
+    
+    
+    fill_vertex_field_display_data(&(game_state->field_display_data), &(game_state->field), -30, 18, 60);
     
     
     if(camera->orbiting)
@@ -314,8 +339,6 @@ update_and_render(GameMemory *game_memory)
                                                   camera->orbit_distance,
                                                   interp_speed * d_time);
     }
-    
-    
     
     
     reload_changed_shaders(game_state);
@@ -414,11 +437,11 @@ update_and_render(GameMemory *game_memory)
     model_loc = glGetUniformLocation(game_state->shader_programs[0].id, "model");
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
     
-    glBindVertexArray(game_state->field_vao);
-    for(Int i = 0; i < game_state->field.height-1; i++)
+    glBindVertexArray(game_state->field_display_data.vao);
+    for(Int i = 0; i < game_state->field_display_data.height-1; i++)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, game_state->field_ebos[i]);
-        glDrawElements(GL_TRIANGLES, (game_state->field.width-1)*6, GL_UNSIGNED_INT, (Void *)0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, game_state->field_display_data.ebos[i]);
+        glDrawElements(GL_TRIANGLES, (game_state->field_display_data.width-1)*6, GL_UNSIGNED_INT, (Void *)0);
     }
     
     
@@ -426,6 +449,9 @@ update_and_render(GameMemory *game_memory)
     F64 frame_end_ms = get_time_ms();
     F64 frame_time_ms = frame_end_ms - frame_start_ms;
     F64 time_to_sleep = game_state->target_frame_time_ms - frame_time_ms;
+    if(time_to_sleep < 0)
+        time_to_sleep = 0;
     game_state->d_time = frame_time_ms + time_to_sleep;
-    sleep(time_to_sleep);
+    if(time_to_sleep > 0)
+        sleep(time_to_sleep);
 }
