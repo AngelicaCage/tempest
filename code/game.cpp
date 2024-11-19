@@ -176,6 +176,7 @@ update_and_render(GameMemory *game_memory)
         // Initialize memory
         game_state->initialized = true;
         game_state->target_frame_time_ms = ((F64)1000) / ((F64)144);
+        game_state->d_time = 1;
         
         glfwSetScrollCallback(game_memory->window, scroll_callback);
         
@@ -246,6 +247,7 @@ update_and_render(GameMemory *game_memory)
         glBindVertexArray(0);
     }
     
+    F32 d_time = game_state->d_time;
     
     F64 new_mouse_pos[2];
     glfwGetCursorPos(game_memory->window, &new_mouse_pos[0], &new_mouse_pos[1]);
@@ -256,21 +258,22 @@ update_and_render(GameMemory *game_memory)
     
     if(camera->orbiting)
     {
-        Float camera_orbit_speed = 0.02f;
+        Float camera_orbit_speed = 0.002f;
         if(KEYDOWN(GLFW_KEY_RIGHT))
-            camera->orbit_angles.x -= camera_orbit_speed;
+            camera->orbit_angles.x -= camera_orbit_speed * d_time;
         if(KEYDOWN(GLFW_KEY_LEFT))
-            camera->orbit_angles.x += camera_orbit_speed;
+            camera->orbit_angles.x += camera_orbit_speed * d_time;
         if(KEYDOWN(GLFW_KEY_UP))
-            camera->orbit_angles.y += camera_orbit_speed;
+            camera->orbit_angles.y += camera_orbit_speed * d_time;
         if(KEYDOWN(GLFW_KEY_DOWN))
-            camera->orbit_angles.y -= camera_orbit_speed;
+            camera->orbit_angles.y -= camera_orbit_speed * d_time;
         
         // LATER: adjust by window resolution
         if(glfwGetMouseButton(game_memory->window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
         {
-            camera->orbit_angles.y += game_state->d_mouse_pos.y * 0.01f;
-            camera->orbit_angles.x += game_state->d_mouse_pos.x * 0.01f;
+            Float camera_mouse_pan_orbit_speed = 0.002f;
+            camera->orbit_angles.y += game_state->d_mouse_pos.y * camera_mouse_pan_orbit_speed * d_time;
+            camera->orbit_angles.x += game_state->d_mouse_pos.x * camera_mouse_pan_orbit_speed * d_time;
         }
         
         if(just_scrolled)
@@ -293,14 +296,14 @@ update_and_render(GameMemory *game_memory)
     
     {
         Camera *real_camera = &game_state->camera;
-        Float interp_speed = 0.15f;
-        real_camera->pos.interpolate_to(camera->pos, interp_speed);
-        real_camera->target.interpolate_to(camera->target, interp_speed);
-        real_camera->up.interpolate_to(camera->up, interp_speed);
-        real_camera->orbit_angles.interpolate_to(camera->orbit_angles, interp_speed);
+        Float interp_speed = 0.015f;
+        real_camera->pos.interpolate_to(camera->pos, interp_speed * d_time);
+        real_camera->target.interpolate_to(camera->target, interp_speed * d_time);
+        real_camera->up.interpolate_to(camera->up, interp_speed * d_time);
+        real_camera->orbit_angles.interpolate_to(camera->orbit_angles, interp_speed * d_time);
         real_camera->orbit_distance = interpolate(real_camera->orbit_distance,
                                                   camera->orbit_distance,
-                                                  interp_speed);
+                                                  interp_speed * d_time);
     }
     
     
@@ -409,8 +412,11 @@ update_and_render(GameMemory *game_memory)
         glDrawElements(GL_TRIANGLES, (game_state->field.width-1)*6, GL_UNSIGNED_INT, (Void *)0);
     }
     
+    
+    game_state->target_frame_time_ms = ((F64)1000) / ((F64)144);
     F64 frame_end_ms = get_time_ms();
     F64 frame_time_ms = frame_end_ms - frame_start_ms;
     F64 time_to_sleep = game_state->target_frame_time_ms - frame_time_ms;
+    game_state->d_time = frame_time_ms + time_to_sleep;
     sleep(time_to_sleep);
 }
