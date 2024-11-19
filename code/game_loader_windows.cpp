@@ -163,9 +163,11 @@ Void error_callback( Int error, const Char *msg ) {
     ASSERT(false);
 }
 
+Float width_over_height = 1000.0f/1000.0f;
+
 Void framebuffer_size_callback(GLFWwindow* window, Int width, Int height)
 {
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, width, height * width_over_height);
 }
 
 Void processInput(GLFWwindow *window)
@@ -216,7 +218,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     
-    GLFWwindow* window = glfwCreateWindow(800, 800, "Game", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "Game", NULL, NULL);
     if (window == NULL)
     {
         print_error("failed to create GLFW window");
@@ -236,7 +238,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         ASSERT(false);
     }
     
-    glViewport(0, 0, 800, 800);
+    framebuffer_size_callback(window, 1920, 1080);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     
     

@@ -72,4 +72,12 @@ V3 v3(Float x, Float y, Float z)
     return result;
 }
 
+
+F32
+random_float(F32 min, F32 max)
+{
+    return (F32)rand()/(F32)RAND_MAX * (max-min) + min;
+}
+
+
 #endif //MATH_H

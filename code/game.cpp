@@ -97,9 +97,10 @@ create_vertex_field(Int width, Int height, Float left_x, Float left_z, Float coo
         for(Int x = 0; x < width; x++)
         {
             Int stride = 3;
-            result.vertices[y*width*stride + x*stride + 0] = ((Float)x) / ((Float)width) - 0.5f;
-            result.vertices[y*width*stride + x*stride + 1] = ((Float)y) / ((Float)height) - 0.5f;
-            result.vertices[y*width*stride + x*stride + 2] = 0;
+            result.vertices[y*width*stride + x*stride + 0] = ((Float)x) / ((Float)width) * coordinate_width + left_x;
+            result.vertices[y*width*stride + x*stride + 1] = 0 + random_float(-0.1, 0.1);
+            result.vertices[y*width*stride + x*stride + 2] = ((Float)y) / ((Float)height) *
+                coordinate_width * ((Float)height / (Float)width) - left_z;
         }
     }
     
@@ -142,7 +143,6 @@ reload_changed_shaders(GameState *game_state)
             *program = gpu_create_shader_program(program->vertex_shader.path, program->fragment_shader.path, program->is_3d);
         }
     }
-    
 }
 
 extern "C" __declspec(dllexport) void __cdecl
@@ -186,9 +186,8 @@ update_and_render(GameMemory *game_memory)
         camera->target = v3(0, 0, 0);
         camera->up = v3(0, 1, 0);
         camera->orbiting = true;
-        camera->orbit_angles = v2(pi/4.0f, 0);
-        camera->orbit_distance = 3.0f;
-        
+        camera->orbit_angles = v2(pi / 2.0f, pi/3.0f);
+        camera->orbit_distance = 10.0f;
         
         
         // Axes
@@ -212,7 +211,7 @@ update_and_render(GameMemory *game_memory)
         
         
         // Field
-        game_state->field = create_vertex_field(6, 5, 0, 0, 10);
+        game_state->field = create_vertex_field(400, 200, -30.0f, 18.0f, 60);
         game_state->field_ebos = (UInt *)alloc(sizeof(UInt) * (game_state->field.height-1));
         
         glGenVertexArrays(1, &game_state->field_vao);
@@ -327,7 +326,7 @@ update_and_render(GameMemory *game_memory)
         glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
         
         
-        glm::mat4 proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 1000.0f);
+        glm::mat4 proj = glm::perspective(glm::radians(45.0f), 1920.0f/1080.0f, 0.1f, 1000.0f);
         Int proj_loc = glGetUniformLocation(shader_program->id, "projection");
         glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm::value_ptr(proj));
     }
