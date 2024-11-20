@@ -110,6 +110,12 @@ reload_changed_shaders(GameState *game_state)
     }
 }
 
+V2
+coords_field_to_world(V2 pos, Field *field)
+{
+    // TODO
+    return pos;
+}
 
 Void
 fill_vertex_field_display_data(FieldDisplayData *data, Field *field, Float left_x, Float left_z, Float coordinate_width)
