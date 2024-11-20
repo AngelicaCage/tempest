@@ -223,9 +223,23 @@ create_field(Int width, Int height)
     return result;
 }
 
-Void 
-field_draw_bitmap()
+Void
+field_draw_bitmap(Field *field, FieldBitmap bitmap, V2I offset, Float height, Color color) // offset from center
 {
+    V2I draw_pos = v2i(field->width/2 + offset.x, field->height/2 + offset.y);
+    
+    for(Int y = 0; y < bitmap.height; y++)
+    {
+        for(Int x = 0; x < bitmap.width; x++)
+        {
+            FieldPoint *point = &(field->points[draw_pos.y + y][draw_pos.x + x]);
+            if(bitmap.data[y][x])
+            {
+                point->height += height;
+                point->color = color;
+            }
+        }
+    }
 }
 
 Void
@@ -242,16 +256,6 @@ update_field_data(GameState *game_state, Field *field)
             point->height = 0;
             point->height += random_float(0, 0.05);
             point->color = color(38.0/255.0, 65.0/255.0, 107.0/255.0, 1);
-            
-#if 0
-            if(x > center.x-raised_area_size.x/2 && x < center.x+raised_area_size.x/2 &&
-               y > center.y-raised_area_size.y/2 && y < center.y+raised_area_size.y/2)
-            {
-                point->height += 1;
-                point->color = color(0.21, 0.71, 0.07, 1);
-            }
-            point->height += random_float(-0.1, 0.1);
-#endif
         }
     }
     
@@ -269,11 +273,11 @@ update_field_data(GameState *game_state, Field *field)
         }
     }
     
+    field_draw_bitmap(field, game_state->test_bitmap, v2i(-20, -20), 0.1f, color(1.0f, 0.0f, 1.0f, 1.0f));
+    
     V2I player_pos = v2i(coords_world_to_field(field, player->pos));
     field->points[player_pos.y][player_pos.x].height += 0.4f;
     field->points[player_pos.y][player_pos.x].color = player->color;
-    
-    
 }
 
 extern "C" __declspec(dllexport) void __cdecl
@@ -360,6 +364,29 @@ update_and_render(GameMemory *game_memory)
         player->vel = v2(0, 0);
         player->max_speed = 1;
         player->color = color(1, 0, 0, 1);
+        
+        Bool smile_bitmap[9][8] = {
+            {0, 1, 1, 0, 0, 1, 1, 0},
+            {0, 1, 1, 0, 0, 1, 1, 0},
+            {0, 1, 1, 0, 0, 1, 1, 0},
+            {0, 1, 1, 0, 0, 1, 1, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0},
+            {1, 1, 0, 0, 0, 0, 1, 1},
+            {1, 1, 1, 1, 1, 1, 1, 1},
+            {0, 1, 1, 1, 1, 1, 1, 0},
+        };
+        
+        game_state->test_bitmap.dim = v2i(8, 9);
+        game_state->test_bitmap.data = (Bool **)alloc(sizeof(Bool *) * game_state->test_bitmap.height);
+        for(Int y = 0; y < game_state->test_bitmap.height; y++)
+        {
+            game_state->test_bitmap.data[y] = (Bool *)alloc(sizeof(Bool) * game_state->test_bitmap.width);
+            for(Int x = 0; x < game_state->test_bitmap.width; x++)
+            {
+                game_state->test_bitmap.data[y][x] = smile_bitmap[y][x];
+            }
+        }
     }
     
     F32 d_time = game_state->d_time;
@@ -485,6 +512,7 @@ update_and_render(GameMemory *game_memory)
     glUseProgram(game_state->shader_programs[1].id);
     glBindVertexArray(game_state->axis_vao);
     
+#if 0
     { // x axis
         glUniform4fv(color_loc, 1, line_color);
         glLineWidth(positive_line_width);
@@ -528,6 +556,7 @@ update_and_render(GameMemory *game_memory)
         glLineWidth(negative_line_width);
         glDrawArrays(GL_LINES, 0, 2);
     }
+#endif
     
     
     // Draw field

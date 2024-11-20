@@ -77,6 +77,7 @@ struct FieldBitmap
             UInt width, height;
         };
     };
+    Bool **data;
 };
 
 struct Player
@@ -108,6 +109,8 @@ struct GameState
     UInt axis_vao;
     
     Player player;
+    
+    FieldBitmap test_bitmap;
 };
 
 #endif //GAME_H
