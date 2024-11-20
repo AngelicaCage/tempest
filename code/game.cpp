@@ -111,81 +111,90 @@ reload_changed_shaders(GameState *game_state)
 }
 
 V2
-coords_field_to_world(V2 pos, Field *field)
+coords_field_to_world(Field *field, V2 pos)
 {
-    // TODO
+    // LATER: optimize if possible
+    V2 top_left = v2(field->center_world.x - field->dim_world.x/2.0f, field->center_world.y - field->dim_world.y/2.0f);
+    pos.x = pos.x / (Float)field->width * field->dim_world.x + top_left.x;
+    pos.y = pos.y / (Float)field->height * field->dim_world.y + top_left.y;
+    return pos;
+}
+V2
+coords_world_to_field(Field *field, V2 pos)
+{
+    V2 top_left = v2(field->center_world.x - field->dim_world.x/2.0f, field->center_world.y - field->dim_world.y/2.0f);
+    pos.x = (pos.x - top_left.x) / field->dim_world.x * (Float(field->width));
+    pos.y = (pos.y - top_left.y) / field->dim_world.y * (Float(field->height));
     return pos;
 }
 
+
 Void
-fill_vertex_field_display_data(FieldDisplayData *data, Field *field, Float left_x, Float left_z, Float coordinate_width)
+fill_field_render_data(Field *field)
 {
-    data->width = field->width;
-    data->height = field->height;
-    
-    if(!data->allocated)
+    if(!field->render_data_allocated)
     {
         // cpu
-        data->vertices = (Float *)alloc(sizeof(Float) * data->width*6 * data->height);
-        data->indices = (UInt *)alloc(sizeof(UInt) * (data->width-1)*6 * (data->height-1));
+        field->vertices = (Float *)alloc(sizeof(Float) * field->width*6 * field->height);
+        field->indices = (UInt *)alloc(sizeof(UInt) * (field->width-1)*6 * (field->height-1));
         
         // gpu
-        data->ebos = (UInt *)alloc(sizeof(UInt) * (data->height-1));
+        field->ebos = (UInt *)alloc(sizeof(UInt) * (field->height-1));
         
-        glGenVertexArrays(1, &data->vao);
-        glGenBuffers(1, &data->vbo);
-        for(Int i = 0; i < data->height-1; i++)
+        glGenVertexArrays(1, &field->vao);
+        glGenBuffers(1, &field->vbo);
+        for(Int i = 0; i < field->height-1; i++)
         {
-            glGenBuffers(1, &(data->ebos[i]));
+            glGenBuffers(1, &(field->ebos[i]));
         }
         
-        data->allocated = true;
+        field->render_data_allocated = true;
     }
     
-    for(Int y = 0; y < data->height; y++)
+    for(Int y = 0; y < field->height; y++)
     {
-        for(Int x = 0; x < data->width; x++)
+        for(Int x = 0; x < field->width; x++)
         {
             Int stride = 6;
             
-            data->vertices[y*data->width*stride + x*stride + 0] = ((Float)x) / ((Float)data->width) * coordinate_width + left_x;
-            data->vertices[y*data->width*stride + x*stride + 1] = field->points[y][x].height;
-            data->vertices[y*data->width*stride + x*stride + 2] = ((Float)y) / ((Float)data->height) *
-                coordinate_width * ((Float)data->height / (Float)data->width) - left_z;
+            V2 coords_world = coords_field_to_world(field, v2(x, y));
+            field->vertices[y*field->width*stride + x*stride + 0] = coords_world.x;
+            field->vertices[y*field->width*stride + x*stride + 1] = field->points[y][x].height;
+            field->vertices[y*field->width*stride + x*stride + 2] = coords_world.y;
             
-            data->vertices[y*data->width*stride + x*stride + 3] = field->points[y][x].color.r;
-            data->vertices[y*data->width*stride + x*stride + 4] = field->points[y][x].color.g;
-            data->vertices[y*data->width*stride + x*stride + 5] = field->points[y][x].color.b;
+            field->vertices[y*field->width*stride + x*stride + 3] = field->points[y][x].color.r;
+            field->vertices[y*field->width*stride + x*stride + 4] = field->points[y][x].color.g;
+            field->vertices[y*field->width*stride + x*stride + 5] = field->points[y][x].color.b;
         }
     }
     
-    for(Int y = 0; y < data->height - 1; y++)
+    for(Int y = 0; y < field->height - 1; y++)
     {
-        for(Int x = 0; x < data->width - 1; x++)
+        for(Int x = 0; x < field->width - 1; x++)
         {
             Int stride = 6;
             
-            data->indices[y*stride*(data->width-1) + x*stride + 0] = x + y*data->width;
-            data->indices[y*stride*(data->width-1) + x*stride + 1] = x + (y+1)*data->width;
-            data->indices[y*stride*(data->width-1) + x*stride + 2] = x + 1 + (y+1)*data->width;
+            field->indices[y*stride*(field->width-1) + x*stride + 0] = x + y*field->width;
+            field->indices[y*stride*(field->width-1) + x*stride + 1] = x + (y+1)*field->width;
+            field->indices[y*stride*(field->width-1) + x*stride + 2] = x + 1 + (y+1)*field->width;
             
-            data->indices[y*stride*(data->width-1) + x*stride + 3] = x + y*data->width;
-            data->indices[y*stride*(data->width-1) + x*stride + 4] = x + 1 + (y+1)*data->width;
-            data->indices[y*stride*(data->width-1) + x*stride + 5] = x + 1 + y*data->width;
+            field->indices[y*stride*(field->width-1) + x*stride + 3] = x + y*field->width;
+            field->indices[y*stride*(field->width-1) + x*stride + 4] = x + 1 + (y+1)*field->width;
+            field->indices[y*stride*(field->width-1) + x*stride + 5] = x + 1 + y*field->width;
         }
     }
     
     
-    glBindVertexArray(data->vao);
+    glBindVertexArray(field->vao);
     
-    glBindBuffer(GL_ARRAY_BUFFER, data->vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * data->width*6 * data->height, data->vertices, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, field->vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * field->width*6 * field->height, field->vertices, GL_DYNAMIC_DRAW);
     
-    for(Int i = 0; i < data->height-1; i++)
+    for(Int i = 0; i < field->height-1; i++)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, data->ebos[i]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(UInt) * (data->width-1)*6,
-                     &(data->indices[i*(data->width-1)*6]), GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field->ebos[i]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(UInt) * (field->width-1)*6,
+                     &(field->indices[i*(field->width-1)*6]), GL_STATIC_DRAW);
     }
     
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*6, (Void *)0);
@@ -214,10 +223,9 @@ create_field(Int width, Int height)
     return result;
 }
 
-V2
-coords_game_to_field(Field *field, V2 game_coords)
+Void 
+field_draw_bitmap()
 {
-    return v2(game_coords.x + field->width/2, game_coords.y + field->height/2);
 }
 
 Void
@@ -226,16 +234,16 @@ update_field_data(GameState *game_state, Field *field)
     Player *player = &game_state->player;
     
     srand(0);
-    V2I center = v2i(field->width/2, field->height/2);
-    V2I raised_area_size = v2i(76, 40);
     for(Int y = 0; y < field->height; y++)
     {
         for(Int x = 0; x < field->width; x++)
         {
             FieldPoint *point = &(field->points[y][x]);
             point->height = 0;
+            point->height += random_float(0, 0.05);
             point->color = color(38.0/255.0, 65.0/255.0, 107.0/255.0, 1);
             
+#if 0
             if(x > center.x-raised_area_size.x/2 && x < center.x+raised_area_size.x/2 &&
                y > center.y-raised_area_size.y/2 && y < center.y+raised_area_size.y/2)
             {
@@ -243,10 +251,25 @@ update_field_data(GameState *game_state, Field *field)
                 point->color = color(0.21, 0.71, 0.07, 1);
             }
             point->height += random_float(-0.1, 0.1);
+#endif
         }
     }
     
-    V2I player_pos = v2i(coords_game_to_field(field, player->pos));
+    V2 raised_area_size = v2(10.5, 7);
+    V2 raised_area_top_left_field = coords_world_to_field(field, v2(raised_area_size.x / -2, raised_area_size.y / -2));
+    V2 raised_area_bottom_right_field = coords_world_to_field(field, v2(raised_area_size.x / 2, raised_area_size.y / 2));
+    
+    for(Int y = raised_area_top_left_field.y; y <= raised_area_bottom_right_field.y; y++)
+    {
+        for(Int x = raised_area_top_left_field.x; x <= raised_area_bottom_right_field.x; x++)
+        {
+            FieldPoint *point = &(field->points[y][x]);
+            point->height = 1;
+            point->color = color(0.21, 0.71, 0.07, 1);
+        }
+    }
+    
+    V2I player_pos = v2i(coords_world_to_field(field, player->pos));
     field->points[player_pos.y][player_pos.x].height += 0.4f;
     field->points[player_pos.y][player_pos.x].color = player->color;
     
@@ -260,6 +283,7 @@ update_and_render(GameMemory *game_memory)
     global_log = game_memory->global_log;
     Camera *camera = &game_state->target_camera;
     Player *player = &game_state->player;
+    Field *field = &game_state->field;
     
     if(!game_memory->functions_loaded)
     {
@@ -325,8 +349,12 @@ update_and_render(GameMemory *game_memory)
         
         
         // Field
-        game_state->field = create_field(400, 200);
-        game_state->field_display_data.allocated = false;
+        //*field = create_field(400, 300);
+        *field = create_field(200, 150);
+        field->render_data_allocated = false;
+        field->center_world = v2(0, 0);
+        Float field_phys_width = 20;
+        field->dim_world = v2(field_phys_width, field_phys_width * ((Float)field->height / (Float)field->width));
         
         player->pos = v2(0, 0);
         player->vel = v2(0, 0);
@@ -355,7 +383,7 @@ update_and_render(GameMemory *game_memory)
     
     
     update_field_data(game_state, &(game_state->field));
-    fill_vertex_field_display_data(&(game_state->field_display_data), &(game_state->field), -30, 15, 60);
+    fill_field_render_data(&(game_state->field));
     
     
     if(camera->orbiting)
@@ -515,11 +543,11 @@ update_and_render(GameMemory *game_memory)
     glUniform3f(ambient_light_color_loc, 1.0f, 1.0f, 1.0f);
     glUniform1f(ambient_light_strength_loc, 1.0f);
     
-    glBindVertexArray(game_state->field_display_data.vao);
-    for(Int i = 0; i < game_state->field_display_data.height-1; i++)
+    glBindVertexArray(field->vao);
+    for(Int i = 0; i < field->height-1; i++)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, game_state->field_display_data.ebos[i]);
-        glDrawElements(GL_TRIANGLES, (game_state->field_display_data.width-1)*6, GL_UNSIGNED_INT, (Void *)0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field->ebos[i]);
+        glDrawElements(GL_TRIANGLES, (field->width-1)*6, GL_UNSIGNED_INT, (Void *)0);
     }
     
     
@@ -538,14 +566,15 @@ update_and_render(GameMemory *game_memory)
     model_loc = glGetUniformLocation(game_state->shader_programs[1].id, "model");
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
     
-    glBindVertexArray(game_state->field_display_data.vao);
-    for(Int i = 0; i < game_state->field_display_data.height-1; i++)
+    glBindVertexArray(field->vao);
+    for(Int i = 0; i < field->height-1; i++)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, game_state->field_display_data.ebos[i]);
-        glDrawElements(GL_TRIANGLES, (game_state->field_display_data.width-1)*6, GL_UNSIGNED_INT, (Void *)0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field->ebos[i]);
+        glDrawElements(GL_TRIANGLES, (field->width-1)*6, GL_UNSIGNED_INT, (Void *)0);
     }
     
     
+    // LATER: improve this
     game_state->target_frame_time_ms = ((F64)1000) / ((F64)144);
     F64 frame_end_ms = get_time_ms();
     F64 frame_time_ms = frame_end_ms - frame_start_ms;

@@ -38,22 +38,45 @@ struct FieldPoint
 
 struct Field
 {
-    Int width, height;
+    union
+    {
+        struct
+        {
+            V2I dim;
+        };
+        struct
+        {
+            Int width, height;
+        };
+    };
+    
     // array of rows
     FieldPoint **points;
-};
-
-struct FieldDisplayData
-{
-    Int width, height;
-    Bool allocated;
-    // array of rows
+    
+    V2 center_world;
+    V2 dim_world;
+    
+    Bool render_data_allocated;
     Float *vertices;
     UInt *indices;
-    
     UInt vbo;
     UInt vao;
     UInt *ebos;
+};
+
+struct FieldBitmap
+{
+    union
+    {
+        struct
+        {
+            V2I dim;
+        };
+        struct
+        {
+            UInt width, height;
+        };
+    };
 };
 
 struct Player
@@ -63,7 +86,6 @@ struct Player
     Float max_speed;
     Color color;
 };
-
 
 struct GameState
 {
@@ -81,7 +103,6 @@ struct GameState
     Camera camera;
     
     Field field;
-    FieldDisplayData field_display_data;
     
     UInt axis_vbo;
     UInt axis_vao;
