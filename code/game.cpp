@@ -137,7 +137,7 @@ fill_field_render_data(Field *field)
     if(!field->render_data_allocated)
     {
         // cpu
-        field->vertices = (Float *)alloc(sizeof(Float) * field->width*6 * field->height);
+        field->vertices = (Float *)alloc(sizeof(Float) * field->width*9 * field->height);
         field->indices = (UInt *)alloc(sizeof(UInt) * (field->width-1)*6 * (field->height-1));
         
         // gpu
@@ -157,7 +157,7 @@ fill_field_render_data(Field *field)
     {
         for(Int x = 0; x < field->width; x++)
         {
-            Int stride = 6;
+            Int stride = 9;
             
             V2 coords_world = coords_field_to_world(field, v2(x, y));
             field->vertices[y*field->width*stride + x*stride + 0] = coords_world.x;
@@ -167,6 +167,10 @@ fill_field_render_data(Field *field)
             field->vertices[y*field->width*stride + x*stride + 3] = field->points[y][x].color.r;
             field->vertices[y*field->width*stride + x*stride + 4] = field->points[y][x].color.g;
             field->vertices[y*field->width*stride + x*stride + 5] = field->points[y][x].color.b;
+            
+            field->vertices[y*field->width*stride + x*stride + 6] = 0;
+            field->vertices[y*field->width*stride + x*stride + 7] = 1;
+            field->vertices[y*field->width*stride + x*stride + 8] = 0;
         }
     }
     
@@ -190,7 +194,7 @@ fill_field_render_data(Field *field)
     glBindVertexArray(field->vao);
     
     glBindBuffer(GL_ARRAY_BUFFER, field->vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * field->width*6 * field->height, field->vertices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * field->width*9 * field->height, field->vertices, GL_DYNAMIC_DRAW);
     
     for(Int i = 0; i < field->height-1; i++)
     {
@@ -199,11 +203,12 @@ fill_field_render_data(Field *field)
                      &(field->indices[i*(field->width-1)*6]), GL_STATIC_DRAW);
     }
     
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*6, (Void *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*9, (Void *)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*6, (Void *)(sizeof(Float)*3));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*9, (Void *)(sizeof(Float)*3));
     glEnableVertexAttribArray(1);
-    
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*9, (Void *)(sizeof(Float)*6));
+    glEnableVertexAttribArray(2);
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
