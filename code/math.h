@@ -90,19 +90,86 @@ struct V3
         y = interpolate(y, target.y, speed);
         z = interpolate(z, target.z, speed);
     }
+    Float mag()
+    {
+        return sqrt(x*x + y*y + z*z);
+    }
+    V3 normalized()
+    {
+        V3 result;
+        Float m = mag();
+        result.x = x / m;
+        result.y = y / m;
+        result.z = z / m;
+        return result;
+    }
+    Void normalize()
+    {
+        Float m = mag();
+        x = x / m;
+        y = y / m;
+        z = z / m;
+    }
+    
+    static Float dot(V3 a, V3 b)
+    {
+        return a.x*b.x + a.y*b.y + a.z*b.z;
+    }
+#if 0
+    static V3 cross(V3 a, V3 b)
+    {
+        Float angle_between = acos(dot(a, b)/(a.mag()*b.mag()));
+        return a.mag()*b.mag()*
+    }
+#endif
 };
 V3 v3(Float x, Float y, Float z)
 {
     V3 result = {x, y, z};
     return result;
 }
-
+V3 v3_from_floats(Float *f)
+{
+    V3 result = {f[0], f[1], f[2]};
+    return result;
+}
+V3 v3_from_glm(glm::vec3 v)
+{
+    V3 result = {v.x, v.y, v.z};
+    return result;
+}
 
 F32
 random_float(F32 min, F32 max)
 {
     return (F32)rand()/(F32)RAND_MAX * (max-min) + min;
 }
+
+
+inline V3
+operator+(V3 a, V3 b)
+{
+    return {a.x + b.x, a.y + b.y, a.z + b.z};
+}
+inline V3 &
+operator+=(V3 &a, V3 b)
+{
+    a=a+b;
+    return a;
+}
+inline V3
+operator-(V3 a, V3 b)
+{
+    return {a.x - b.x, a.y - b.y, a.z - b.z};
+}
+inline V3 &
+operator-=(V3 &a, V3 b)
+{
+    a=a-b;
+    return a;
+}
+
+
 
 
 #endif //MATH_H

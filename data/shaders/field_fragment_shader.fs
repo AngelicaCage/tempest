@@ -14,9 +14,9 @@ uniform vec3 sunLightDirection;
 void main()
 {
 	vec3 ambient = ambientLightStrength * ambientLightColor;
-	vec3 lightDir = normalize(-sunLightDirection);
 
 	vec3 norm = normalize(normal);
+	vec3 lightDir = normalize(sunLightDirection);
 	float diff = max(dot(norm, lightDir), 0.0);
 	vec3 diffuse = sunLightStrength * diff * sunLightColor;
 

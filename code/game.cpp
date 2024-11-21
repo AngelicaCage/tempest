@@ -131,6 +131,62 @@ coords_world_to_field(Field *field, V2 pos)
 }
 
 
+// From: https://gamedev.stackexchange.com/questions/152991/how-can-i-calculate-normals-using-a-vertex-and-index-buffer
+Void
+calculate_vertex_normals(Field *field)
+{
+    Float *vertices = field->vertices;
+    UInt *indices = field->indices;
+    // For each face, compute the face normal, and accumulate it into each vertex.
+    for(Int index = 0; index < (field->width-1)*2 * (field->height-1); index += 3) {
+        Int vertexA = indices[index];
+        Int vertexB = indices[index + 1];
+        Int vertexC = indices[index + 2];
+        
+        V3 edgeAB = v3_from_floats(&vertices[vertexB*9]) - v3_from_floats(&vertices[vertexA*9]);
+        V3 edgeAC = v3_from_floats(&vertices[vertexC*9]) - v3_from_floats(&vertices[vertexA*9]);
+        
+        // The cross product is perpendicular to both input vectors (normal to the plane).
+        // Flip the argument order if you need the opposite winding.    
+        glm::vec3 _areaWeightedNormal = glm::cross(edgeAB.to_glm(), edgeAC.to_glm());
+        V3 areaWeightedNormal = v3_from_glm(_areaWeightedNormal);
+        
+        // Don't normalize this vector just yet. Its magnitude is proportional to the
+        // area of the triangle (times 2), so this helps ensure tiny/skinny triangles
+        // don't have an outsized impact on the final normal per vertex.
+        
+        // Accumulate this cross product into each vertex normal slot.
+#if 0
+        vertexNormals[vertexA] += areaWeightedNormal;
+        vertexNormals[vertexB] += areaWeightedNormal;
+        vertexNormals[vertexC] += areaWeightedNormal;
+#endif
+        vertices[vertexA*9 + 6] += areaWeightedNormal.x;
+        vertices[vertexA*9 + 7] += areaWeightedNormal.y;
+        vertices[vertexA*9 + 8] += areaWeightedNormal.z;
+        
+        vertices[vertexB*9 + 6] += areaWeightedNormal.x;
+        vertices[vertexB*9 + 7] += areaWeightedNormal.y;
+        vertices[vertexB*9 + 8] += areaWeightedNormal.z;
+        
+        vertices[vertexC*9 + 6] += areaWeightedNormal.x;
+        vertices[vertexC*9 + 7] += areaWeightedNormal.y;
+        vertices[vertexC*9 + 8] += areaWeightedNormal.z;
+    }
+    
+    // Finally, normalize all the sums to get a unit-length, area-weighted average.
+    for(int vertex = 0; vertex < (field->width) * (field->height); vertex++)
+    {
+        V3 current_normal = v3_from_floats(&vertices[vertex*9]);
+        V3 new_normal = current_normal.normalized();
+#if 1
+        vertices[vertex*9 + 6] = new_normal.x;
+        vertices[vertex*9 + 7] = new_normal.y;
+        vertices[vertex*9 + 8] = new_normal.z;
+#endif
+    }
+}
+
 Void
 fill_field_render_data(Field *field)
 {
@@ -168,9 +224,11 @@ fill_field_render_data(Field *field)
             field->vertices[y*field->width*stride + x*stride + 4] = field->points[y][x].color.g;
             field->vertices[y*field->width*stride + x*stride + 5] = field->points[y][x].color.b;
             
+#if 0
             field->vertices[y*field->width*stride + x*stride + 6] = 0;
             field->vertices[y*field->width*stride + x*stride + 7] = 1;
             field->vertices[y*field->width*stride + x*stride + 8] = 0;
+#endif
         }
     }
     
@@ -190,6 +248,7 @@ fill_field_render_data(Field *field)
         }
     }
     
+    calculate_vertex_normals(field);
     
     glBindVertexArray(field->vao);
     
@@ -577,7 +636,7 @@ update_and_render(GameMemory *game_memory)
     Int sun_light_dir_loc = glGetUniformLocation(game_state->shader_programs[0].id, "sunLightDirection");
     glUniform3f(sun_light_color_loc, 1.0f, 1.0f, 1.0f);
     glUniform1f(sun_light_strength_loc, 1.0f);
-    glUniform3f(sun_light_dir_loc, -1.0f, -1.0f, -1.0f);
+    glUniform3f(sun_light_dir_loc, sin(glfwGetTime()), 1.0f, cos(glfwGetTime()));
     
     glBindVertexArray(field->vao);
     for(Int i = 0; i < field->height-1; i++)
@@ -606,7 +665,7 @@ update_and_render(GameMemory *game_memory)
     for(Int i = 0; i < field->height-1; i++)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field->ebos[i]);
-        glDrawElements(GL_TRIANGLES, (field->width-1)*6, GL_UNSIGNED_INT, (Void *)0);
+        //glDrawElements(GL_TRIANGLES, (field->width-1)*6, GL_UNSIGNED_INT, (Void *)0);
     }
     
     
