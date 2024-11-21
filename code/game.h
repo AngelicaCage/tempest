@@ -80,6 +80,12 @@ struct FieldBitmap
     Bool **data;
 };
 
+struct SmallFieldBitmap
+{
+    Bool data[5][5];
+};
+
+
 struct Player
 {
     V2 pos;
@@ -110,7 +116,7 @@ struct GameState
     
     Player player;
     
-    FieldBitmap test_bitmap;
+    SmallFieldBitmap text_bitmaps[26];
 };
 
 #endif //GAME_H

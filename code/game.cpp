@@ -18,6 +18,8 @@
 #include "gpu.h"
 #include "game.h"
 
+#include "bitmaps.cpp"
+
 // Later: move to gpu.h
 UInt vertex_shader_fallback_id = 0;
 UInt fragment_shader_fallback_id = 0;
@@ -224,13 +226,13 @@ create_field(Int width, Int height)
 }
 
 Void
-field_draw_bitmap(Field *field, FieldBitmap bitmap, V2I offset, Float height, Color color) // offset from center
+field_draw_small_bitmap(Field *field, SmallFieldBitmap bitmap, V2I offset, Float height, Color color) // offset from center
 {
     V2I draw_pos = v2i(field->width/2 + offset.x, field->height/2 + offset.y);
     
-    for(Int y = 0; y < bitmap.height; y++)
+    for(Int y = 0; y < 5; y++)
     {
-        for(Int x = 0; x < bitmap.width; x++)
+        for(Int x = 0; x < 5; x++)
         {
             FieldPoint *point = &(field->points[draw_pos.y + y][draw_pos.x + x]);
             if(bitmap.data[y][x])
@@ -255,7 +257,7 @@ update_field_data(GameState *game_state, Field *field)
             FieldPoint *point = &(field->points[y][x]);
             point->height = 0;
             point->height += random_float(0, 0.05);
-            point->color = color(38.0/255.0, 65.0/255.0, 107.0/255.0, 1);
+            point->color = color(0.14, 0.22, 0.66, 1);
         }
     }
     
@@ -269,16 +271,26 @@ update_field_data(GameState *game_state, Field *field)
         {
             FieldPoint *point = &(field->points[y][x]);
             point->height = 1;
-            point->color = color(0.21, 0.71, 0.07, 1);
+            point->color = color(0.17, 0.55, 0.22, 1);
         }
     }
     
-    field_draw_bitmap(field, game_state->test_bitmap, v2i(-20, -20), 0.1f, color(1.0f, 0.0f, 1.0f, 1.0f));
+    for(Int y = 0; y <= 2; y += 1)
+        for(Int x = 0; x <= 10; x += 1)
+    {
+        if(y*11 + x > 26)
+            break;
+        V2I coords = v2i(x*7 - 50, y*7 - 20);
+        field_draw_small_bitmap(field, game_state->text_bitmaps[y*11 + x], coords, 0.1f, color(0.96, 0.78, 0.02, 1.0f));
+    }
     
     V2I player_pos = v2i(coords_world_to_field(field, player->pos));
     field->points[player_pos.y][player_pos.x].height += 0.4f;
     field->points[player_pos.y][player_pos.x].color = player->color;
 }
+
+
+
 
 extern "C" __declspec(dllexport) void __cdecl
 update_and_render(GameMemory *game_memory)
@@ -365,28 +377,10 @@ update_and_render(GameMemory *game_memory)
         player->max_speed = 1;
         player->color = color(1, 0, 0, 1);
         
-        Bool smile_bitmap[9][8] = {
-            {0, 1, 1, 0, 0, 1, 1, 0},
-            {0, 1, 1, 0, 0, 1, 1, 0},
-            {0, 1, 1, 0, 0, 1, 1, 0},
-            {0, 1, 1, 0, 0, 1, 1, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0},
-            {1, 1, 0, 0, 0, 0, 1, 1},
-            {1, 1, 1, 1, 1, 1, 1, 1},
-            {0, 1, 1, 1, 1, 1, 1, 0},
-        };
+        generate_text_bitmaps(game_state);
+        update_field_data(game_state, &(game_state->field));
+        fill_field_render_data(&(game_state->field));
         
-        game_state->test_bitmap.dim = v2i(8, 9);
-        game_state->test_bitmap.data = (Bool **)alloc(sizeof(Bool *) * game_state->test_bitmap.height);
-        for(Int y = 0; y < game_state->test_bitmap.height; y++)
-        {
-            game_state->test_bitmap.data[y] = (Bool *)alloc(sizeof(Bool) * game_state->test_bitmap.width);
-            for(Int x = 0; x < game_state->test_bitmap.width; x++)
-            {
-                game_state->test_bitmap.data[y][x] = smile_bitmap[y][x];
-            }
-        }
     }
     
     F32 d_time = game_state->d_time;
