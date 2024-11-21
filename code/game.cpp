@@ -257,7 +257,7 @@ update_field_data(GameState *game_state, Field *field)
         {
             FieldPoint *point = &(field->points[y][x]);
             point->height = 0;
-            point->height += random_float(0, 0.05);
+            point->height += random_float(0, 0.1);
             point->color = color(0.20, 0.22, 0.30, 1);
         }
     }
@@ -572,7 +572,7 @@ update_and_render(GameMemory *game_memory)
     Int sun_light_dir_loc = glGetUniformLocation(game_state->shader_programs[0].id, "sunLightDirection");
     glUniform3f(sun_light_color_loc, 1.0f, 1.0f, 1.0f);
     glUniform1f(sun_light_strength_loc, 1.0f);
-    glUniform3f(sun_light_dir_loc, 0.0f, 1.0f, 0.0f);
+    glUniform3f(sun_light_dir_loc, -1.0f, -1.0f, -1.0f);
     
     glBindVertexArray(field->vao);
     for(Int i = 0; i < field->height-1; i++)
