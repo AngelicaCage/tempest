@@ -129,6 +129,17 @@ coords_world_to_field(Field *field, V2 pos)
     pos.y = (pos.y - top_left.y) / field->dim_world.y * (Float(field->height));
     return pos;
 }
+Float
+scale_world_to_field(Field *field, Float s)
+{
+    return s / field->dim_world.x * (Float(field->width));
+}
+Float
+scale_field_to_world(Field *field, Float s)
+{
+    return s / (Float(field->width)) * field->dim_world.x;
+}
+
 
 
 // From: https://gamedev.stackexchange.com/questions/152991/how-can-i-calculate-normals-using-a-vertex-and-index-buffer
@@ -291,7 +302,7 @@ create_field(Int width, Int height)
 
 Void
 field_draw_small_bitmap(Field *field, SmallFieldBitmap bitmap, V2I offset,
-                        Float base_height, Float added_height, Color color) // offset from center
+                        Float added_height, Color color, Bool set_base_height = false, Float base_height = 1) // offset from center
 {
     V2I draw_pos = v2i(field->width/2 + offset.x, field->height/2 + offset.y);
     
@@ -302,7 +313,32 @@ field_draw_small_bitmap(Field *field, SmallFieldBitmap bitmap, V2I offset,
             FieldPoint *point = &(field->points[draw_pos.y + y][draw_pos.x + x]);
             if(bitmap.data[y][x])
             {
-                point->height = base_height + added_height;
+                if(set_base_height)
+                    point->height = base_height;
+                point->height += added_height;
+                point->color = color;
+            }
+        }
+    }
+}
+
+Void // coords in world space
+field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Color color)
+{
+    V2 center_field = coords_world_to_field(field, center);
+    Float radius_field = scale_world_to_field(field, radius);
+    V2I top_left = v2i(center_field - v2(radius_field, radius_field));
+    V2I bottom_right = v2i(center_field + v2(radius_field + 0.5f, radius_field + 0.5f));
+    
+    for(Int y = top_left.y; y < bottom_right.y; y++)
+    {
+        for(Int x = top_left.x; x < bottom_right.x; x++)
+        {
+            Float dist = v2_dist(center_field, v2(x, y));
+            if(dist <= radius_field)
+            {
+                FieldPoint *point = &(field->points[y][x]);
+                point->height += added_height;
                 point->color = color;
             }
         }
@@ -321,7 +357,7 @@ update_field_data(GameState *game_state, Field *field)
         {
             FieldPoint *point = &(field->points[y][x]);
             point->height = 0;
-            point->height += random_float(0, 1);
+            point->height += random_float(0, 0.1f);
             point->color = color(0.20, 0.22, 0.30, 1);
         }
     }
@@ -346,8 +382,10 @@ update_field_data(GameState *game_state, Field *field)
         if(y*11 + x > 26)
             break;
         V2I coords = v2i(x*7 - 50, y*7 - 20);
-        field_draw_small_bitmap(field, game_state->text_bitmaps[y*11 + x], coords, 1.0f, 0.12f, color(0.96, 0.78, 0.02, 1.0f));
+        field_draw_small_bitmap(field, game_state->text_bitmaps[y*11 + x], coords, 0.12f, color(0.96, 0.78, 0.02, 1.0f), true, 1.0f);
     }
+    
+    field_draw_circle(field, v2(1, 0), 0.6f, 0.2f, color(0.77f, 0.37f, 0, 1));
     
     V2I player_pos = v2i(coords_world_to_field(field, player->pos));
     field->points[player_pos.y][player_pos.x].height += 0.4f;
@@ -636,7 +674,7 @@ update_and_render(GameMemory *game_memory)
     Int sun_light_dir_loc = glGetUniformLocation(game_state->shader_programs[0].id, "sunLightDirection");
     glUniform3f(sun_light_color_loc, 1.0f, 1.0f, 1.0f);
     glUniform1f(sun_light_strength_loc, 1.0f);
-    glUniform3f(sun_light_dir_loc, sin(glfwGetTime()), -1.0f * 0.1f, cos(glfwGetTime()));
+    glUniform3f(sun_light_dir_loc, sin(glfwGetTime()), -1.0f * 0.9f, cos(glfwGetTime()));
     
     glBindVertexArray(field->vao);
     for(Int i = 0; i < field->height-1; i++)
@@ -653,7 +691,7 @@ update_and_render(GameMemory *game_memory)
     line_color[0] = 0.0f;
     line_color[1] = 0.0f;
     line_color[2] = 0.0f;
-    line_color[3] = 0.3f;
+    line_color[3] = 0.2f;
     glUniform4fv(color_loc, 1, line_color);
     
     model = glm::mat4(1.0f);
@@ -665,7 +703,7 @@ update_and_render(GameMemory *game_memory)
     for(Int i = 0; i < field->height-1; i++)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field->ebos[i]);
-        //glDrawElements(GL_TRIANGLES, (field->width-1)*6, GL_UNSIGNED_INT, (Void *)0);
+        glDrawElements(GL_TRIANGLES, (field->width-1)*6, GL_UNSIGNED_INT, (Void *)0);
     }
     
     

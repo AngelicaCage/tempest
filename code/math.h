@@ -35,12 +35,6 @@ struct V2
     }
     
 };
-V2 v2(Float x, Float y)
-{
-    V2 result = {x, y};
-    return result;
-}
-
 struct V2I
 {
     union
@@ -55,6 +49,21 @@ struct V2I
         };
     };
 };
+
+V2 v2(Float x, Float y)
+{
+    V2 result = {x, y};
+    return result;
+}
+V2 v2(V2I v)
+{
+    return {(Float)v.x, (Float)v.y};
+}
+Float v2_dist(V2 a, V2 b)
+{
+    return sqrtf(pow(b.x-a.x, 2) + pow(b.y-a.y, 2));
+}
+
 V2I v2i(Int x, Int y)
 {
     V2I result = {x, y};
@@ -64,6 +73,10 @@ V2I v2i(V2 vec)
 {
     V2I result = {(Int)vec.x, (Int)vec.y};
     return result;
+}
+Float v2i_dist(V2I a, V2I b)
+{
+    return sqrtf((Float)pow(b.x-a.x, 2) + (Float)pow(b.y-a.y, 2));
 }
 
 struct V3
@@ -92,7 +105,7 @@ struct V3
     }
     Float mag()
     {
-        return sqrt(x*x + y*y + z*z);
+        return sqrtf(x*x + y*y + z*z);
     }
     V3 normalized()
     {
@@ -164,6 +177,29 @@ operator-(V3 a, V3 b)
 }
 inline V3 &
 operator-=(V3 &a, V3 b)
+{
+    a=a-b;
+    return a;
+}
+
+inline V2
+operator+(V2 a, V2 b)
+{
+    return {a.x + b.x, a.y + b.y};
+}
+inline V2 &
+operator+=(V2 &a, V2 b)
+{
+    a=a+b;
+    return a;
+}
+inline V2
+operator-(V2 a, V2 b)
+{
+    return {a.x - b.x, a.y - b.y};
+}
+inline V2 &
+operator-=(V2 &a, V2 b)
 {
     a=a-b;
     return a;

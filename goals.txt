@@ -1,11 +1,5 @@
-TECHNICAL
-Draw subdivided mesh
-Draw subdivided mesh with colors
-3d camera projection
-mesh heights
+field circle rendering
 
-GAME
-player rendering and movement
 bullets and collision
 text drawing?
 enemies and collision
