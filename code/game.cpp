@@ -15,6 +15,7 @@
 #include "game_loader.h"
 
 #include "math.h"
+#include "input.h"
 #include "gpu.h"
 #include "game.h"
 
