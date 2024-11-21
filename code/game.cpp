@@ -226,7 +226,8 @@ create_field(Int width, Int height)
 }
 
 Void
-field_draw_small_bitmap(Field *field, SmallFieldBitmap bitmap, V2I offset, Float height, Color color) // offset from center
+field_draw_small_bitmap(Field *field, SmallFieldBitmap bitmap, V2I offset,
+                        Float base_height, Float added_height, Color color) // offset from center
 {
     V2I draw_pos = v2i(field->width/2 + offset.x, field->height/2 + offset.y);
     
@@ -237,7 +238,7 @@ field_draw_small_bitmap(Field *field, SmallFieldBitmap bitmap, V2I offset, Float
             FieldPoint *point = &(field->points[draw_pos.y + y][draw_pos.x + x]);
             if(bitmap.data[y][x])
             {
-                point->height += height;
+                point->height = base_height + added_height;
                 point->color = color;
             }
         }
@@ -257,7 +258,7 @@ update_field_data(GameState *game_state, Field *field)
             FieldPoint *point = &(field->points[y][x]);
             point->height = 0;
             point->height += random_float(0, 0.05);
-            point->color = color(0.14, 0.22, 0.66, 1);
+            point->color = color(0.20, 0.22, 0.30, 1);
         }
     }
     
@@ -270,8 +271,8 @@ update_field_data(GameState *game_state, Field *field)
         for(Int x = raised_area_top_left_field.x; x <= raised_area_bottom_right_field.x; x++)
         {
             FieldPoint *point = &(field->points[y][x]);
-            point->height = 1;
-            point->color = color(0.17, 0.55, 0.22, 1);
+            point->height += 1;
+            point->color = color(0.17, 0.55, 0.42, 1);
         }
     }
     
@@ -281,7 +282,7 @@ update_field_data(GameState *game_state, Field *field)
         if(y*11 + x > 26)
             break;
         V2I coords = v2i(x*7 - 50, y*7 - 20);
-        field_draw_small_bitmap(field, game_state->text_bitmaps[y*11 + x], coords, 0.1f, color(0.96, 0.78, 0.02, 1.0f));
+        field_draw_small_bitmap(field, game_state->text_bitmaps[y*11 + x], coords, 1.0f, 0.12f, color(0.96, 0.78, 0.02, 1.0f));
     }
     
     V2I player_pos = v2i(coords_world_to_field(field, player->pos));
