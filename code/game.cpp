@@ -138,13 +138,13 @@ calculate_vertex_normals(Field *field)
     Float *vertices = field->vertices;
     UInt *indices = field->indices;
     // For each face, compute the face normal, and accumulate it into each vertex.
-    for(Int index = 0; index < (field->width-1)*2 * (field->height-1); index += 3) {
+    for(Int index = 0; index < (field->width-1)*6 * (field->height-1); index += 3) {
         Int vertexA = indices[index];
         Int vertexB = indices[index + 1];
         Int vertexC = indices[index + 2];
         
-        V3 edgeAB = v3_from_floats(&vertices[vertexB*9]) - v3_from_floats(&vertices[vertexA*9]);
-        V3 edgeAC = v3_from_floats(&vertices[vertexC*9]) - v3_from_floats(&vertices[vertexA*9]);
+        V3 edgeAB = v3_from_floats(&(vertices[vertexB*9])) - v3_from_floats(&(vertices[vertexA*9]));
+        V3 edgeAC = v3_from_floats(&(vertices[vertexC*9])) - v3_from_floats(&(vertices[vertexA*9]));
         
         // The cross product is perpendicular to both input vectors (normal to the plane).
         // Flip the argument order if you need the opposite winding.    
@@ -177,7 +177,7 @@ calculate_vertex_normals(Field *field)
     // Finally, normalize all the sums to get a unit-length, area-weighted average.
     for(int vertex = 0; vertex < (field->width) * (field->height); vertex++)
     {
-        V3 current_normal = v3_from_floats(&vertices[vertex*9]);
+        V3 current_normal = v3_from_floats(&vertices[vertex*9 + 6]);
         V3 new_normal = current_normal.normalized();
 #if 1
         vertices[vertex*9 + 6] = new_normal.x;
@@ -321,7 +321,7 @@ update_field_data(GameState *game_state, Field *field)
         {
             FieldPoint *point = &(field->points[y][x]);
             point->height = 0;
-            point->height += random_float(0, 0.1);
+            point->height += random_float(0, 1);
             point->color = color(0.20, 0.22, 0.30, 1);
         }
     }
@@ -636,7 +636,7 @@ update_and_render(GameMemory *game_memory)
     Int sun_light_dir_loc = glGetUniformLocation(game_state->shader_programs[0].id, "sunLightDirection");
     glUniform3f(sun_light_color_loc, 1.0f, 1.0f, 1.0f);
     glUniform1f(sun_light_strength_loc, 1.0f);
-    glUniform3f(sun_light_dir_loc, sin(glfwGetTime()), 1.0f, cos(glfwGetTime()));
+    glUniform3f(sun_light_dir_loc, sin(glfwGetTime()), -1.0f * 0.1f, cos(glfwGetTime()));
     
     glBindVertexArray(field->vao);
     for(Int i = 0; i < field->height-1; i++)
