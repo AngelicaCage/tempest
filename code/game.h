@@ -55,6 +55,7 @@ struct Field
     
     V2 center_world;
     V2 dim_world;
+    V2 playing_area_dim;
     
     Bool render_data_allocated;
     Float *vertices;
@@ -94,9 +95,28 @@ struct Player
     Color color;
 };
 
+struct Bullet
+{
+    V2 pos;
+    V2 vel;
+    Float radius;
+    Color color;
+};
+Bullet bullet(V2 pos, V2 vel, Float radius, Color color)
+{
+    Bullet result;
+    result.pos = pos;
+    result.vel = vel;
+    result.radius = radius;
+    result.color = color;
+    return result;
+}
+
 struct GameState
 {
     Bool initialized;
+    
+    Bool paused;
     
     F64 target_frame_time_ms;
     F32 d_time; // ms
@@ -115,6 +135,8 @@ struct GameState
     UInt axis_vao;
     
     Player player;
+    
+    List<Bullet> enemy_bullets;
     
     SmallFieldBitmap text_bitmaps[26];
 };

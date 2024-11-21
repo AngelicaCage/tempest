@@ -310,7 +310,12 @@ field_draw_small_bitmap(Field *field, SmallFieldBitmap bitmap, V2I offset,
     {
         for(Int x = 0; x < 5; x++)
         {
-            FieldPoint *point = &(field->points[draw_pos.y + y][draw_pos.x + x]);
+            V2I coords = v2i(draw_pos.x + x, draw_pos.y + y);
+            if(coords.x < 0 || coords.x >= field->width ||
+               coords.y < 0 || coords.y >= field->height)
+                break;
+            
+            FieldPoint *point = &(field->points[coords.y][coords.x]);
             if(bitmap.data[y][x])
             {
                 if(set_base_height)
@@ -334,6 +339,11 @@ field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Col
     {
         for(Int x = top_left.x; x < bottom_right.x; x++)
         {
+            V2I coords = v2i(x, y);
+            if(coords.x < 0 || coords.x >= field->width ||
+               coords.y < 0 || coords.y >= field->height)
+                break;
+            
             Float dist = v2_dist(center_field, v2(x, y));
             if(dist <= radius_field)
             {
@@ -350,7 +360,7 @@ update_field_data(GameState *game_state, Field *field)
 {
     Player *player = &game_state->player;
     
-    srand(0);
+    //srand(0);
     for(Int y = 0; y < field->height; y++)
     {
         for(Int x = 0; x < field->width; x++)
@@ -362,9 +372,9 @@ update_field_data(GameState *game_state, Field *field)
         }
     }
     
-    V2 raised_area_size = v2(10.5, 7);
-    V2 raised_area_top_left_field = coords_world_to_field(field, v2(raised_area_size.x / -2, raised_area_size.y / -2));
-    V2 raised_area_bottom_right_field = coords_world_to_field(field, v2(raised_area_size.x / 2, raised_area_size.y / 2));
+    field->playing_area_dim = v2(10.5, 7);
+    V2 raised_area_top_left_field = coords_world_to_field(field, v2(field->playing_area_dim.x / -2, field->playing_area_dim.y / -2));
+    V2 raised_area_bottom_right_field = coords_world_to_field(field, v2(field->playing_area_dim.x / 2, field->playing_area_dim.y / 2));
     
     for(Int y = raised_area_top_left_field.y; y <= raised_area_bottom_right_field.y; y++)
     {
@@ -385,7 +395,11 @@ update_field_data(GameState *game_state, Field *field)
         field_draw_small_bitmap(field, game_state->text_bitmaps[y*11 + x], coords, 0.12f, color(0.96, 0.78, 0.02, 1.0f), true, 1.0f);
     }
     
-    field_draw_circle(field, v2(1, 0), 0.6f, 0.2f, color(0.77f, 0.37f, 0, 1));
+    for(Int i = 0; i < game_state->enemy_bullets.length; i++)
+    {
+        Bullet bullet = game_state->enemy_bullets[i];
+        field_draw_circle(field, bullet.pos, bullet.radius, 0.3f, bullet.color);
+    }
     
     V2I player_pos = v2i(coords_world_to_field(field, player->pos));
     field->points[player_pos.y][player_pos.x].height += 0.4f;
@@ -427,6 +441,8 @@ update_and_render(GameMemory *game_memory)
         game_state->initialized = true;
         game_state->target_frame_time_ms = ((F64)1000) / ((F64)144);
         game_state->d_time = 1;
+        
+        game_state->paused = false;
         
         glfwSetScrollCallback(game_memory->window, scroll_callback);
         
@@ -480,6 +496,8 @@ update_and_render(GameMemory *game_memory)
         player->max_speed = 1;
         player->color = color(1, 0, 0, 1);
         
+        game_state->enemy_bullets = create_list<Bullet>();
+        
         generate_text_bitmaps(game_state);
         update_field_data(game_state, &(game_state->field));
         fill_field_render_data(&(game_state->field));
@@ -494,70 +512,84 @@ update_and_render(GameMemory *game_memory)
                                  (Float)new_mouse_pos[1] - game_state->mouse_pos.y);
     game_state->mouse_pos = v2(new_mouse_pos[0], new_mouse_pos[1]);
     
-    Float player_speed = 0.01f;
-    if(KEYDOWN(GLFW_KEY_D))
-        player->pos.x += player_speed * d_time;
-    if(KEYDOWN(GLFW_KEY_A))
-        player->pos.x -= player_speed * d_time;
-    if(KEYDOWN(GLFW_KEY_W))
-        player->pos.y -= player_speed * d_time;
-    if(KEYDOWN(GLFW_KEY_S))
-        player->pos.y += player_speed * d_time;
-    
-    
-    
-    update_field_data(game_state, &(game_state->field));
-    fill_field_render_data(&(game_state->field));
-    
-    
-    if(camera->orbiting)
+    if(!game_state->paused)
     {
-        Float camera_orbit_speed = 0.002f;
-        if(KEYDOWN(GLFW_KEY_RIGHT))
-            camera->orbit_angles.x -= camera_orbit_speed * d_time;
-        if(KEYDOWN(GLFW_KEY_LEFT))
-            camera->orbit_angles.x += camera_orbit_speed * d_time;
-        if(KEYDOWN(GLFW_KEY_UP))
-            camera->orbit_angles.y += camera_orbit_speed * d_time;
-        if(KEYDOWN(GLFW_KEY_DOWN))
-            camera->orbit_angles.y -= camera_orbit_speed * d_time;
+        Float player_speed = 0.01f;
+        if(KEYDOWN(GLFW_KEY_D))
+            player->pos.x += player_speed * d_time;
+        if(KEYDOWN(GLFW_KEY_A))
+            player->pos.x -= player_speed * d_time;
+        if(KEYDOWN(GLFW_KEY_W))
+            player->pos.y -= player_speed * d_time;
+        if(KEYDOWN(GLFW_KEY_S))
+            player->pos.y += player_speed * d_time;
         
-        // LATER: adjust by window resolution
-        if(glfwGetMouseButton(game_memory->window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+        if(glfwGetTime() - (Float)(Int)glfwGetTime() <= 0.01f)
         {
-            Float camera_mouse_pan_orbit_speed = 0.002f;
-            camera->orbit_angles.y += game_state->d_mouse_pos.y * camera_mouse_pan_orbit_speed * d_time;
-            camera->orbit_angles.x += game_state->d_mouse_pos.x * camera_mouse_pan_orbit_speed * d_time;
+            game_state->enemy_bullets.add(bullet(v2(1, 0), v2(random_float(-0.01f, 0.01f), random_float(-0.01f, 0.01f)),
+                                                 0.5f, color(1.0f, 0.0f, 1.0f, 1.0f)));
+        }
+        for(Int i = 0; i < game_state->enemy_bullets.length; i++)
+        {
+            Bullet *bullet = &game_state->enemy_bullets.data[i];
+            // Later: make * function for V2 and Float
+            bullet->pos += v2(bullet->vel.x * d_time, bullet->vel.y * d_time);
         }
         
-        if(just_scrolled)
+        
+        update_field_data(game_state, &(game_state->field));
+        fill_field_render_data(&(game_state->field));
+        
+        
+        if(camera->orbiting)
         {
-            just_scrolled = false;
-            camera->orbit_distance -= d_scroll * 0.5 * (camera->orbit_distance);
+            Float camera_orbit_speed = 0.002f;
+            if(KEYDOWN(GLFW_KEY_RIGHT))
+                camera->orbit_angles.x -= camera_orbit_speed * d_time;
+            if(KEYDOWN(GLFW_KEY_LEFT))
+                camera->orbit_angles.x += camera_orbit_speed * d_time;
+            if(KEYDOWN(GLFW_KEY_UP))
+                camera->orbit_angles.y += camera_orbit_speed * d_time;
+            if(KEYDOWN(GLFW_KEY_DOWN))
+                camera->orbit_angles.y -= camera_orbit_speed * d_time;
+            
+            // LATER: adjust by window resolution
+            if(glfwGetMouseButton(game_memory->window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+            {
+                Float camera_mouse_pan_orbit_speed = 0.002f;
+                camera->orbit_angles.y += game_state->d_mouse_pos.y * camera_mouse_pan_orbit_speed * d_time;
+                camera->orbit_angles.x += game_state->d_mouse_pos.x * camera_mouse_pan_orbit_speed * d_time;
+            }
+            
+            if(just_scrolled)
+            {
+                just_scrolled = false;
+                camera->orbit_distance -= d_scroll * 0.5 * (camera->orbit_distance);
+            }
+            
+            Float angle_y_min = -1*pi/2.2f;
+            if(camera->orbit_angles.y < angle_y_min)
+                camera->orbit_angles.y = angle_y_min;
+            if(camera->orbit_angles.y > -angle_y_min)
+                camera->orbit_angles.y = -angle_y_min;
+            
+            
+            camera->pos.x = camera->orbit_distance * cos(camera->orbit_angles.y) * cos(camera->orbit_angles.x);
+            camera->pos.y = camera->orbit_distance * sin(camera->orbit_angles.y);
+            camera->pos.z = camera->orbit_distance * cos(camera->orbit_angles.y) * sin(camera->orbit_angles.x);
         }
         
-        Float angle_y_min = -1*pi/2.2f;
-        if(camera->orbit_angles.y < angle_y_min)
-            camera->orbit_angles.y = angle_y_min;
-        if(camera->orbit_angles.y > -angle_y_min)
-            camera->orbit_angles.y = -angle_y_min;
-        
-        
-        camera->pos.x = camera->orbit_distance * cos(camera->orbit_angles.y) * cos(camera->orbit_angles.x);
-        camera->pos.y = camera->orbit_distance * sin(camera->orbit_angles.y);
-        camera->pos.z = camera->orbit_distance * cos(camera->orbit_angles.y) * sin(camera->orbit_angles.x);
-    }
-    
-    {
-        Camera *real_camera = &game_state->camera;
-        Float interp_speed = 0.015f;
-        real_camera->pos.interpolate_to(camera->pos, interp_speed * d_time);
-        real_camera->target.interpolate_to(camera->target, interp_speed * d_time);
-        real_camera->up.interpolate_to(camera->up, interp_speed * d_time);
-        real_camera->orbit_angles.interpolate_to(camera->orbit_angles, interp_speed * d_time);
-        real_camera->orbit_distance = interpolate(real_camera->orbit_distance,
-                                                  camera->orbit_distance,
-                                                  interp_speed * d_time);
+        {
+            Camera *real_camera = &game_state->camera;
+            Float interp_speed = 0.015f;
+            real_camera->pos.interpolate_to(camera->pos, interp_speed * d_time);
+            real_camera->target.interpolate_to(camera->target, interp_speed * d_time);
+            real_camera->up.interpolate_to(camera->up, interp_speed * d_time);
+            real_camera->orbit_angles.interpolate_to(camera->orbit_angles, interp_speed * d_time);
+            real_camera->orbit_distance = interpolate(real_camera->orbit_distance,
+                                                      camera->orbit_distance,
+                                                      interp_speed * d_time);
+        }
     }
     
     
@@ -674,7 +706,7 @@ update_and_render(GameMemory *game_memory)
     Int sun_light_dir_loc = glGetUniformLocation(game_state->shader_programs[0].id, "sunLightDirection");
     glUniform3f(sun_light_color_loc, 1.0f, 1.0f, 1.0f);
     glUniform1f(sun_light_strength_loc, 1.0f);
-    glUniform3f(sun_light_dir_loc, sin(glfwGetTime()), -1.0f * 0.9f, cos(glfwGetTime()));
+    glUniform3f(sun_light_dir_loc, -1.0f, -1.0f, 1.0f);
     
     glBindVertexArray(field->vao);
     for(Int i = 0; i < field->height-1; i++)
