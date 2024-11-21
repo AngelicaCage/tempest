@@ -565,7 +565,14 @@ update_and_render(GameMemory *game_memory)
     Int ambient_light_color_loc = glGetUniformLocation(game_state->shader_programs[0].id, "ambientLightColor");
     Int ambient_light_strength_loc = glGetUniformLocation(game_state->shader_programs[0].id, "ambientLightStrength");
     glUniform3f(ambient_light_color_loc, 1.0f, 1.0f, 1.0f);
-    glUniform1f(ambient_light_strength_loc, 1.0f);
+    glUniform1f(ambient_light_strength_loc, 0.1f);
+    
+    Int sun_light_color_loc = glGetUniformLocation(game_state->shader_programs[0].id, "sunLightColor");
+    Int sun_light_strength_loc = glGetUniformLocation(game_state->shader_programs[0].id, "sunLightStrength");
+    Int sun_light_dir_loc = glGetUniformLocation(game_state->shader_programs[0].id, "sunLightDirection");
+    glUniform3f(sun_light_color_loc, 1.0f, 1.0f, 1.0f);
+    glUniform1f(sun_light_strength_loc, 1.0f);
+    glUniform3f(sun_light_dir_loc, 0.0f, 1.0f, 0.0f);
     
     glBindVertexArray(field->vao);
     for(Int i = 0; i < field->height-1; i++)
