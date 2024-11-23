@@ -285,7 +285,8 @@ update_field_data(GameState *game_state, Field *field)
         field_draw_circle(field, bullet.pos, bullet.radius, 0.3f, bullet.color);
     }
     
-    V2I player_pos = v2i(coords_world_to_field(field, player->pos));
-    field->points[player_pos.y][player_pos.x].height += 0.4f;
-    field->points[player_pos.y][player_pos.x].color = player->color;
+    //V2I player_pos = v2i(coords_world_to_field(field, player->pos));
+    //field->points[player_pos.y][player_pos.x].height += 0.4f;
+    //field->points[player_pos.y][player_pos.x].color = player->color;
+    field_draw_circle(field, player->pos, 0.1f, 0.8f, color(1, 1, 1, 1));
 }

@@ -98,6 +98,14 @@ update_gameplay(GameState *game_state)
         Bullet *bullet = &game_state->enemy_bullets.data[i];
         // Later: make * function for V2 and Float
         bullet->pos += v2(bullet->vel.x * d_time, bullet->vel.y * d_time);
+        if(bullet->pos.x < -playing_area_dim.x/2 - bullet->radius ||
+           bullet->pos.x > playing_area_dim.x/2 + bullet->radius || 
+           bullet->pos.y < -playing_area_dim.y/2 - bullet->radius ||
+           bullet->pos.y > playing_area_dim.y/2 + bullet->radius)
+        {
+            game_state->enemy_bullets.remove_at(i);
+            i--;
+        }
     }
     
 }
@@ -192,7 +200,7 @@ update_and_render(GameMemory *game_memory)
         player->pos = v2(0, 0);
         player->vel = v2(0, 0);
         player->max_speed = 1;
-        player->color = color(1, 0, 0, 1);
+        player->color = color(1, 1, 1, 1);
         
         game_state->enemy_bullets = create_list<Bullet>();
         game_state->enemies = create_list<Enemy>();
@@ -306,7 +314,7 @@ update_and_render(GameMemory *game_memory)
     F64 time_to_sleep = game_state->target_frame_time_ms - frame_time_ms;
     if(time_to_sleep < 0)
         time_to_sleep = 0;
-    game_state->d_time = frame_time_ms + time_to_sleep;
+    game_state->d_time = (frame_time_ms + time_to_sleep);
     if(time_to_sleep > 0)
         sleep(time_to_sleep);
 }
