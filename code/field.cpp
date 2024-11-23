@@ -51,11 +51,6 @@ calculate_vertex_normals(Field *field)
         // don't have an outsized impact on the final normal per vertex.
         
         // Accumulate this cross product into each vertex normal slot.
-#if 0
-        vertexNormals[vertexA] += areaWeightedNormal;
-        vertexNormals[vertexB] += areaWeightedNormal;
-        vertexNormals[vertexC] += areaWeightedNormal;
-#endif
         vertices[vertexA*9 + 6] += areaWeightedNormal.x;
         vertices[vertexA*9 + 7] += areaWeightedNormal.y;
         vertices[vertexA*9 + 8] += areaWeightedNormal.z;
@@ -213,7 +208,8 @@ field_draw_small_bitmap(Field *field, SmallFieldBitmap bitmap, V2I offset,
 }
 
 Void // coords in world space
-field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Color color)
+field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Color color,
+                  Bool set_base_height = false, Float base_height = 1)
 {
     V2 center_field = coords_world_to_field(field, center);
     Float radius_field = scale_world_to_field(field, radius);
@@ -233,6 +229,8 @@ field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Col
             if(dist <= radius_field)
             {
                 FieldPoint *point = &(field->points[y][x]);
+                if(set_base_height)
+                    point->height = base_height;
                 point->height += added_height;
                 point->color = color;
             }
@@ -241,7 +239,7 @@ field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Col
 }
 
 Void
-field_draw_playing_area(GameState *game_state, Field *field)
+field_draw_playing_area(GameState *game_state, Field *field, Float height)
 {
     field->playing_area_dim = v2(10.5, 7);
     V2 raised_area_top_left_field = coords_world_to_field(field, v2(field->playing_area_dim.x / -2, field->playing_area_dim.y / -2));
@@ -252,7 +250,7 @@ field_draw_playing_area(GameState *game_state, Field *field)
         for(Int x = raised_area_top_left_field.x; x <= raised_area_bottom_right_field.x; x++)
         {
             FieldPoint *point = &(field->points[y][x]);
-            point->height = 1;
+            point->height = height;
             point->color = color(0.17, 0.55, 0.42, 1);
         }
     }
@@ -282,9 +280,10 @@ field_draw_text(GameState *game_state, Field *field, const Char *str, V2 pos,
 Void
 update_field_data(GameState *game_state, Field *field)
 {
+    Float playing_area_height = 1;
     if(game_state->paused)
     {
-        field_draw_playing_area(game_state, field);
+        field_draw_playing_area(game_state, field, playing_area_height);
         field_draw_text(game_state, field, "paused", v2(-1.8f, -1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
         field_draw_text(game_state, field, "esc to resume", v2(-3.9f, 1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
     }
@@ -304,7 +303,7 @@ update_field_data(GameState *game_state, Field *field)
             }
         }
         
-        field_draw_playing_area(game_state, field);
+        field_draw_playing_area(game_state, field, playing_area_height);
         
         field_draw_text(game_state, field, "hiiii", v2(0, 0), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
         
@@ -316,7 +315,7 @@ update_field_data(GameState *game_state, Field *field)
         for(Int i = 0; i < game_state->enemies.length; i++)
         {
             Enemy enemy = game_state->enemies[i];
-            field_draw_circle(field, enemy.pos, enemy.radius, 0.3f, enemy.color);
+            field_draw_circle(field, enemy.pos, enemy.radius, 0.3f, enemy.color, true, playing_area_height);
         }
         
         //V2I player_pos = v2i(coords_world_to_field(field, player->pos));
