@@ -188,7 +188,8 @@ Void
 field_draw_small_bitmap(Field *field, SmallFieldBitmap bitmap, V2I offset,
                         Float added_height, Color color, Bool set_base_height = false, Float base_height = 1) // offset from center
 {
-    V2I draw_pos = v2i(field->width/2 + offset.x, field->height/2 + offset.y);
+    //V2I draw_pos = v2i(field->width/2 + offset.x, field->height/2 + offset.y);
+    V2I draw_pos = offset;
     
     for(Int y = 0; y < 5; y++)
     {
@@ -240,22 +241,8 @@ field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Col
 }
 
 Void
-update_field_data(GameState *game_state, Field *field)
+field_draw_playing_area(GameState *game_state, Field *field)
 {
-    Player *player = &game_state->player;
-    
-    //srand(0);
-    for(Int y = 0; y < field->height; y++)
-    {
-        for(Int x = 0; x < field->width; x++)
-        {
-            FieldPoint *point = &(field->points[y][x]);
-            point->height = 0;
-            point->height += random_float(0, 0.1f);
-            point->color = color(0.20, 0.22, 0.30, 1);
-        }
-    }
-    
     field->playing_area_dim = v2(10.5, 7);
     V2 raised_area_top_left_field = coords_world_to_field(field, v2(field->playing_area_dim.x / -2, field->playing_area_dim.y / -2));
     V2 raised_area_bottom_right_field = coords_world_to_field(field, v2(field->playing_area_dim.x / 2, field->playing_area_dim.y / 2));
@@ -269,24 +256,72 @@ update_field_data(GameState *game_state, Field *field)
             point->color = color(0.17, 0.55, 0.42, 1);
         }
     }
+}
+
+Void
+field_draw_text(GameState *game_state, Field *field, const Char *str, V2 pos,
+                Float added_height, Color color, Bool set_base_height = false, Float base_height = 1)
+{
+    V2I start_pos = v2i(coords_world_to_field(field, pos));
     
-    for(Int y = 0; y <= 2; y += 1)
-        for(Int x = 0; x <= 10; x += 1)
+    for(Int i = 0; str[i] != '\0'; i++)
     {
-        if(y*11 + x > 26)
-            break;
-        V2I coords = v2i(x*7 - 50, y*7 - 20);
-        field_draw_small_bitmap(field, game_state->text_bitmaps[y*11 + x], coords, 0.12f, color(0.96, 0.78, 0.02, 1.0f), true, 1.0f);
+        UInt index = 0;
+        if(str[i] == ' ')
+            continue;
+        if(str[i] >= 'A' && str[i] <= 'Z')
+            index = str[i] - 'A';
+        if(str[i] >= 'a' && str[i] <= 'z')
+            index = str[i] - 'a';
+        
+        field_draw_small_bitmap(field, game_state->text_bitmaps[index], start_pos + v2i(6*i, 0),
+                                added_height, color, set_base_height, base_height);
     }
-    
-    for(Int i = 0; i < game_state->enemy_bullets.length; i++)
+}
+
+Void
+update_field_data(GameState *game_state, Field *field)
+{
+    if(game_state->paused)
     {
-        Bullet bullet = game_state->enemy_bullets[i];
-        field_draw_circle(field, bullet.pos, bullet.radius, 0.3f, bullet.color);
+        field_draw_playing_area(game_state, field);
+        field_draw_text(game_state, field, "paused", v2(-1.8f, -1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
+        field_draw_text(game_state, field, "esc to resume", v2(-3.9f, 1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
     }
-    
-    //V2I player_pos = v2i(coords_world_to_field(field, player->pos));
-    //field->points[player_pos.y][player_pos.x].height += 0.4f;
-    //field->points[player_pos.y][player_pos.x].color = player->color;
-    field_draw_circle(field, player->pos, 0.1f, 0.8f, color(1, 1, 1, 1));
+    else
+    {
+        Player *player = &game_state->player;
+        
+        //srand(0);
+        for(Int y = 0; y < field->height; y++)
+        {
+            for(Int x = 0; x < field->width; x++)
+            {
+                FieldPoint *point = &(field->points[y][x]);
+                point->height = 0;
+                point->height += random_float(0, 0.1f);
+                point->color = color(0.20, 0.22, 0.30, 1);
+            }
+        }
+        
+        field_draw_playing_area(game_state, field);
+        
+        field_draw_text(game_state, field, "hiiii", v2(0, 0), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
+        
+        for(Int i = 0; i < game_state->enemy_bullets.length; i++)
+        {
+            Bullet bullet = game_state->enemy_bullets[i];
+            field_draw_circle(field, bullet.pos, bullet.radius, 0.3f, bullet.color);
+        }
+        for(Int i = 0; i < game_state->enemies.length; i++)
+        {
+            Enemy enemy = game_state->enemies[i];
+            field_draw_circle(field, enemy.pos, enemy.radius, 0.3f, enemy.color);
+        }
+        
+        //V2I player_pos = v2i(coords_world_to_field(field, player->pos));
+        //field->points[player_pos.y][player_pos.x].height += 0.4f;
+        //field->points[player_pos.y][player_pos.x].color = player->color;
+        field_draw_circle(field, player->pos, 0.1f, 0.8f, color(1, 1, 1, 1));
+    }
 }

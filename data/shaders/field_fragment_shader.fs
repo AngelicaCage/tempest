@@ -27,6 +27,5 @@ void main()
 		sunLightIntensity = 0.0;
 */
 	vec3 diffuse = sunLightIntensity * sunLightColor;
-
 	FragColor = vec4(vertexColor * (ambient + diffuse), 0.7f);
 }

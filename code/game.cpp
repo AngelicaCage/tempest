@@ -58,7 +58,7 @@ update_gameplay(GameState *game_state)
     Keys *keys = &game_state->input.keys;
     V2 playing_area_dim = game_state->field.playing_area_dim;
     
-    Float player_speed = 0.01f;
+    Float player_speed = 5.0f;
     if(keys->d.is_down)
         player->pos.x += player_speed * d_time;
     if(keys->a.is_down)
@@ -70,13 +70,14 @@ update_gameplay(GameState *game_state)
     
     if(keys->e.just_pressed)
     {
+        Float enemy_fire_time = 0.3f;
         Enemy new_enemy = {
             v2(random_float(-playing_area_dim.x/2, playing_area_dim.x/2),
                random_float(-playing_area_dim.y/2, playing_area_dim.y/2)),
             0.3f,
-            color(1, 1, 1, 1),
-            10,
-            10
+            color(1, 0, 0, 1),
+            enemy_fire_time,
+            enemy_fire_time
         };
         game_state->enemies.add(new_enemy);
     }
@@ -88,8 +89,13 @@ update_gameplay(GameState *game_state)
         if(enemy->time_to_fire <= 0)
         {
             enemy->time_to_fire = enemy->time_between_fires;
-            game_state->enemy_bullets.add(bullet(enemy->pos, v2(random_float(-0.01f, 0.01f), random_float(-0.01f, 0.01f)),
-                                                 0.2f, color(1.0f, 0.0f, 1.0f, 1.0f)));
+            Float bullet_speed = 5.0f;
+            V2 bullet_dir = v2(random_float(-1, 1), random_float(-1, 1));
+            if(bullet_dir.x == 0 && bullet_dir.y == 0)
+                bullet_dir.x = 1;
+            bullet_dir.normalize();
+            game_state->enemy_bullets.add(bullet(enemy->pos, bullet_dir,
+                                                 0.2f, color(1.0f, 0.8f, 0.0f, 1.0f)));
         }
     }
     
@@ -199,7 +205,7 @@ update_and_render(GameMemory *game_memory)
         
         player->pos = v2(0, 0);
         player->vel = v2(0, 0);
-        player->max_speed = 1;
+        player->max_speed = 100;
         player->color = color(1, 1, 1, 1);
         
         game_state->enemy_bullets = create_list<Bullet>();
@@ -231,13 +237,12 @@ update_and_render(GameMemory *game_memory)
     if(!game_state->paused)
     {
         update_gameplay(game_state);
-        update_field_data(game_state, &(game_state->field));
-        fill_field_render_data(&(game_state->field));
         
         if(camera->orbiting)
         {
-            Float camera_orbit_speed = 0.002f;
+            Float camera_orbit_speed = 2.0f;
             //if(KEYDOWN(GLFW_KEY_RIGHT))
+#if 0
             if(keys->right.is_down)
                 camera->orbit_angles.x -= camera_orbit_speed * d_time;
             if(keys->left.is_down)
@@ -250,7 +255,7 @@ update_and_render(GameMemory *game_memory)
             // LATER: adjust by window resolution
             if(glfwGetMouseButton(game_memory->window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
             {
-                Float camera_mouse_pan_orbit_speed = 0.002f;
+                Float camera_mouse_pan_orbit_speed = 2.0f;
                 camera->orbit_angles.y += input->d_mouse_pos.y * camera_mouse_pan_orbit_speed * d_time;
                 camera->orbit_angles.x += input->d_mouse_pos.x * camera_mouse_pan_orbit_speed * d_time;
             }
@@ -260,6 +265,7 @@ update_and_render(GameMemory *game_memory)
                 just_scrolled = false;
                 camera->orbit_distance -= d_scroll * 0.5 * (camera->orbit_distance);
             }
+#endif
             
             Float angle_y_min = -1*pi/2.2f;
             if(camera->orbit_angles.y < angle_y_min)
@@ -275,7 +281,7 @@ update_and_render(GameMemory *game_memory)
         
         {
             Camera *real_camera = &game_state->camera;
-            Float interp_speed = 0.015f;
+            Float interp_speed = 50.0f;
             real_camera->pos.interpolate_to(camera->pos, interp_speed * d_time);
             real_camera->target.interpolate_to(camera->target, interp_speed * d_time);
             real_camera->up.interpolate_to(camera->up, interp_speed * d_time);
@@ -285,6 +291,9 @@ update_and_render(GameMemory *game_memory)
                                                       interp_speed * d_time);
         }
     }
+    
+    update_field_data(game_state, &(game_state->field));
+    fill_field_render_data(&(game_state->field));
     
     
     reload_changed_shaders(game_state);
@@ -314,7 +323,7 @@ update_and_render(GameMemory *game_memory)
     F64 time_to_sleep = game_state->target_frame_time_ms - frame_time_ms;
     if(time_to_sleep < 0)
         time_to_sleep = 0;
-    game_state->d_time = (frame_time_ms + time_to_sleep);
+    game_state->d_time = (frame_time_ms + time_to_sleep) / 1000;
     if(time_to_sleep > 0)
         sleep(time_to_sleep);
 }

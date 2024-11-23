@@ -24,6 +24,17 @@ struct V2
         };
     };
     
+    Float mag()
+    {
+        return sqrtf(x*x + y*y);
+    }
+    Void normalize()
+    {
+        Float m = mag();
+        x = x / m;
+        y = y / m;
+    }
+    
     glm::vec2 to_glm()
     {
         return glm::vec2(x, y);
@@ -205,6 +216,28 @@ operator-=(V2 &a, V2 b)
     return a;
 }
 
+inline V2I
+operator+(V2I a, V2I b)
+{
+    return {a.x + b.x, a.y + b.y};
+}
+inline V2I &
+operator+=(V2I &a, V2I b)
+{
+    a=a+b;
+    return a;
+}
+inline V2I
+operator-(V2I a, V2I b)
+{
+    return {a.x - b.x, a.y - b.y};
+}
+inline V2I &
+operator-=(V2I &a, V2I b)
+{
+    a=a-b;
+    return a;
+}
 
 
 
