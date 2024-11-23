@@ -171,9 +171,17 @@ create_field(Int width, Int height)
     result.height = height;
     
     result.points = (FieldPoint **)alloc(sizeof(FieldPoint *) * height);
-    for(Int i = 0; i < result.height; i++)
+    result.target_points = (FieldPoint **)alloc(sizeof(FieldPoint *) * height);
+    for(Int y = 0; y < result.height; y++)
     {
-        result.points[i] = (FieldPoint *)alloc(sizeof(FieldPoint) * width);
+        result.points[y] = (FieldPoint *)alloc(sizeof(FieldPoint) * width);
+        result.target_points[y] = (FieldPoint *)alloc(sizeof(FieldPoint) * width);
+        
+        for(Int x = 0; x < result.width; x++)
+        {
+            result.points[y][x].height = 0;
+            result.points[y][x].color = color(0, 0, 0, 1.0f);
+        }
     }
     
     return result;
@@ -195,7 +203,7 @@ field_draw_small_bitmap(Field *field, SmallFieldBitmap bitmap, V2I offset,
                coords.y < 0 || coords.y >= field->height)
                 break;
             
-            FieldPoint *point = &(field->points[coords.y][coords.x]);
+            FieldPoint *point = &(field->target_points[coords.y][coords.x]);
             if(bitmap.data[y][x])
             {
                 if(set_base_height)
@@ -228,7 +236,7 @@ field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Col
             Float dist = v2_dist(center_field, v2(x, y));
             if(dist <= radius_field)
             {
-                FieldPoint *point = &(field->points[y][x]);
+                FieldPoint *point = &(field->target_points[y][x]);
                 if(set_base_height)
                     point->height = base_height;
                 point->height += added_height;
@@ -249,7 +257,7 @@ field_draw_playing_area(GameState *game_state, Field *field, Float height)
     {
         for(Int x = raised_area_top_left_field.x; x <= raised_area_bottom_right_field.x; x++)
         {
-            FieldPoint *point = &(field->points[y][x]);
+            FieldPoint *point = &(field->target_points[y][x]);
             point->height = height;
             point->color = color(0.17, 0.55, 0.42, 1);
         }
@@ -296,7 +304,7 @@ update_field_data(GameState *game_state, Field *field)
         {
             for(Int x = 0; x < field->width; x++)
             {
-                FieldPoint *point = &(field->points[y][x]);
+                FieldPoint *point = &(field->target_points[y][x]);
                 point->height = 0;
                 point->height += random_float(0, 0.1f);
                 point->color = color(0.20, 0.22, 0.30, 1);
@@ -323,4 +331,18 @@ update_field_data(GameState *game_state, Field *field)
         //field->points[player_pos.y][player_pos.x].color = player->color;
         field_draw_circle(field, player->pos, 0.1f, 0.8f, color(1, 1, 1, 1));
     }
+    
+    for(Int y = 0; y < field->height; y++)
+    {
+        for(Int x = 0; x < field->width; x++)
+        {
+            FieldPoint *target_point = &(field->target_points[y][x]);
+            FieldPoint *point = &(field->points[y][x]);
+            Float interp_speed = 60.0f * game_state->d_time;
+            
+            point->height = interpolate(point->height, target_point->height, interp_speed);
+            point->color.interpolate_to(target_point->color, interp_speed);
+        }
+    }
+    
 }

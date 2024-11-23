@@ -24,6 +24,14 @@ struct Color
             Float data[4];
         };
     };
+    Void interpolate_to(Color target, Float speed)
+    {
+        r = interpolate(r, target.r, speed);
+        g = interpolate(g, target.g, speed);
+        b = interpolate(b, target.b, speed);
+        a = interpolate(a, target.a, speed);
+    }
+    
 };
 Color color(Float r, Float g, Float b, Float a)
 {
@@ -52,6 +60,7 @@ struct Field
     
     // array of rows
     FieldPoint **points;
+    FieldPoint **target_points;
     
     V2 center_world;
     V2 dim_world;

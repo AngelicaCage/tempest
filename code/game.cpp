@@ -242,7 +242,7 @@ update_and_render(GameMemory *game_memory)
         {
             Float camera_orbit_speed = 2.0f;
             //if(KEYDOWN(GLFW_KEY_RIGHT))
-#if 0
+#if 1
             if(keys->right.is_down)
                 camera->orbit_angles.x -= camera_orbit_speed * d_time;
             if(keys->left.is_down)
@@ -307,9 +307,10 @@ update_and_render(GameMemory *game_memory)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
     
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    //glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     
-    //draw_axes(game_state);
+    draw_axes(game_state);
     
     draw_field(game_state);
     
