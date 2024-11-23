@@ -148,7 +148,7 @@ update_and_render(GameMemory *game_memory)
         // Initialize memory
         game_state->initialized = true;
         
-        game_state->target_fps = 60;
+        game_state->target_fps = 144;
         game_state->d_time = 1;
         game_state->frame_times = create_list<F64>();
         game_state->last_frame_start_time = get_time();
@@ -219,6 +219,8 @@ update_and_render(GameMemory *game_memory)
         game_state->d_time = 0.06f;
     }
     
+    game_state->target_fps = 144;
+    
     F64 this_frame_start_time = get_time();
     game_state->d_time = this_frame_start_time - game_state->last_frame_start_time;
     game_state->last_frame_start_time = this_frame_start_time;
@@ -230,11 +232,9 @@ update_and_render(GameMemory *game_memory)
     {
         frame_times->remove_at(0);
     }
-    else
-    {
-        F64 time_diff = frame_times->data[frame_times->length - 1] - frame_times->data[0];
-        game_state->fps = (Float)frame_times->length / (Float)time_diff;
-    }
+    F64 time_diff = frame_times->data[frame_times->length - 1] - frame_times->data[0];
+    game_state->fps = (Float)frame_times->length / (Float)time_diff;
+    
     
     Float d_time = game_state->d_time;
     
@@ -265,7 +265,7 @@ update_and_render(GameMemory *game_memory)
         {
             Float camera_orbit_speed = 2.0f;
             //if(KEYDOWN(GLFW_KEY_RIGHT))
-#if 0
+#if 1
             if(keys->right.is_down)
                 camera->orbit_angles.x -= camera_orbit_speed * d_time;
             if(keys->left.is_down)

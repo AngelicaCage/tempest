@@ -277,8 +277,10 @@ field_draw_text(GameState *game_state, Field *field, const Char *str, V2 pos,
             continue;
         if(str[i] >= 'A' && str[i] <= 'Z')
             index = str[i] - 'A';
-        if(str[i] >= 'a' && str[i] <= 'z')
+        else if(str[i] >= 'a' && str[i] <= 'z')
             index = str[i] - 'a';
+        else if(str[i] >= '0' && str[i] <= '9')
+            index = 27 + str[i] - '0';
         
         field_draw_small_bitmap(field, game_state->text_bitmaps[index], start_pos + v2i(6*i, 0),
                                 added_height, color, set_base_height, base_height);
@@ -313,7 +315,7 @@ update_field_data(GameState *game_state, Field *field)
         
         field_draw_playing_area(game_state, field, playing_area_height);
         
-        field_draw_text(game_state, field, "hiiii", v2(0, 0), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
+        //field_draw_text(game_state, field, "hiiii", v2(0, 0), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
         
         for(Int i = 0; i < game_state->enemy_bullets.length; i++)
         {
@@ -331,7 +333,15 @@ update_field_data(GameState *game_state, Field *field)
         }
         
         field_draw_circle(field, player->pos, 0.1f, 0.8f, color(1, 1, 1, 1));
+        
     }
+    
+    Char fps_text_buffer[20];
+    sprintf(fps_text_buffer, "%d fps", (Int)game_state->fps);
+    field_draw_text(game_state, field, fps_text_buffer, v2(-1.0f, -1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
+    
+    field_draw_text(game_state, field, "0123456789", v2(-1.0f, 0), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
+    
     
     for(Int y = 0; y < field->height; y++)
     {
@@ -345,5 +355,4 @@ update_field_data(GameState *game_state, Field *field)
             point->color.interpolate_to(target_point->color, interp_speed);
         }
     }
-    
 }

@@ -7,6 +7,8 @@ Float pi = 3.141582f;
 
 Float interpolate(Float a, Float b, Float speed)
 {
+    if(speed > 1) speed = 1;
+    if(speed < 0) speed = 0.1f;
     return a + (b - a) * speed;
 }
 

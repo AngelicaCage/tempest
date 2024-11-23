@@ -161,7 +161,7 @@ struct GameState
     List<Enemy> enemies;
     List<Bullet> enemy_bullets;
     
-    SmallFieldBitmap text_bitmaps[26];
+    SmallFieldBitmap text_bitmaps[36];
 };
 
 #endif //GAME_H
