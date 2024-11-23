@@ -217,6 +217,7 @@ update_key_input(Input *input, GLFWwindow *window, Float d_time)
         }
         else
         {
+            key->is_down = false;
             key->just_pressed = false;
             key->press_time = 0;
             key->time_till_next_repeat = 0;

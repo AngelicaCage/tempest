@@ -194,12 +194,6 @@ Void framebuffer_size_callback(GLFWwindow* window, Int width, Int height)
     glViewport(0, 0, width, height * width_over_height);
 }
 
-Void processInput(GLFWwindow *window)
-{
-    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-}
-
 
 Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
@@ -291,8 +285,6 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
             game_memory.functions_loaded = false;
         }
         
-        
-        processInput(window);
         if(glfwWindowShouldClose(window))
             break;
         

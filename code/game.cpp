@@ -419,6 +419,7 @@ update_and_render(GameMemory *game_memory)
     Player *player = &game_state->player;
     Field *field = &game_state->field;
     Input *input = &game_state->input;
+    Keys *keys = &input->keys;
     
     if(!game_memory->functions_loaded)
     {
@@ -517,16 +518,25 @@ update_and_render(GameMemory *game_memory)
                             (Float)new_mouse_pos[1] - input->mouse_pos.y);
     input->mouse_pos = v2(new_mouse_pos[0], new_mouse_pos[1]);
     
+    if(keys->l.is_down)
+    {
+        game_memory->game_running = false;
+        return;
+    }
+    
+    if(keys->escape.just_pressed)
+        game_state->paused = !game_state->paused;
+    
     if(!game_state->paused)
     {
         Float player_speed = 0.01f;
-        if(KEYDOWN(GLFW_KEY_D))
+        if(keys->d.is_down)
             player->pos.x += player_speed * d_time;
-        if(KEYDOWN(GLFW_KEY_A))
+        if(keys->a.is_down)
             player->pos.x -= player_speed * d_time;
-        if(KEYDOWN(GLFW_KEY_W))
+        if(keys->w.is_down)
             player->pos.y -= player_speed * d_time;
-        if(KEYDOWN(GLFW_KEY_S))
+        if(keys->s.is_down)
             player->pos.y += player_speed * d_time;
         
         if(glfwGetTime() - (Float)(Int)glfwGetTime() <= 0.01f)
@@ -549,13 +559,14 @@ update_and_render(GameMemory *game_memory)
         if(camera->orbiting)
         {
             Float camera_orbit_speed = 0.002f;
-            if(KEYDOWN(GLFW_KEY_RIGHT))
+            //if(KEYDOWN(GLFW_KEY_RIGHT))
+            if(keys->right.is_down)
                 camera->orbit_angles.x -= camera_orbit_speed * d_time;
-            if(KEYDOWN(GLFW_KEY_LEFT))
+            if(keys->left.is_down)
                 camera->orbit_angles.x += camera_orbit_speed * d_time;
-            if(KEYDOWN(GLFW_KEY_UP))
+            if(keys->up.is_down)
                 camera->orbit_angles.y += camera_orbit_speed * d_time;
-            if(KEYDOWN(GLFW_KEY_DOWN))
+            if(keys->down.is_down)
                 camera->orbit_angles.y -= camera_orbit_speed * d_time;
             
             // LATER: adjust by window resolution
@@ -600,7 +611,8 @@ update_and_render(GameMemory *game_memory)
     
     reload_changed_shaders(game_state);
     
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    //glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     
     
