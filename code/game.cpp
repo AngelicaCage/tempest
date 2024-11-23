@@ -382,7 +382,7 @@ update_field_data(GameState *game_state, Field *field)
         for(Int x = raised_area_top_left_field.x; x <= raised_area_bottom_right_field.x; x++)
         {
             FieldPoint *point = &(field->points[y][x]);
-            point->height += 1;
+            point->height = 1;
             point->color = color(0.17, 0.55, 0.42, 1);
         }
     }
@@ -418,6 +418,7 @@ update_and_render(GameMemory *game_memory)
     Camera *camera = &game_state->target_camera;
     Player *player = &game_state->player;
     Field *field = &game_state->field;
+    Input *input = &game_state->input;
     
     if(!game_memory->functions_loaded)
     {
@@ -444,6 +445,8 @@ update_and_render(GameMemory *game_memory)
         game_state->d_time = 1;
         
         game_state->paused = false;
+        
+        fill_key_data(input);
         
         glfwSetScrollCallback(game_memory->window, scroll_callback);
         
@@ -507,11 +510,12 @@ update_and_render(GameMemory *game_memory)
     
     F32 d_time = game_state->d_time;
     
+    update_key_input(input, game_memory->window, d_time);
     F64 new_mouse_pos[2];
     glfwGetCursorPos(game_memory->window, &new_mouse_pos[0], &new_mouse_pos[1]);
-    game_state->d_mouse_pos = v2((Float)new_mouse_pos[0] - game_state->mouse_pos.x,
-                                 (Float)new_mouse_pos[1] - game_state->mouse_pos.y);
-    game_state->mouse_pos = v2(new_mouse_pos[0], new_mouse_pos[1]);
+    input->d_mouse_pos = v2((Float)new_mouse_pos[0] - input->mouse_pos.x,
+                            (Float)new_mouse_pos[1] - input->mouse_pos.y);
+    input->mouse_pos = v2(new_mouse_pos[0], new_mouse_pos[1]);
     
     if(!game_state->paused)
     {
@@ -558,8 +562,8 @@ update_and_render(GameMemory *game_memory)
             if(glfwGetMouseButton(game_memory->window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
             {
                 Float camera_mouse_pan_orbit_speed = 0.002f;
-                camera->orbit_angles.y += game_state->d_mouse_pos.y * camera_mouse_pan_orbit_speed * d_time;
-                camera->orbit_angles.x += game_state->d_mouse_pos.x * camera_mouse_pan_orbit_speed * d_time;
+                camera->orbit_angles.y += input->d_mouse_pos.y * camera_mouse_pan_orbit_speed * d_time;
+                camera->orbit_angles.x += input->d_mouse_pos.x * camera_mouse_pan_orbit_speed * d_time;
             }
             
             if(just_scrolled)
@@ -688,6 +692,8 @@ update_and_render(GameMemory *game_memory)
     }
 #endif
     
+    glShadeModel(GL_SMOOTH);
+    glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
     
     // Draw field
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -700,7 +706,7 @@ update_and_render(GameMemory *game_memory)
     Int ambient_light_color_loc = glGetUniformLocation(game_state->shader_programs[0].id, "ambientLightColor");
     Int ambient_light_strength_loc = glGetUniformLocation(game_state->shader_programs[0].id, "ambientLightStrength");
     glUniform3f(ambient_light_color_loc, 1.0f, 1.0f, 1.0f);
-    glUniform1f(ambient_light_strength_loc, 0.1f);
+    glUniform1f(ambient_light_strength_loc, 0.5f);
     
     Int sun_light_color_loc = glGetUniformLocation(game_state->shader_programs[0].id, "sunLightColor");
     Int sun_light_strength_loc = glGetUniformLocation(game_state->shader_programs[0].id, "sunLightStrength");
@@ -717,19 +723,20 @@ update_and_render(GameMemory *game_memory)
     }
     
     
+    // Field outlines
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glLineWidth(1);
-    glUseProgram(game_state->shader_programs[1].id);
+    glLineWidth(2);
+    //glUseProgram(game_state->shader_programs[1].id);
     
-    line_color[0] = 0.0f;
-    line_color[1] = 0.0f;
-    line_color[2] = 0.0f;
-    line_color[3] = 0.2f;
-    glUniform4fv(color_loc, 1, line_color);
+    line_color[0] = 1.0f;
+    line_color[1] = 1.0f;
+    line_color[2] = 1.0f;
+    line_color[3] = 0.3f;
+    //glUniform4fv(color_loc, 1, line_color);
     
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(0.0f, 0.01f, 0.0f));
-    model_loc = glGetUniformLocation(game_state->shader_programs[1].id, "model");
+    model_loc = glGetUniformLocation(game_state->shader_programs[0].id, "model");
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
     
     glBindVertexArray(field->vao);

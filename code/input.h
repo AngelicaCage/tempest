@@ -105,6 +105,7 @@ struct Input
     F32 key_repeat_speed;
     
     V2 mouse_pos;
+    V2 d_mouse_pos;
     
     Keys keys;
 };
@@ -187,5 +188,53 @@ fill_key_data(Input *input)
     keys->escape.key_code = GLFW_KEY_ESCAPE;
     //keys->Key.key_code = GLFW_KEY_;
 }
+
+#if 0
+Int key_code;
+Bool just_pressed;
+Bool is_down;
+Float press_time;
+Float time_till_next_repeat;
+#endif
+
+Void
+update_key_input(Input *input, GLFWwindow *window, Float d_time)
+{
+    Keys *keys = &input->keys;
+    for(int i = 0; i < sizeof(keys->data) / sizeof(KeyData); i++)
+    {
+        KeyData *key = &(keys->data[i]);
+        
+        if(glfwGetKey(window, key->key_code) == GLFW_PRESS)
+        {
+            key->is_down = true;
+            if(key->press_time == 0)
+                key->just_pressed = true;
+            else
+                key->just_pressed = false;
+            
+            key->press_time += d_time;
+        }
+        else
+        {
+            key->just_pressed = false;
+            key->press_time = 0;
+            key->time_till_next_repeat = 0;
+        }
+        
+        if(key->just_pressed || key->press_time >= input->key_first_repeat_time)
+        {
+            if(key->time_till_next_repeat <= 0)
+            {
+                key->time_till_next_repeat = input->key_repeat_speed;
+            }
+            else
+            {
+                key->time_till_next_repeat -= d_time;
+            }
+        }
+    }
+}
+
 
 #endif //INPUT_H

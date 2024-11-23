@@ -121,8 +121,7 @@ struct GameState
     F64 target_frame_time_ms;
     F32 d_time; // ms
     
-    V2 mouse_pos;
-    V2 d_mouse_pos;
+    Input input;
     
     List<ShaderProgram> shader_programs;
     
