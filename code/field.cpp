@@ -324,11 +324,12 @@ update_field_data(GameState *game_state, Field *field)
         {
             Enemy enemy = game_state->enemies[i];
             field_draw_circle(field, enemy.pos, enemy.radius, 0.3f, enemy.color, true, playing_area_height);
+            
+            Float max_enemy_charge_height = 1.5f;
+            Float enemy_charge_height = (enemy.time_between_fires - enemy.time_to_fire) * max_enemy_charge_height;
+            field_draw_circle(field, enemy.pos, enemy.radius/2, enemy_charge_height, enemy.color);
         }
         
-        //V2I player_pos = v2i(coords_world_to_field(field, player->pos));
-        //field->points[player_pos.y][player_pos.x].height += 0.4f;
-        //field->points[player_pos.y][player_pos.x].color = player->color;
         field_draw_circle(field, player->pos, 0.1f, 0.8f, color(1, 1, 1, 1));
     }
     
