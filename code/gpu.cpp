@@ -118,6 +118,34 @@ gpu_delete_shader_program(ShaderProgram *program)
     program->linked = false;
 }
 
+Void
+gpu_update_camera_in_shaders(GameState *game_state)
+{
+    for(Int i = 0; i < game_state->shader_programs.length; i++)
+    {
+        ShaderProgram *shader_program = &(game_state->shader_programs.data[i]);
+        if(!shader_program->is_3d)
+            continue;
+        
+        glUseProgram(shader_program->id);
+        
+        glm::mat model = glm::mat4(1.0f);
+        Int model_loc = glGetUniformLocation(shader_program->id, "model");
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
+        
+        glm::mat4 view = glm::lookAt(game_state->camera.pos.to_glm(),
+                                     game_state->camera.target.to_glm(),
+                                     game_state->camera.up.to_glm());
+        Int view_loc = glGetUniformLocation(shader_program->id, "view");
+        glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
+        
+        
+        glm::mat4 proj = glm::perspective(glm::radians(45.0f), 1920.0f/1080.0f, 0.1f, 1000.0f);
+        Int proj_loc = glGetUniformLocation(shader_program->id, "projection");
+        glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm::value_ptr(proj));
+    }
+}
+
 #if 0
 Void
 gpu_upload_vertices_static(Float v[])

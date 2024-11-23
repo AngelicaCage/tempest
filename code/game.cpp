@@ -20,8 +20,9 @@
 #include "game.h"
 
 #include "bitmaps.cpp"
+#include "drawing.cpp"
 
-// Later: move to gpu.h
+// Later: move to shaders.h (or some better-named file)
 UInt vertex_shader_fallback_id = 0;
 UInt fragment_shader_fallback_id = 0;
 
@@ -31,12 +32,14 @@ F64 (*get_time_ms)();
 Void (*sleep)(F64);
 
 #include "gpu.cpp"
+#include "shaders.cpp"
+#include "field.cpp"
 
 #define GAME_DATA_DIRECTORY "../data"
 
 #define KEYDOWN(key) (glfwGetKey(game_memory->window, (key)) == GLFW_PRESS)
 
-// Later: get a better solution (sending input from platform layer)
+// Later: integrate these with Input
 Float d_scroll;
 Bool just_scrolled;
 
@@ -47,367 +50,57 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     //ASSERT(false);
 }
 
-void
-compile_fallback_shaders()
-{
-    const Char *vs_source = "#version 330 core\n"
-        "layout (location = 0) in vec3 aPos;\n"
-        "void main()\n"
-        "{\n"
-        "gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-        "}";
-    Int vs_source_length = strlen(vs_source);
-    
-    const Char *fs_source = "#version 330 core\n"
-        "out vec4 FragColor;\n"
-        "void main()\n"
-        "{\n"
-        "FragColor = vec4(1.0f, 0.0f, 1.0f, 1.0f);\n"
-        "}";
-    Int fs_source_length = strlen(vs_source);
-    
-    vertex_shader_fallback_id = glCreateShader(GL_VERTEX_SHADER);
-    fragment_shader_fallback_id = glCreateShader(GL_FRAGMENT_SHADER);
-    
-    
-    glShaderSource(vertex_shader_fallback_id, 1, &vs_source, &vs_source_length);
-    glCompileShader(vertex_shader_fallback_id);
-    
-    Int compilation_succeeded;
-    glGetShaderiv(vertex_shader_fallback_id, GL_COMPILE_STATUS, &compilation_succeeded);
-    ASSERT(compilation_succeeded == GL_TRUE);
-    
-    
-    glShaderSource(fragment_shader_fallback_id, 1, &fs_source, &fs_source_length);
-    glCompileShader(fragment_shader_fallback_id);
-    
-    glGetShaderiv(fragment_shader_fallback_id, GL_COMPILE_STATUS, &compilation_succeeded);
-    ASSERT(compilation_succeeded == GL_TRUE);
-    
-}
-
-#define TERMINATE_GAME_LOOP() {\
-game_memory->game_running = false;\
-return;\
-}
-
-
 Void
-reload_changed_shaders(GameState *game_state)
+update_gameplay(GameState *game_state)
 {
-    for(Int i = 0; i < game_state->shader_programs.length; i++)
-    {
-        if(i > 0)
-            break;
-        ShaderProgram *program = &(game_state->shader_programs.data[i]);
-        
-        U64 vs_last_write_time = get_file_last_write_time(program->vertex_shader.path);
-        U64 fs_last_write_time = get_file_last_write_time(program->fragment_shader.path);
-        
-        if(vs_last_write_time != program->vertex_shader.file_last_write_time ||
-           fs_last_write_time != program->fragment_shader.file_last_write_time)
-        {
-            gpu_delete_shader_program(program);
-            *program = gpu_create_shader_program(program->vertex_shader.path, program->fragment_shader.path, program->is_3d);
-        }
-    }
-}
-
-V2
-coords_field_to_world(Field *field, V2 pos)
-{
-    // LATER: optimize if possible
-    V2 top_left = v2(field->center_world.x - field->dim_world.x/2.0f, field->center_world.y - field->dim_world.y/2.0f);
-    pos.x = pos.x / (Float)field->width * field->dim_world.x + top_left.x;
-    pos.y = pos.y / (Float)field->height * field->dim_world.y + top_left.y;
-    return pos;
-}
-V2
-coords_world_to_field(Field *field, V2 pos)
-{
-    V2 top_left = v2(field->center_world.x - field->dim_world.x/2.0f, field->center_world.y - field->dim_world.y/2.0f);
-    pos.x = (pos.x - top_left.x) / field->dim_world.x * (Float(field->width));
-    pos.y = (pos.y - top_left.y) / field->dim_world.y * (Float(field->height));
-    return pos;
-}
-Float
-scale_world_to_field(Field *field, Float s)
-{
-    return s / field->dim_world.x * (Float(field->width));
-}
-Float
-scale_field_to_world(Field *field, Float s)
-{
-    return s / (Float(field->width)) * field->dim_world.x;
-}
-
-
-
-// From: https://gamedev.stackexchange.com/questions/152991/how-can-i-calculate-normals-using-a-vertex-and-index-buffer
-Void
-calculate_vertex_normals(Field *field)
-{
-    Float *vertices = field->vertices;
-    UInt *indices = field->indices;
-    // For each face, compute the face normal, and accumulate it into each vertex.
-    for(Int index = 0; index < (field->width-1)*6 * (field->height-1); index += 3) {
-        Int vertexA = indices[index];
-        Int vertexB = indices[index + 1];
-        Int vertexC = indices[index + 2];
-        
-        V3 edgeAB = v3_from_floats(&(vertices[vertexB*9])) - v3_from_floats(&(vertices[vertexA*9]));
-        V3 edgeAC = v3_from_floats(&(vertices[vertexC*9])) - v3_from_floats(&(vertices[vertexA*9]));
-        
-        // The cross product is perpendicular to both input vectors (normal to the plane).
-        // Flip the argument order if you need the opposite winding.    
-        glm::vec3 _areaWeightedNormal = glm::cross(edgeAB.to_glm(), edgeAC.to_glm());
-        V3 areaWeightedNormal = v3_from_glm(_areaWeightedNormal);
-        
-        // Don't normalize this vector just yet. Its magnitude is proportional to the
-        // area of the triangle (times 2), so this helps ensure tiny/skinny triangles
-        // don't have an outsized impact on the final normal per vertex.
-        
-        // Accumulate this cross product into each vertex normal slot.
-#if 0
-        vertexNormals[vertexA] += areaWeightedNormal;
-        vertexNormals[vertexB] += areaWeightedNormal;
-        vertexNormals[vertexC] += areaWeightedNormal;
-#endif
-        vertices[vertexA*9 + 6] += areaWeightedNormal.x;
-        vertices[vertexA*9 + 7] += areaWeightedNormal.y;
-        vertices[vertexA*9 + 8] += areaWeightedNormal.z;
-        
-        vertices[vertexB*9 + 6] += areaWeightedNormal.x;
-        vertices[vertexB*9 + 7] += areaWeightedNormal.y;
-        vertices[vertexB*9 + 8] += areaWeightedNormal.z;
-        
-        vertices[vertexC*9 + 6] += areaWeightedNormal.x;
-        vertices[vertexC*9 + 7] += areaWeightedNormal.y;
-        vertices[vertexC*9 + 8] += areaWeightedNormal.z;
-    }
-    
-    // Finally, normalize all the sums to get a unit-length, area-weighted average.
-    for(int vertex = 0; vertex < (field->width) * (field->height); vertex++)
-    {
-        V3 current_normal = v3_from_floats(&vertices[vertex*9 + 6]);
-        V3 new_normal = current_normal.normalized();
-#if 1
-        vertices[vertex*9 + 6] = new_normal.x;
-        vertices[vertex*9 + 7] = new_normal.y;
-        vertices[vertex*9 + 8] = new_normal.z;
-#endif
-    }
-}
-
-Void
-fill_field_render_data(Field *field)
-{
-    if(!field->render_data_allocated)
-    {
-        // cpu
-        field->vertices = (Float *)alloc(sizeof(Float) * field->width*9 * field->height);
-        field->indices = (UInt *)alloc(sizeof(UInt) * (field->width-1)*6 * (field->height-1));
-        
-        // gpu
-        field->ebos = (UInt *)alloc(sizeof(UInt) * (field->height-1));
-        
-        glGenVertexArrays(1, &field->vao);
-        glGenBuffers(1, &field->vbo);
-        for(Int i = 0; i < field->height-1; i++)
-        {
-            glGenBuffers(1, &(field->ebos[i]));
-        }
-        
-        field->render_data_allocated = true;
-    }
-    
-    for(Int y = 0; y < field->height; y++)
-    {
-        for(Int x = 0; x < field->width; x++)
-        {
-            Int stride = 9;
-            
-            V2 coords_world = coords_field_to_world(field, v2(x, y));
-            field->vertices[y*field->width*stride + x*stride + 0] = coords_world.x;
-            field->vertices[y*field->width*stride + x*stride + 1] = field->points[y][x].height;
-            field->vertices[y*field->width*stride + x*stride + 2] = coords_world.y;
-            
-            field->vertices[y*field->width*stride + x*stride + 3] = field->points[y][x].color.r;
-            field->vertices[y*field->width*stride + x*stride + 4] = field->points[y][x].color.g;
-            field->vertices[y*field->width*stride + x*stride + 5] = field->points[y][x].color.b;
-            
-#if 0
-            field->vertices[y*field->width*stride + x*stride + 6] = 0;
-            field->vertices[y*field->width*stride + x*stride + 7] = 1;
-            field->vertices[y*field->width*stride + x*stride + 8] = 0;
-#endif
-        }
-    }
-    
-    for(Int y = 0; y < field->height - 1; y++)
-    {
-        for(Int x = 0; x < field->width - 1; x++)
-        {
-            Int stride = 6;
-            
-            field->indices[y*stride*(field->width-1) + x*stride + 0] = x + y*field->width;
-            field->indices[y*stride*(field->width-1) + x*stride + 1] = x + (y+1)*field->width;
-            field->indices[y*stride*(field->width-1) + x*stride + 2] = x + 1 + (y+1)*field->width;
-            
-            field->indices[y*stride*(field->width-1) + x*stride + 3] = x + y*field->width;
-            field->indices[y*stride*(field->width-1) + x*stride + 4] = x + 1 + (y+1)*field->width;
-            field->indices[y*stride*(field->width-1) + x*stride + 5] = x + 1 + y*field->width;
-        }
-    }
-    
-    calculate_vertex_normals(field);
-    
-    glBindVertexArray(field->vao);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, field->vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * field->width*9 * field->height, field->vertices, GL_DYNAMIC_DRAW);
-    
-    for(Int i = 0; i < field->height-1; i++)
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field->ebos[i]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(UInt) * (field->width-1)*6,
-                     &(field->indices[i*(field->width-1)*6]), GL_STATIC_DRAW);
-    }
-    
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*9, (Void *)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*9, (Void *)(sizeof(Float)*3));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*9, (Void *)(sizeof(Float)*6));
-    glEnableVertexAttribArray(2);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-}
-
-Field
-create_field(Int width, Int height)
-{
-    Field result;
-    result.width = width;
-    result.height = height;
-    
-    result.points = (FieldPoint **)alloc(sizeof(FieldPoint *) * height);
-    for(Int i = 0; i < result.height; i++)
-    {
-        result.points[i] = (FieldPoint *)alloc(sizeof(FieldPoint) * width);
-    }
-    
-    return result;
-}
-
-Void
-field_draw_small_bitmap(Field *field, SmallFieldBitmap bitmap, V2I offset,
-                        Float added_height, Color color, Bool set_base_height = false, Float base_height = 1) // offset from center
-{
-    V2I draw_pos = v2i(field->width/2 + offset.x, field->height/2 + offset.y);
-    
-    for(Int y = 0; y < 5; y++)
-    {
-        for(Int x = 0; x < 5; x++)
-        {
-            V2I coords = v2i(draw_pos.x + x, draw_pos.y + y);
-            if(coords.x < 0 || coords.x >= field->width ||
-               coords.y < 0 || coords.y >= field->height)
-                break;
-            
-            FieldPoint *point = &(field->points[coords.y][coords.x]);
-            if(bitmap.data[y][x])
-            {
-                if(set_base_height)
-                    point->height = base_height;
-                point->height += added_height;
-                point->color = color;
-            }
-        }
-    }
-}
-
-Void // coords in world space
-field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Color color)
-{
-    V2 center_field = coords_world_to_field(field, center);
-    Float radius_field = scale_world_to_field(field, radius);
-    V2I top_left = v2i(center_field - v2(radius_field, radius_field));
-    V2I bottom_right = v2i(center_field + v2(radius_field + 0.5f, radius_field + 0.5f));
-    
-    for(Int y = top_left.y; y < bottom_right.y; y++)
-    {
-        for(Int x = top_left.x; x < bottom_right.x; x++)
-        {
-            V2I coords = v2i(x, y);
-            if(coords.x < 0 || coords.x >= field->width ||
-               coords.y < 0 || coords.y >= field->height)
-                break;
-            
-            Float dist = v2_dist(center_field, v2(x, y));
-            if(dist <= radius_field)
-            {
-                FieldPoint *point = &(field->points[y][x]);
-                point->height += added_height;
-                point->color = color;
-            }
-        }
-    }
-}
-
-Void
-update_field_data(GameState *game_state, Field *field)
-{
+    F32 d_time = game_state->d_time;
     Player *player = &game_state->player;
+    Keys *keys = &game_state->input.keys;
+    V2 playing_area_dim = game_state->field.playing_area_dim;
     
-    //srand(0);
-    for(Int y = 0; y < field->height; y++)
+    Float player_speed = 0.01f;
+    if(keys->d.is_down)
+        player->pos.x += player_speed * d_time;
+    if(keys->a.is_down)
+        player->pos.x -= player_speed * d_time;
+    if(keys->w.is_down)
+        player->pos.y -= player_speed * d_time;
+    if(keys->s.is_down)
+        player->pos.y += player_speed * d_time;
+    
+    if(keys->e.just_pressed)
     {
-        for(Int x = 0; x < field->width; x++)
-        {
-            FieldPoint *point = &(field->points[y][x]);
-            point->height = 0;
-            point->height += random_float(0, 0.1f);
-            point->color = color(0.20, 0.22, 0.30, 1);
-        }
+        Enemy new_enemy = {
+            v2(random_float(-playing_area_dim.x/2, playing_area_dim.x/2),
+               random_float(-playing_area_dim.y/2, playing_area_dim.y/2)),
+            0.3f,
+            color(1, 1, 1, 1),
+            10,
+            10
+        };
+        game_state->enemies.add(new_enemy);
     }
     
-    field->playing_area_dim = v2(10.5, 7);
-    V2 raised_area_top_left_field = coords_world_to_field(field, v2(field->playing_area_dim.x / -2, field->playing_area_dim.y / -2));
-    V2 raised_area_bottom_right_field = coords_world_to_field(field, v2(field->playing_area_dim.x / 2, field->playing_area_dim.y / 2));
-    
-    for(Int y = raised_area_top_left_field.y; y <= raised_area_bottom_right_field.y; y++)
+    for(Int i = 0; i < game_state->enemies.length; i++)
     {
-        for(Int x = raised_area_top_left_field.x; x <= raised_area_bottom_right_field.x; x++)
+        Enemy *enemy = &(game_state->enemies.data[i]);
+        enemy->time_to_fire -= d_time;
+        if(enemy->time_to_fire <= 0)
         {
-            FieldPoint *point = &(field->points[y][x]);
-            point->height = 1;
-            point->color = color(0.17, 0.55, 0.42, 1);
+            enemy->time_to_fire = enemy->time_between_fires;
+            game_state->enemy_bullets.add(bullet(enemy->pos, v2(random_float(-0.01f, 0.01f), random_float(-0.01f, 0.01f)),
+                                                 0.2f, color(1.0f, 0.0f, 1.0f, 1.0f)));
         }
-    }
-    
-    for(Int y = 0; y <= 2; y += 1)
-        for(Int x = 0; x <= 10; x += 1)
-    {
-        if(y*11 + x > 26)
-            break;
-        V2I coords = v2i(x*7 - 50, y*7 - 20);
-        field_draw_small_bitmap(field, game_state->text_bitmaps[y*11 + x], coords, 0.12f, color(0.96, 0.78, 0.02, 1.0f), true, 1.0f);
     }
     
     for(Int i = 0; i < game_state->enemy_bullets.length; i++)
     {
-        Bullet bullet = game_state->enemy_bullets[i];
-        field_draw_circle(field, bullet.pos, bullet.radius, 0.3f, bullet.color);
+        Bullet *bullet = &game_state->enemy_bullets.data[i];
+        // Later: make * function for V2 and Float
+        bullet->pos += v2(bullet->vel.x * d_time, bullet->vel.y * d_time);
     }
     
-    V2I player_pos = v2i(coords_world_to_field(field, player->pos));
-    field->points[player_pos.y][player_pos.x].height += 0.4f;
-    field->points[player_pos.y][player_pos.x].color = player->color;
 }
-
-
 
 
 extern "C" __declspec(dllexport) void __cdecl
@@ -502,11 +195,11 @@ update_and_render(GameMemory *game_memory)
         player->color = color(1, 0, 0, 1);
         
         game_state->enemy_bullets = create_list<Bullet>();
+        game_state->enemies = create_list<Enemy>();
         
         generate_text_bitmaps(game_state);
         update_field_data(game_state, &(game_state->field));
         fill_field_render_data(&(game_state->field));
-        
     }
     
     F32 d_time = game_state->d_time;
@@ -518,7 +211,7 @@ update_and_render(GameMemory *game_memory)
                             (Float)new_mouse_pos[1] - input->mouse_pos.y);
     input->mouse_pos = v2(new_mouse_pos[0], new_mouse_pos[1]);
     
-    if(keys->l.is_down)
+    if(keys->q.is_down)
     {
         game_memory->game_running = false;
         return;
@@ -529,32 +222,9 @@ update_and_render(GameMemory *game_memory)
     
     if(!game_state->paused)
     {
-        Float player_speed = 0.01f;
-        if(keys->d.is_down)
-            player->pos.x += player_speed * d_time;
-        if(keys->a.is_down)
-            player->pos.x -= player_speed * d_time;
-        if(keys->w.is_down)
-            player->pos.y -= player_speed * d_time;
-        if(keys->s.is_down)
-            player->pos.y += player_speed * d_time;
-        
-        if(glfwGetTime() - (Float)(Int)glfwGetTime() <= 0.01f)
-        {
-            game_state->enemy_bullets.add(bullet(v2(1, 0), v2(random_float(-0.01f, 0.01f), random_float(-0.01f, 0.01f)),
-                                                 0.5f, color(1.0f, 0.0f, 1.0f, 1.0f)));
-        }
-        for(Int i = 0; i < game_state->enemy_bullets.length; i++)
-        {
-            Bullet *bullet = &game_state->enemy_bullets.data[i];
-            // Later: make * function for V2 and Float
-            bullet->pos += v2(bullet->vel.x * d_time, bullet->vel.y * d_time);
-        }
-        
-        
+        update_gameplay(game_state);
         update_field_data(game_state, &(game_state->field));
         fill_field_render_data(&(game_state->field));
-        
         
         if(camera->orbiting)
         {
@@ -611,154 +281,24 @@ update_and_render(GameMemory *game_memory)
     
     reload_changed_shaders(game_state);
     
-    //glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    
-    
-    
-    for(Int i = 0; i < game_state->shader_programs.length; i++)
-    {
-        ShaderProgram *shader_program = &(game_state->shader_programs.data[i]);
-        if(!shader_program->is_3d)
-            continue;
-        
-        glUseProgram(shader_program->id);
-        
-        glm::mat4 model = glm::mat4(1.0f);
-        Int model_loc = glGetUniformLocation(shader_program->id, "model");
-        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
-        
-        glm::mat4 view = glm::lookAt(game_state->camera.pos.to_glm(),
-                                     game_state->camera.target.to_glm(),
-                                     game_state->camera.up.to_glm());
-        Int view_loc = glGetUniformLocation(shader_program->id, "view");
-        glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
-        
-        
-        glm::mat4 proj = glm::perspective(glm::radians(45.0f), 1920.0f/1080.0f, 0.1f, 1000.0f);
-        Int proj_loc = glGetUniformLocation(shader_program->id, "projection");
-        glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm::value_ptr(proj));
-    }
-    
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable( GL_BLEND );
-    
-    // Draw axes
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    Int positive_line_width = 3;
-    Int negative_line_width = 1;
-    
-    Float line_color[4] = {1.0f, 0.0f, 0.0f, 1.0f};
-    Int color_loc = glGetUniformLocation(game_state->shader_programs[1].id, "lineColor");
-    glm::mat4 model = glm::mat4(1.0f);
-    Int model_loc = glGetUniformLocation(game_state->shader_programs[1].id, "model");
-    glUseProgram(game_state->shader_programs[1].id);
-    glBindVertexArray(game_state->axis_vao);
-    
-#if 0
-    { // x axis
-        glUniform4fv(color_loc, 1, line_color);
-        glLineWidth(positive_line_width);
-        glDrawArrays(GL_LINES, 0, 2);
-        
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-100, 0, 0));
-        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
-        glLineWidth(negative_line_width);
-        glDrawArrays(GL_LINES, 0, 2);
-    }
-    
-    { // z axis
-        line_color[0] = 0.0f;
-        line_color[2] = 1.0f;
-        glUniform4fv(color_loc, 1, line_color);
-        model = glm::mat4(1.0f);
-        model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
-        glLineWidth(positive_line_width);
-        glDrawArrays(GL_LINES, 0, 2);
-        
-        model = glm::translate(model, glm::vec3(-100, 0, 0));
-        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
-        glLineWidth(negative_line_width);
-        glDrawArrays(GL_LINES, 0, 2);
-    }
-    
-    { // y axis
-        line_color[2] = 0.0f;
-        line_color[1] = 1.0f;
-        glUniform4fv(color_loc, 1, line_color);
-        model = glm::mat4(1.0f);
-        model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
-        glLineWidth(positive_line_width);
-        glDrawArrays(GL_LINES, 0, 2);
-        
-        model = glm::translate(model, glm::vec3(-100, 0, 0));
-        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
-        glLineWidth(negative_line_width);
-        glDrawArrays(GL_LINES, 0, 2);
-    }
-#endif
+    gpu_update_camera_in_shaders(game_state);
     
     glShadeModel(GL_SMOOTH);
     glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
     
-    // Draw field
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glUseProgram(game_state->shader_programs[0].id);
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-    model_loc = glGetUniformLocation(game_state->shader_programs[0].id, "model");
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
-    Int ambient_light_color_loc = glGetUniformLocation(game_state->shader_programs[0].id, "ambientLightColor");
-    Int ambient_light_strength_loc = glGetUniformLocation(game_state->shader_programs[0].id, "ambientLightStrength");
-    glUniform3f(ambient_light_color_loc, 1.0f, 1.0f, 1.0f);
-    glUniform1f(ambient_light_strength_loc, 0.5f);
+    //draw_axes(game_state);
     
-    Int sun_light_color_loc = glGetUniformLocation(game_state->shader_programs[0].id, "sunLightColor");
-    Int sun_light_strength_loc = glGetUniformLocation(game_state->shader_programs[0].id, "sunLightStrength");
-    Int sun_light_dir_loc = glGetUniformLocation(game_state->shader_programs[0].id, "sunLightDirection");
-    glUniform3f(sun_light_color_loc, 1.0f, 1.0f, 1.0f);
-    glUniform1f(sun_light_strength_loc, 1.0f);
-    glUniform3f(sun_light_dir_loc, -1.0f, -1.0f, 1.0f);
-    
-    glBindVertexArray(field->vao);
-    for(Int i = 0; i < field->height-1; i++)
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field->ebos[i]);
-        glDrawElements(GL_TRIANGLES, (field->width-1)*6, GL_UNSIGNED_INT, (Void *)0);
-    }
+    draw_field(game_state);
     
     
-    // Field outlines
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glLineWidth(2);
-    //glUseProgram(game_state->shader_programs[1].id);
     
-    line_color[0] = 1.0f;
-    line_color[1] = 1.0f;
-    line_color[2] = 1.0f;
-    line_color[3] = 0.3f;
-    //glUniform4fv(color_loc, 1, line_color);
-    
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 0.01f, 0.0f));
-    model_loc = glGetUniformLocation(game_state->shader_programs[0].id, "model");
-    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
-    
-    glBindVertexArray(field->vao);
-    for(Int i = 0; i < field->height-1; i++)
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field->ebos[i]);
-        glDrawElements(GL_TRIANGLES, (field->width-1)*6, GL_UNSIGNED_INT, (Void *)0);
-    }
-    
-    
+    // TODO: change d_time to seconds
     // LATER: improve this
     game_state->target_frame_time_ms = ((F64)1000) / ((F64)144);
     F64 frame_end_ms = get_time_ms();

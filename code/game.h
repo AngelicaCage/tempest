@@ -112,6 +112,16 @@ Bullet bullet(V2 pos, V2 vel, Float radius, Color color)
     return result;
 }
 
+struct Enemy
+{
+    V2 pos;
+    Float radius;
+    Color color;
+    
+    Float time_between_fires; // in seconds
+    Float time_to_fire;
+};
+
 struct GameState
 {
     Bool initialized;
@@ -135,6 +145,7 @@ struct GameState
     
     Player player;
     
+    List<Enemy> enemies;
     List<Bullet> enemy_bullets;
     
     SmallFieldBitmap text_bitmaps[26];
