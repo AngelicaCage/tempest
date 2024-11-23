@@ -32,14 +32,8 @@ log_windows_error(DWORD error_code)
     log(message_buffer);
 }
 
-Void
-sleep(F64 ms)
-{
-    Sleep((DWORD)ms);
-}
-
 F64
-get_time_ms()
+get_time()
 {
     LARGE_INTEGER ticks;
     LARGE_INTEGER freq;
@@ -53,7 +47,30 @@ get_time_ms()
         log_windows_error(GetLastError());
         ASSERT(false);
     }
-    return (F64)(ticks.QuadPart) / (F64)(freq.QuadPart * 1000);
+    //return (F64)(ticks.QuadPart) / (F64)(freq.QuadPart * 1000);
+    return (F64)((ticks.QuadPart) / (F64)(freq.QuadPart));
+}
+
+Void
+sleep(F64 seconds)
+{
+    //ASSERT(timeBeginPeriod(1) == TIMERR_NOERROR);
+    //ASSERT(timeEndPeriod(1) == TIMERR_NOERROR);
+    
+    //Sleep((DWORD)ms);
+    //Sleep((DWORD)16);
+    // NOTE: EVIL sleep
+    // Later: make this not devour cpu cycles
+    
+    F64 start_time = get_time();
+    F64 current_time;
+    F64 time_diff;
+    do
+    {
+        current_time = get_time();
+        time_diff = current_time - start_time;
+    }
+    while(time_diff < seconds);
 }
 
 U64 get_file_last_write_time(const Char *path)
@@ -248,7 +265,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     game_memory.window = window;
     game_memory.get_file_last_write_time = get_file_last_write_time;
     game_memory.read_file_contents = read_file_contents;
-    game_memory.get_time_ms = get_time_ms;
+    game_memory.get_time = get_time;
     game_memory.sleep = sleep;
     
     
@@ -262,7 +279,6 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     
     // Set schedular granularity to 1ms
-    timeBeginPeriod(1);
     
     while(game_memory.game_running)
     {

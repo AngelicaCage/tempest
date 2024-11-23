@@ -28,7 +28,7 @@ UInt fragment_shader_fallback_id = 0;
 
 U64 (*get_file_last_write_time)(const Char *);
 FileContents (*read_file_contents)(const Char *);
-F64 (*get_time_ms)();
+F64 (*get_time)();
 Void (*sleep)(F64);
 
 #include "gpu.cpp"
@@ -132,7 +132,7 @@ update_and_render(GameMemory *game_memory)
     {
         get_file_last_write_time = game_memory->get_file_last_write_time;
         read_file_contents = game_memory->read_file_contents;
-        get_time_ms = game_memory->get_time_ms;
+        get_time = game_memory->get_time;
         sleep = game_memory->sleep;
         
         glfwMakeContextCurrent(game_memory->window);
@@ -143,14 +143,15 @@ update_and_render(GameMemory *game_memory)
         }
     }
     
-    F64 frame_start_ms = get_time_ms();
-    
     if(!game_state->initialized)
     {
         // Initialize memory
         game_state->initialized = true;
-        game_state->target_frame_time_ms = ((F64)1000) / ((F64)144);
+        
+        game_state->target_fps = 60;
         game_state->d_time = 1;
+        game_state->frame_times = create_list<F64>();
+        game_state->last_frame_start_time = get_time();
         
         game_state->paused = false;
         
@@ -214,9 +215,31 @@ update_and_render(GameMemory *game_memory)
         generate_text_bitmaps(game_state);
         update_field_data(game_state, &(game_state->field));
         fill_field_render_data(&(game_state->field));
+        
+        game_state->d_time = 0.06f;
     }
     
-    F32 d_time = game_state->d_time;
+    F64 this_frame_start_time = get_time();
+    game_state->d_time = this_frame_start_time - game_state->last_frame_start_time;
+    game_state->last_frame_start_time = this_frame_start_time;
+    
+    
+    List<F64> *frame_times = &game_state->frame_times;
+    frame_times->add(this_frame_start_time);
+    if(frame_times->length > 144)
+    {
+        frame_times->remove_at(0);
+    }
+    else
+    {
+        F64 time_diff = frame_times->data[frame_times->length - 1] - frame_times->data[0];
+        game_state->fps = (Float)frame_times->length / (Float)time_diff;
+    }
+    
+    Float d_time = game_state->d_time;
+    
+    
+    
     
     update_key_input(input, game_memory->window, d_time);
     F64 new_mouse_pos[2];
@@ -316,15 +339,14 @@ update_and_render(GameMemory *game_memory)
     
     
     
-    // TODO: change d_time to seconds
     // LATER: improve this
-    game_state->target_frame_time_ms = ((F64)1000) / ((F64)144);
-    F64 frame_end_ms = get_time_ms();
-    F64 frame_time_ms = frame_end_ms - frame_start_ms;
-    F64 time_to_sleep = game_state->target_frame_time_ms - frame_time_ms;
+    F64 this_frame_end_time = get_time();
+    F64 this_frame_time = this_frame_end_time - this_frame_start_time;
+    F64 time_to_sleep = (1 / game_state->target_fps) - this_frame_time;
+    
     if(time_to_sleep < 0)
         time_to_sleep = 0;
-    game_state->d_time = (frame_time_ms + time_to_sleep) / 1000;
+    
     if(time_to_sleep > 0)
         sleep(time_to_sleep);
 }

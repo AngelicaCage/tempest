@@ -137,8 +137,12 @@ struct GameState
     
     Bool paused;
     
-    F64 target_frame_time_ms;
-    F32 d_time; // ms
+    // all timing is in seconds
+    List<F64> frame_times; // max 144
+    Float fps;
+    Float target_fps;
+    F64 last_frame_start_time;
+    F32 d_time;
     
     Input input;
     

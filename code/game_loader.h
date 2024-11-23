@@ -31,7 +31,7 @@ struct GameMemory
     
     U64 (*get_file_last_write_time)(const Char *);
     FileContents (*read_file_contents)(const Char *);
-    F64 (*get_time_ms)();
+    F64 (*get_time)();
     Void (*sleep)(F64);
 };
 
