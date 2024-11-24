@@ -146,7 +146,23 @@ struct GameState
     
     Input input;
     
-    List<ShaderProgram> shader_programs;
+    union
+    {
+        struct
+        {
+            ShaderProgram field_sp;
+            ShaderProgram line_sp;
+            ShaderProgram font_sp;
+        };
+        struct
+        {
+            ShaderProgram shader_programs[3];
+        };
+    };
+    
+    UInt font_texture;
+    UInt font_vbo;
+    UInt font_vao;
     
     Camera target_camera;
     Camera camera;

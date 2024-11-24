@@ -1,5 +1,3 @@
-field circle rendering
-
-bullets and collision
-text drawing?
-enemies and collision
+shader reorganization
+Log drawing (proper, not on the field)
+Collision

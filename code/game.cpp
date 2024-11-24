@@ -7,6 +7,8 @@
 #include "glm/gtc/type_ptr.hpp"
 //#define STB_PERLIN_IMPLEMENTATION
 //#include "stb/stb_perlin.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb/stb_image.h"
 
 #include "ciel/base.h"
 #include "ciel/list.h"
@@ -117,6 +119,31 @@ update_gameplay(GameState *game_state)
 }
 
 
+
+GLenum glCheckError_(const char *file, int line)
+{
+    GLenum errorCode;
+    while ((errorCode = glGetError()) != GL_NO_ERROR)
+    {
+        const Char *error;
+        switch (errorCode)
+        {
+            case GL_INVALID_ENUM:                  error = "INVALID_ENUM"; break;
+            case GL_INVALID_VALUE:                 error = "INVALID_VALUE"; break;
+            case GL_INVALID_OPERATION:             error = "INVALID_OPERATION"; break;
+            case GL_STACK_OVERFLOW:                error = "STACK_OVERFLOW"; break;
+            case GL_STACK_UNDERFLOW:               error = "STACK_UNDERFLOW"; break;
+            case GL_OUT_OF_MEMORY:                 error = "OUT_OF_MEMORY"; break;
+            case GL_INVALID_FRAMEBUFFER_OPERATION: error = "INVALID_FRAMEBUFFER_OPERATION"; break;
+            default: error = "Unknown error";
+        }
+        ASSERT(false);
+    }
+    return errorCode;
+}
+#define gl_check_error() glCheckError_(__FUNCTION__, __LINE__) 
+
+
 extern "C" __declspec(dllexport) void __cdecl
 update_and_render(GameMemory *game_memory)
 {
@@ -159,14 +186,54 @@ update_and_render(GameMemory *game_memory)
         
         glfwSetScrollCallback(game_memory->window, scroll_callback);
         
-        game_state->shader_programs = create_list<ShaderProgram>();
-        
         compile_fallback_shaders();
         
-        game_state->shader_programs.add(gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/3d_vertex_shader.vs",
-                                                                  GAME_DATA_DIRECTORY "/shaders/field_fragment_shader.fs", true));
-        game_state->shader_programs.add(gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/3d_vertex_shader.vs",
-                                                                  GAME_DATA_DIRECTORY "/shaders/line_fragment_shader.fs", true));
+        game_state->field_sp = gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/3d_vertex_shader.vs",
+                                                         GAME_DATA_DIRECTORY "/shaders/field_fragment_shader.fs", true);
+        game_state->line_sp = gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/3d_vertex_shader.vs",
+                                                        GAME_DATA_DIRECTORY "/shaders/line_fragment_shader.fs", true);
+        game_state->font_sp = gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/font_vertex_shader.vs",
+                                                        GAME_DATA_DIRECTORY "/shaders/font_fragment_shader.fs", false);
+        
+        
+        Int width, height, channel_count;
+        U8 *font_image_data = stbi_load(GAME_DATA_DIRECTORY "/textures/charmap-oldschool_black.png",
+                                        &width, &height, &channel_count, 0);
+        ASSERT(font_image_data);
+        glGenTextures(1, &game_state->font_texture);
+        glBindTexture(GL_TEXTURE_2D, game_state->font_texture);
+        gl_check_error();
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, font_image_data);
+        gl_check_error();
+        glGenerateMipmap(GL_TEXTURE_2D);
+        gl_check_error();
+        stbi_image_free(font_image_data);
+        
+        float font_vertices[] = {
+            // positions        // texture coords
+            -0.5f,  0.5f, 0.0f, 0.0f, 1.0f,    // top left 
+            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,   // bottom left
+            0.5f, -0.5f, 0.0f,  1.0f, 0.0f,   // bottom right
+            -0.5f,  0.5f, 0.0f, 0.0f, 1.0f,   // top left 
+            0.5f, -0.5f, 0.0f,  1.0f, 0.0f,   // bottom right
+            0.5f,  0.5f, 0.0f,  1.0f, 1.0f,   // top right
+        };
+        glGenVertexArrays(1, &game_state->font_vao);
+        glGenBuffers(1, &game_state->font_vbo);
+        
+        glBindVertexArray(game_state->font_vao);
+        glBindBuffer(GL_ARRAY_BUFFER, game_state->font_vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(font_vertices), font_vertices, GL_STATIC_DRAW);
+        
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*5, (Void *)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Float)*5, (Void *)(sizeof(Float)*3));
+        glEnableVertexAttribArray(1);
+        
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+        
+        
         
         camera->pos = v3(1, 1, 3);
         camera->target = v3(0, 0, 0);
@@ -225,7 +292,6 @@ update_and_render(GameMemory *game_memory)
     game_state->d_time = this_frame_start_time - game_state->last_frame_start_time;
     game_state->last_frame_start_time = this_frame_start_time;
     
-    
     List<F64> *frame_times = &game_state->frame_times;
     frame_times->add(this_frame_start_time);
     if(frame_times->length > 144)
@@ -234,7 +300,6 @@ update_and_render(GameMemory *game_memory)
     }
     F64 time_diff = frame_times->data[frame_times->length - 1] - frame_times->data[0];
     game_state->fps = (Float)frame_times->length / (Float)time_diff;
-    
     
     Float d_time = game_state->d_time;
     
@@ -338,15 +403,25 @@ update_and_render(GameMemory *game_memory)
     draw_field(game_state);
     
     
+    glUseProgram(game_state->font_sp.id);
+    
+    glBindTexture(GL_TEXTURE_2D, game_state->font_texture);
+    glUniform1i(glGetUniformLocation(game_state->font_sp.id, "texture1"), game_state->font_texture);
+    
+    glBindVertexArray(game_state->font_vao);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    
     
     // LATER: improve this
     F64 this_frame_end_time = get_time();
     F64 this_frame_time = this_frame_end_time - this_frame_start_time;
-    F64 time_to_sleep = (1 / game_state->target_fps) - this_frame_time;
+    F64 time_to_sleep = (1.0 / game_state->target_fps) - this_frame_time;
     
     if(time_to_sleep < 0)
         time_to_sleep = 0;
     
+#if 0
     if(time_to_sleep > 0)
         sleep(time_to_sleep);
+#endif
 }

@@ -47,11 +47,11 @@ return;\
 Void
 reload_changed_shaders(GameState *game_state)
 {
-    for(Int i = 0; i < game_state->shader_programs.length; i++)
+    for(Int i = 0; i < sizeof(game_state->shader_programs) / sizeof(ShaderProgram); i++)
     {
         if(i > 0)
             break;
-        ShaderProgram *program = &(game_state->shader_programs.data[i]);
+        ShaderProgram *program = &(game_state->shader_programs[i]);
         
         U64 vs_last_write_time = get_file_last_write_time(program->vertex_shader.path);
         U64 fs_last_write_time = get_file_last_write_time(program->fragment_shader.path);

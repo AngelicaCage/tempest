@@ -48,7 +48,7 @@ get_time()
         ASSERT(false);
     }
     //return (F64)(ticks.QuadPart) / (F64)(freq.QuadPart * 1000);
-    return (F64)((ticks.QuadPart) / (F64)(freq.QuadPart));
+    return ((F64)(ticks.QuadPart)) / ((F64)(freq.QuadPart));
 }
 
 Void
@@ -57,11 +57,12 @@ sleep(F64 seconds)
     //ASSERT(timeBeginPeriod(1) == TIMERR_NOERROR);
     //ASSERT(timeEndPeriod(1) == TIMERR_NOERROR);
     
-    //Sleep((DWORD)ms);
+    //Sleep((DWORD)(seconds * 1000.0));
     //Sleep((DWORD)16);
     // NOTE: EVIL sleep
     // Later: make this not devour cpu cycles
     
+#if 1
     F64 start_time = get_time();
     F64 current_time;
     F64 time_diff;
@@ -71,6 +72,7 @@ sleep(F64 seconds)
         time_diff = current_time - start_time;
     }
     while(time_diff < seconds);
+#endif
 }
 
 U64 get_file_last_write_time(const Char *path)
@@ -306,6 +308,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         
         (game_code.update_and_render)(&game_memory);
         
+        glfwSwapInterval(1);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

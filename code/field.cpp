@@ -351,8 +351,8 @@ update_field_data(GameState *game_state, Field *field)
             FieldPoint *point = &(field->points[y][x]);
             Float interp_speed = 60.0f * game_state->d_time;
             
-            point->height = interpolate(point->height, target_point->height, interp_speed);
-            point->color.interpolate_to(target_point->color, interp_speed);
+            point->height = target_point->height;//interpolate(point->height, target_point->height, interp_speed);
+            point->color = target_point->color;//.interpolate_to(target_point->color, interp_speed);
         }
     }
 }

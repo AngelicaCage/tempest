@@ -121,9 +121,9 @@ gpu_delete_shader_program(ShaderProgram *program)
 Void
 gpu_update_camera_in_shaders(GameState *game_state)
 {
-    for(Int i = 0; i < game_state->shader_programs.length; i++)
+    for(Int i = 0; i < sizeof(game_state->shader_programs) / sizeof(ShaderProgram); i++)
     {
-        ShaderProgram *shader_program = &(game_state->shader_programs.data[i]);
+        ShaderProgram *shader_program = &(game_state->shader_programs[i]);
         if(!shader_program->is_3d)
             continue;
         

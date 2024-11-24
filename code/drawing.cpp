@@ -7,10 +7,10 @@ draw_axes(GameState *game_state)
     Int negative_line_width = 1;
     
     Float line_color[4] = {1.0f, 0.0f, 0.0f, 1.0f};
-    Int color_loc = glGetUniformLocation(game_state->shader_programs[1].id, "lineColor");
+    Int color_loc = glGetUniformLocation(game_state->line_sp.id, "lineColor");
     glm::mat4 model = glm::mat4(1.0f);
-    Int model_loc = glGetUniformLocation(game_state->shader_programs[1].id, "model");
-    glUseProgram(game_state->shader_programs[1].id);
+    Int model_loc = glGetUniformLocation(game_state->line_sp.id, "model");
+    glUseProgram(game_state->line_sp.id);
     glBindVertexArray(game_state->axis_vao);
     
     { // x axis
@@ -66,20 +66,20 @@ draw_field(GameState *game_state)
     // Draw field
     glm::mat4 model = glm::mat4(1.0f);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glUseProgram(game_state->shader_programs[0].id);
+    glUseProgram(game_state->field_sp.id);
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-    Int model_loc = glGetUniformLocation(game_state->shader_programs[0].id, "model");
+    Int model_loc = glGetUniformLocation(game_state->field_sp.id, "model");
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
     
-    Int ambient_light_color_loc = glGetUniformLocation(game_state->shader_programs[0].id, "ambientLightColor");
-    Int ambient_light_strength_loc = glGetUniformLocation(game_state->shader_programs[0].id, "ambientLightStrength");
+    Int ambient_light_color_loc = glGetUniformLocation(game_state->field_sp.id, "ambientLightColor");
+    Int ambient_light_strength_loc = glGetUniformLocation(game_state->field_sp.id, "ambientLightStrength");
     glUniform3f(ambient_light_color_loc, 1.0f, 1.0f, 1.0f);
     glUniform1f(ambient_light_strength_loc, 0.5f);
     
-    Int sun_light_color_loc = glGetUniformLocation(game_state->shader_programs[0].id, "sunLightColor");
-    Int sun_light_strength_loc = glGetUniformLocation(game_state->shader_programs[0].id, "sunLightStrength");
-    Int sun_light_dir_loc = glGetUniformLocation(game_state->shader_programs[0].id, "sunLightDirection");
+    Int sun_light_color_loc = glGetUniformLocation(game_state->field_sp.id, "sunLightColor");
+    Int sun_light_strength_loc = glGetUniformLocation(game_state->field_sp.id, "sunLightStrength");
+    Int sun_light_dir_loc = glGetUniformLocation(game_state->field_sp.id, "sunLightDirection");
     glUniform3f(sun_light_color_loc, 1.0f, 1.0f, 1.0f);
     glUniform1f(sun_light_strength_loc, 1.0f);
     glUniform3f(sun_light_dir_loc, -1.0f, -1.0f, 1.0f);
@@ -98,7 +98,7 @@ draw_field(GameState *game_state)
     
     model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(0.0f, 0.01f, 0.0f));
-    model_loc = glGetUniformLocation(game_state->shader_programs[0].id, "model");
+    model_loc = glGetUniformLocation(game_state->field_sp.id, "model");
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
     
     glBindVertexArray(field->vao);
