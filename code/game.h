@@ -134,6 +134,17 @@ struct Enemy
     Float time_to_fire;
 };
 
+// TODO: implement these
+struct EnemyExplosion
+{
+    V2 pos;
+    Float initial_radius;
+    Color initial_color;
+    
+    Float time_left_max;
+    Float time_left;
+};
+
 struct GameState
 {
     Bool initialized;

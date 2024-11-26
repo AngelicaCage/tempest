@@ -167,6 +167,26 @@ update_gameplay(GameState *game_state)
     for(Int i = 0; i < game_state->enemies.length; i++)
     {
         Enemy *enemy = &(game_state->enemies.data[i]);
+        
+        Bool enemy_destroyed = false;
+        for(Int a = 0; a < game_state->player_bullets.length; a++)
+        {
+            Bullet *bullet = &game_state->player_bullets.data[a];
+            if(v2_dist(enemy->pos, bullet->pos) <= enemy->radius + bullet->radius)
+            {
+                game_state->enemies.remove_at(i);
+                enemy_destroyed = true;
+                break;
+            }
+        }
+        
+        if(enemy_destroyed)
+        {
+            i--;
+            continue;
+        }
+        
+        
         enemy->time_to_fire -= d_time;
         if(enemy->time_to_fire <= 0)
         {
