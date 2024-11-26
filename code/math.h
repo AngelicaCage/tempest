@@ -171,6 +171,22 @@ random_float(F32 min, F32 max)
     return (F32)rand()/(F32)RAND_MAX * (max-min) + min;
 }
 
+Float clamp(Float val, Float min, Float max)
+{
+    if(val < min) return min;
+    if(val > max) return max;
+    return val;
+}
+
+V2 clamp(V2 val, V2 min, V2 max)
+{
+    if(val.x < min.x) val.x = min.x;
+    if(val.y < min.y) val.y = min.y;
+    if(val.x > max.x) val.x = max.x;
+    if(val.y > max.y) val.y = max.y;
+    
+    return val;
+}
 
 inline V3
 operator+(V3 a, V3 b)
@@ -211,6 +227,17 @@ operator-(V2 a, V2 b)
 {
     return {a.x - b.x, a.y - b.y};
 }
+inline V2
+operator*(V2 a, Float scalar)
+{
+    return {a.x * scalar, a.y *scalar};
+}
+inline V2
+operator/(V2 a, Float scalar)
+{
+    return {a.x / scalar, a.y / scalar};
+}
+
 inline V2 &
 operator-=(V2 &a, V2 b)
 {

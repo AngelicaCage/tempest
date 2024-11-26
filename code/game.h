@@ -102,6 +102,9 @@ struct Player
     V2 vel;
     Float max_speed;
     Color color;
+    
+    Float shot_cooldown_max;
+    Float shot_cooldown;
 };
 
 struct Bullet
@@ -180,6 +183,7 @@ struct GameState
     
     Field field;
     Player player;
+    List<Bullet> player_bullets;
     List<Enemy> enemies;
     List<Bullet> enemy_bullets;
 };

@@ -250,8 +250,8 @@ Void
 field_draw_playing_area(GameState *game_state, Field *field, Float height)
 {
     field->playing_area_dim = v2(10.5, 7);
-    V2 raised_area_top_left_field = coords_world_to_field(field, v2(field->playing_area_dim.x / -2, field->playing_area_dim.y / -2));
-    V2 raised_area_bottom_right_field = coords_world_to_field(field, v2(field->playing_area_dim.x / 2, field->playing_area_dim.y / 2));
+    V2 raised_area_top_left_field = coords_world_to_field(field, v2(field->playing_area_dim.x / -2, field->playing_area_dim.y / -2)) - v2(1, 1);
+    V2 raised_area_bottom_right_field = coords_world_to_field(field, v2(field->playing_area_dim.x / 2, field->playing_area_dim.y / 2)) + v2(1, 1);
     
     for(Int y = raised_area_top_left_field.y; y <= raised_area_bottom_right_field.y; y++)
     {
@@ -280,68 +280,13 @@ field_draw_text(GameState *game_state, Field *field, const Char *str, V2 pos,
         else if(str[i] >= 'a' && str[i] <= 'z')
             index = str[i] - 'a';
         else if(str[i] >= '0' && str[i] <= '9')
-            index = 27 + str[i] - '0';
+            index = 26 + str[i] - '0';
         
         field_draw_small_bitmap(field, game_state->text_bitmaps[index], start_pos + v2i(6*i, 0),
                                 added_height, color, set_base_height, base_height);
     }
 }
 
-Void
-update_field_data_in_game(GameState *game_state, Field *field)
-{
-    Float playing_area_height = 1;
-    if(game_state->paused)
-    {
-        field_draw_playing_area(game_state, field, playing_area_height);
-        field_draw_text(game_state, field, "paused", v2(-1.8f, -1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
-        field_draw_text(game_state, field, "esc to resume", v2(-3.9f, 1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
-    }
-    else
-    {
-        Player *player = &game_state->player;
-        
-        //srand(0);
-        for(Int y = 0; y < field->height; y++)
-        {
-            for(Int x = 0; x < field->width; x++)
-            {
-                FieldPoint *point = &(field->target_points[y][x]);
-                point->height = 0;
-                point->height += random_float(0, 0.1f);
-                point->color = color(0.20, 0.22, 0.30, 1);
-            }
-        }
-        
-        field_draw_playing_area(game_state, field, playing_area_height);
-        
-        //field_draw_text(game_state, field, "hiiii", v2(0, 0), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
-        
-        for(Int i = 0; i < game_state->enemy_bullets.length; i++)
-        {
-            Bullet bullet = game_state->enemy_bullets[i];
-            field_draw_circle(field, bullet.pos, bullet.radius, 0.3f, bullet.color);
-        }
-        for(Int i = 0; i < game_state->enemies.length; i++)
-        {
-            Enemy enemy = game_state->enemies[i];
-            field_draw_circle(field, enemy.pos, enemy.radius, 0.3f, enemy.color, true, playing_area_height);
-            
-            Float max_enemy_charge_height = 1.5f;
-            Float enemy_charge_height = (enemy.time_between_fires - enemy.time_to_fire) * max_enemy_charge_height;
-            field_draw_circle(field, enemy.pos, enemy.radius/2, enemy_charge_height, enemy.color);
-        }
-        
-        field_draw_circle(field, player->pos, 0.1f, 0.8f, color(1, 1, 1, 1));
-        
-    }
-    
-    //Char fps_text_buffer[20];
-    //sprintf(fps_text_buffer, "%d fps", (Int)game_state->fps);
-    //field_draw_text(game_state, field, fps_text_buffer, v2(-1.0f, -1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
-    
-    //field_draw_text(game_state, field, "0123456789", v2(-1.0f, 0), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
-}
 
 Void
 update_field_data_main_menu(GameState *game_state, Field *field)
@@ -387,6 +332,76 @@ update_field_data_main_menu(GameState *game_state, Field *field)
     menu_text_y += menu_text_spacing;
     field_draw_text(game_state, field, "Exit", v2(menu_text_left, menu_text_y), 0.12f,
                     selector == 2 ? selected_text_color : normal_text_color);
+}
+
+Void
+update_field_data_in_game(GameState *game_state, Field *field)
+{
+    F64 time = get_time();
+    for(Int y = 0; y < field->height; y++)
+    {
+        for(Int x = 0; x < field->width; x++)
+        {
+            FieldPoint *point = &(field->target_points[y][x]);
+            point->height = 0;
+            //point->height += random_float(0, 0.1f);
+            point->color = color(0.31, 0.58, 0.68, 1);
+            
+            //point->height += sin((x+0.5984f)*0.2f + time) * 0.1f;
+            point->height += sin((x+0.5984f)*0.1f + time) * 0.3f;
+            point->height += sin((-y+x)*0.2f + time) * 0.07f;
+            point->height += cos((y+x)*0.3f + time) * 0.07f;
+        }
+    }
+    
+    Float playing_area_height = 1;
+    if(game_state->paused)
+    {
+        field_draw_playing_area(game_state, field, playing_area_height);
+        field_draw_text(game_state, field, "paused", v2(-1.8f, -1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
+        field_draw_text(game_state, field, "esc to resume", v2(-3.9f, 1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
+    }
+    else
+    {
+        Player *player = &game_state->player;
+        
+        field_draw_playing_area(game_state, field, playing_area_height);
+        
+        for(Int i = 0; i < game_state->enemy_bullets.length; i++)
+        {
+            Bullet bullet = game_state->enemy_bullets[i];
+            field_draw_circle(field, bullet.pos, bullet.radius, 0.3f, bullet.color);
+        }
+        for(Int i = 0; i < game_state->enemies.length; i++)
+        {
+            Enemy enemy = game_state->enemies[i];
+            field_draw_circle(field, enemy.pos, enemy.radius, 0.3f, enemy.color, true, playing_area_height);
+            
+            Float max_enemy_charge_height = 1.5f;
+            Float enemy_charge_height = (enemy.time_between_fires - enemy.time_to_fire) * max_enemy_charge_height;
+            field_draw_circle(field, enemy.pos, enemy.radius/2, enemy_charge_height, enemy.color);
+        }
+        for(Int i = 0; i < game_state->player_bullets.length; i++)
+        {
+            Bullet bullet = game_state->player_bullets[i];
+            field_draw_circle(field, bullet.pos, bullet.radius, 0.3f, bullet.color);
+        }
+        
+        field_draw_circle(field, player->pos, 0.1f, 0.8f, color(1, 1, 1, 1));
+        
+    }
+    
+#if 0
+    Char fps_text_buffer[20];
+    sprintf(fps_text_buffer, "%d", (Int)game_state->time_in_game);
+    field_draw_text(game_state, field, fps_text_buffer, v2(-1.0f, -1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
+#endif
+    
+    //Char fps_text_buffer[20];
+    //sprintf(fps_text_buffer, "%d fps", (Int)game_state->fps);
+    //field_draw_text(game_state, field, fps_text_buffer, v2(-1.0f, -1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
+    
+    //field_draw_text(game_state, field, "0123456789", v2(-1.0f, 0), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
 }
 
 Void

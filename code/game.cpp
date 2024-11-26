@@ -53,6 +53,38 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 
 Void
+update_main_menu(GameState *game_state)
+{
+    F32 d_time = game_state->d_time;
+    Keys *keys = &game_state->input.keys;
+    
+    if(keys->down.just_pressed)
+        game_state->main_menu_selector++;
+    if(keys->up.just_pressed)
+        game_state->main_menu_selector--;
+    // Later: write clamp function
+    if(game_state->main_menu_selector < 0)
+        game_state->main_menu_selector = 2;
+    if(game_state->main_menu_selector > 2)
+        game_state->main_menu_selector = 0;
+    
+    if(keys->enter.is_down)
+    {
+        if(game_state->main_menu_selector == 0)
+        {
+            game_state->in_game = true;
+        }
+        else if(game_state->main_menu_selector == 1)
+        {
+        }
+        else if(game_state->main_menu_selector == 2)
+        {
+            game_state->should_quit = true;
+        }
+    }
+}
+
+Void
 update_gameplay(GameState *game_state)
 {
     F32 d_time = game_state->d_time;
@@ -60,7 +92,11 @@ update_gameplay(GameState *game_state)
     Keys *keys = &game_state->input.keys;
     V2 playing_area_dim = game_state->field.playing_area_dim;
     
+    
     Float player_speed = 5.0f;
+    if(keys->shift_left.is_down)
+        player_speed = 2.5f;
+    
     if(keys->d.is_down)
         player->pos.x += player_speed * d_time;
     if(keys->a.is_down)
@@ -69,6 +105,50 @@ update_gameplay(GameState *game_state)
         player->pos.y -= player_speed * d_time;
     if(keys->s.is_down)
         player->pos.y += player_speed * d_time;
+    
+    if(player->shot_cooldown <= 0)
+    {
+        V2 bullet_dir = v2(0, 0);
+        Bool should_shoot = false;
+        if(keys->up.is_down)
+        {
+            bullet_dir += v2(0, -1);
+            should_shoot = true;
+        }
+        if(keys->down.is_down)
+        {
+            bullet_dir += v2(0, 1);
+            should_shoot = true;
+        }
+        if(keys->left.is_down)
+        {
+            bullet_dir += v2(-1, 0);
+            should_shoot = true;
+        }
+        if(keys->right.is_down)
+        {
+            bullet_dir += v2(1, 0);
+            should_shoot = true;
+        }
+        bullet_dir.normalize();
+        
+        if(should_shoot)
+        {
+            V2 bullet_vel = bullet_dir * 10.0f;
+            player->shot_cooldown = player->shot_cooldown_max;
+            game_state->player_bullets.add(bullet(player->pos, bullet_vel,
+                                                  0.15f, color(0.88f, 0.42f, 0.88f, 1.0f)));
+            
+        }
+    }
+    else
+    {
+        player->shot_cooldown -= d_time;
+    }
+    
+    V2 play_area_top_left = game_state->field.playing_area_dim / -2;
+    V2 play_area_bottom_right = game_state->field.playing_area_dim / 2;
+    player->pos = clamp(player->pos, play_area_top_left, play_area_bottom_right);
     
     if(keys->e.just_pressed)
     {
@@ -103,6 +183,7 @@ update_gameplay(GameState *game_state)
     
     for(Int i = 0; i < game_state->enemy_bullets.length; i++)
     {
+        // TODO: change this to use play_area_top_left etc.
         Bullet *bullet = &game_state->enemy_bullets.data[i];
         // Later: make * function for V2 and Float
         bullet->pos += v2(bullet->vel.x * d_time, bullet->vel.y * d_time);
@@ -115,39 +196,21 @@ update_gameplay(GameState *game_state)
             i--;
         }
     }
-    
-}
-
-Void
-update_main_menu(GameState *game_state)
-{
-    F32 d_time = game_state->d_time;
-    Keys *keys = &game_state->input.keys;
-    
-    if(keys->down.just_pressed)
-        game_state->main_menu_selector++;
-    if(keys->up.just_pressed)
-        game_state->main_menu_selector--;
-    // Later: write clamp function
-    if(game_state->main_menu_selector < 0)
-        game_state->main_menu_selector = 2;
-    if(game_state->main_menu_selector > 2)
-        game_state->main_menu_selector = 0;
-    
-    if(keys->enter.is_down)
+    for(Int i = 0; i < game_state->player_bullets.length; i++)
     {
-        if(game_state->main_menu_selector == 0)
+        Bullet *bullet = &game_state->player_bullets.data[i];
+        // Later: make * function for V2 and Float
+        bullet->pos += v2(bullet->vel.x * d_time, bullet->vel.y * d_time);
+        if(bullet->pos.x < -playing_area_dim.x/2 - bullet->radius ||
+           bullet->pos.x > playing_area_dim.x/2 + bullet->radius || 
+           bullet->pos.y < -playing_area_dim.y/2 - bullet->radius ||
+           bullet->pos.y > playing_area_dim.y/2 + bullet->radius)
         {
-            game_state->in_game = true;
-        }
-        else if(game_state->main_menu_selector == 1)
-        {
-        }
-        else if(game_state->main_menu_selector == 2)
-        {
-            game_state->should_quit = true;
+            game_state->player_bullets.remove_at(i);
+            i--;
         }
     }
+    
     
 }
 
@@ -265,7 +328,6 @@ update_and_render(GameMemory *game_memory)
 #endif
         
         
-        
         camera->pos = v3(1, 1, 3);
         camera->target = v3(0, 0, 0);
         camera->up = v3(0, 1, 0);
@@ -306,6 +368,9 @@ update_and_render(GameMemory *game_memory)
         player->vel = v2(0, 0);
         player->max_speed = 100;
         player->color = color(1, 1, 1, 1);
+        player->shot_cooldown_max = 0.5f;
+        player->shot_cooldown = 0;
+        game_state->player_bullets = create_list<Bullet>();
         
         game_state->enemy_bullets = create_list<Bullet>();
         game_state->enemies = create_list<Enemy>();
@@ -316,11 +381,12 @@ update_and_render(GameMemory *game_memory)
         
         game_state->d_time = 0.06f;
         
-        game_state->in_game = false;
+        game_state->in_game = true;
         game_state->time_in_game = 0;
         
         game_state->main_menu_selector = 0;
     }
+    player->shot_cooldown_max = 0.15f;
     
     game_state->target_fps = 144;
     
