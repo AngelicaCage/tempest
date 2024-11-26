@@ -124,9 +124,6 @@ update_main_menu(GameState *game_state)
     F32 d_time = game_state->d_time;
     Keys *keys = &game_state->input.keys;
     
-    if(keys->enter.is_down)
-        game_state->in_game = true;
-    
     if(keys->down.just_pressed)
         game_state->main_menu_selector++;
     if(keys->up.just_pressed)
@@ -136,6 +133,22 @@ update_main_menu(GameState *game_state)
         game_state->main_menu_selector = 2;
     if(game_state->main_menu_selector > 2)
         game_state->main_menu_selector = 0;
+    
+    if(keys->enter.is_down)
+    {
+        if(game_state->main_menu_selector == 0)
+        {
+            game_state->in_game = true;
+        }
+        else if(game_state->main_menu_selector == 1)
+        {
+        }
+        else if(game_state->main_menu_selector == 2)
+        {
+            game_state->should_quit = true;
+        }
+    }
+    
 }
 
 
@@ -173,12 +186,13 @@ update_and_render(GameMemory *game_memory)
         // Initialize memory
         game_state->initialized = true;
         
+        game_state->paused = false;
+        game_state->should_quit = false;
+        
         game_state->target_fps = 144;
         game_state->d_time = 1;
         game_state->frame_times = create_list<F64>();
         game_state->last_frame_start_time = get_time();
-        
-        game_state->paused = false;
         
         fill_key_data(input);
         
@@ -336,12 +350,6 @@ update_and_render(GameMemory *game_memory)
                             (Float)new_mouse_pos[1] - input->mouse_pos.y);
     input->mouse_pos = v2(new_mouse_pos[0], new_mouse_pos[1]);
     
-    if(keys->q.is_down)
-    {
-        game_memory->game_running = false;
-        return;
-    }
-    
     if(game_state->in_game)
     {
         game_state->time_in_game += d_time;
@@ -415,6 +423,17 @@ update_and_render(GameMemory *game_memory)
         real_camera->orbit_distance = interpolate(real_camera->orbit_distance,
                                                   camera->orbit_distance,
                                                   interp_speed * d_time);
+    }
+    
+    if(keys->q.is_down)
+    {
+        game_state->should_quit = true;
+    }
+    
+    if(game_state->should_quit)
+    {
+        game_memory->game_running = false;
+        return;
     }
     
     reload_changed_shaders(game_state);

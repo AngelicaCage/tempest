@@ -136,6 +136,7 @@ struct GameState
     Bool initialized;
     
     Bool paused;
+    Bool should_quit;
     
     // all timing is in seconds
     List<F64> frame_times; // max 144
