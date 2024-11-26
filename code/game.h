@@ -105,6 +105,8 @@ struct Player
     
     Float shot_cooldown_max;
     Float shot_cooldown;
+    
+    Int bomb_count; // TODO: reflective bomb, can store up to 2 or maybe 1
 };
 
 struct Bullet
@@ -124,6 +126,16 @@ Bullet bullet(V2 pos, V2 vel, Float radius, Color color)
     return result;
 }
 
+enum class EnemyType
+{
+    spread,
+    stream,
+    spin,
+    wall,
+    bomb, // maybe?
+    suicide,
+};
+
 struct Enemy
 {
     V2 pos;
@@ -132,6 +144,27 @@ struct Enemy
     
     Float time_between_fires; // in seconds
     Float time_to_fire;
+    
+    EnemyType type;
+    union
+    {
+        struct
+        { // spread
+        };
+        struct
+        { // stream
+        };
+        struct
+        { // wall
+            V2 wall_dir;
+        };
+        struct
+        { // bomb
+        };
+        struct
+        { // suicide
+        };
+    };
 };
 
 // TODO: implement these
@@ -139,6 +172,7 @@ struct EnemyExplosion
 {
     V2 pos;
     Float initial_radius;
+    Float initial_height;
     Color initial_color;
     
     Float time_left_max;

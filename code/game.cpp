@@ -175,6 +175,7 @@ update_gameplay(GameState *game_state)
             if(v2_dist(enemy->pos, bullet->pos) <= enemy->radius + bullet->radius)
             {
                 game_state->enemies.remove_at(i);
+                game_state->player_bullets.remove_at(a);
                 enemy_destroyed = true;
                 break;
             }
