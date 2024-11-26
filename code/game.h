@@ -152,32 +152,35 @@ struct GameState
         {
             ShaderProgram field_sp;
             ShaderProgram line_sp;
-            ShaderProgram font_sp;
         };
         struct
         {
-            ShaderProgram shader_programs[3];
+            ShaderProgram shader_programs[2];
         };
     };
     
     UInt font_texture;
     UInt font_vbo;
     UInt font_vao;
-    
-    Camera target_camera;
-    Camera camera;
-    
-    Field field;
+    UInt font_ebo;
     
     UInt axis_vbo;
     UInt axis_vao;
     
-    Player player;
+    SmallFieldBitmap text_bitmaps[36];
     
+    Camera target_camera;
+    Camera camera;
+    
+    Bool in_game;
+    F64 time_in_game;
+    
+    Int main_menu_selector;
+    
+    Field field;
+    Player player;
     List<Enemy> enemies;
     List<Bullet> enemy_bullets;
-    
-    SmallFieldBitmap text_bitmaps[36];
 };
 
 #endif //GAME_H

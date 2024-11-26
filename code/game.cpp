@@ -118,30 +118,28 @@ update_gameplay(GameState *game_state)
     
 }
 
-
-
-GLenum glCheckError_(const char *file, int line)
+Void
+update_main_menu(GameState *game_state)
 {
-    GLenum errorCode;
-    while ((errorCode = glGetError()) != GL_NO_ERROR)
-    {
-        const Char *error;
-        switch (errorCode)
-        {
-            case GL_INVALID_ENUM:                  error = "INVALID_ENUM"; break;
-            case GL_INVALID_VALUE:                 error = "INVALID_VALUE"; break;
-            case GL_INVALID_OPERATION:             error = "INVALID_OPERATION"; break;
-            case GL_STACK_OVERFLOW:                error = "STACK_OVERFLOW"; break;
-            case GL_STACK_UNDERFLOW:               error = "STACK_UNDERFLOW"; break;
-            case GL_OUT_OF_MEMORY:                 error = "OUT_OF_MEMORY"; break;
-            case GL_INVALID_FRAMEBUFFER_OPERATION: error = "INVALID_FRAMEBUFFER_OPERATION"; break;
-            default: error = "Unknown error";
-        }
-        ASSERT(false);
-    }
-    return errorCode;
+    F32 d_time = game_state->d_time;
+    Keys *keys = &game_state->input.keys;
+    
+    if(keys->enter.is_down)
+        game_state->in_game = true;
+    
+    if(keys->down.just_pressed)
+        game_state->main_menu_selector++;
+    if(keys->up.just_pressed)
+        game_state->main_menu_selector--;
+    // Later: write clamp function
+    if(game_state->main_menu_selector < 0)
+        game_state->main_menu_selector = 2;
+    if(game_state->main_menu_selector > 2)
+        game_state->main_menu_selector = 0;
 }
-#define gl_check_error() glCheckError_(__FUNCTION__, __LINE__) 
+
+
+
 
 
 extern "C" __declspec(dllexport) void __cdecl
@@ -192,38 +190,56 @@ update_and_render(GameMemory *game_memory)
                                                          GAME_DATA_DIRECTORY "/shaders/field_fragment_shader.fs", true);
         game_state->line_sp = gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/3d_vertex_shader.vs",
                                                         GAME_DATA_DIRECTORY "/shaders/line_fragment_shader.fs", true);
+#if 0
         game_state->font_sp = gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/font_vertex_shader.vs",
                                                         GAME_DATA_DIRECTORY "/shaders/font_fragment_shader.fs", false);
         
         
         Int width, height, channel_count;
+        stbi_set_flip_vertically_on_load(true);
         U8 *font_image_data = stbi_load(GAME_DATA_DIRECTORY "/textures/charmap-oldschool_black.png",
+                                        //GAME_DATA_DIRECTORY "/textures/test.jpg",
                                         &width, &height, &channel_count, 0);
         ASSERT(font_image_data);
         glGenTextures(1, &game_state->font_texture);
         glBindTexture(GL_TEXTURE_2D, game_state->font_texture);
-        gl_check_error();
+        
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        // set texture filtering parameters
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, font_image_data);
-        gl_check_error();
+        //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, font_image_data);
         glGenerateMipmap(GL_TEXTURE_2D);
-        gl_check_error();
         stbi_image_free(font_image_data);
         
+        // TODO: send texture coords as a uniform
+        Float tex_coord_width = 0.3f;
         float font_vertices[] = {
             // positions        // texture coords
-            -0.5f,  0.5f, 0.0f, 0.0f, 1.0f,    // top left 
+            0.5f,  0.5f, 0.0f,  tex_coord_width, tex_coord_width,   // top right
+            0.5f, -0.5f, 0.0f,  tex_coord_width, 0.0f,   // bottom right
             -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,   // bottom left
-            0.5f, -0.5f, 0.0f,  1.0f, 0.0f,   // bottom right
-            -0.5f,  0.5f, 0.0f, 0.0f, 1.0f,   // top left 
-            0.5f, -0.5f, 0.0f,  1.0f, 0.0f,   // bottom right
-            0.5f,  0.5f, 0.0f,  1.0f, 1.0f,   // top right
+            -0.5f,  0.5f, 0.0f, 0.0f, tex_coord_width,    // top left 
+        };
+        unsigned int indices[] = {
+            0, 1, 3, // first triangle
+            1, 2, 3  // second triangle
         };
         glGenVertexArrays(1, &game_state->font_vao);
         glGenBuffers(1, &game_state->font_vbo);
+        glGenBuffers(1, &game_state->font_ebo);
         
         glBindVertexArray(game_state->font_vao);
+        
         glBindBuffer(GL_ARRAY_BUFFER, game_state->font_vbo);
         glBufferData(GL_ARRAY_BUFFER, sizeof(font_vertices), font_vertices, GL_STATIC_DRAW);
+        
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, game_state->font_ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+        
         
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*5, (Void *)0);
         glEnableVertexAttribArray(0);
@@ -232,6 +248,7 @@ update_and_render(GameMemory *game_memory)
         
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
+#endif
         
         
         
@@ -284,6 +301,11 @@ update_and_render(GameMemory *game_memory)
         fill_field_render_data(&(game_state->field));
         
         game_state->d_time = 0.06f;
+        
+        game_state->in_game = false;
+        game_state->time_in_game = 0;
+        
+        game_state->main_menu_selector = 0;
     }
     
     game_state->target_fps = 144;
@@ -306,6 +328,7 @@ update_and_render(GameMemory *game_memory)
     
     
     
+    
     update_key_input(input, game_memory->window, d_time);
     F64 new_mouse_pos[2];
     glfwGetCursorPos(game_memory->window, &new_mouse_pos[0], &new_mouse_pos[1]);
@@ -319,70 +342,80 @@ update_and_render(GameMemory *game_memory)
         return;
     }
     
-    if(keys->escape.just_pressed)
-        game_state->paused = !game_state->paused;
-    
-    if(!game_state->paused)
+    if(game_state->in_game)
     {
-        update_gameplay(game_state);
+        game_state->time_in_game += d_time;
+        if(keys->escape.just_pressed)
+            game_state->paused = !game_state->paused;
         
-        if(camera->orbiting)
+        if(!game_state->paused)
         {
-            Float camera_orbit_speed = 2.0f;
-            //if(KEYDOWN(GLFW_KEY_RIGHT))
-#if 1
-            if(keys->right.is_down)
-                camera->orbit_angles.x -= camera_orbit_speed * d_time;
-            if(keys->left.is_down)
-                camera->orbit_angles.x += camera_orbit_speed * d_time;
-            if(keys->up.is_down)
-                camera->orbit_angles.y += camera_orbit_speed * d_time;
-            if(keys->down.is_down)
-                camera->orbit_angles.y -= camera_orbit_speed * d_time;
-            
-            // LATER: adjust by window resolution
-            if(glfwGetMouseButton(game_memory->window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-            {
-                Float camera_mouse_pan_orbit_speed = 2.0f;
-                camera->orbit_angles.y += input->d_mouse_pos.y * camera_mouse_pan_orbit_speed * d_time;
-                camera->orbit_angles.x += input->d_mouse_pos.x * camera_mouse_pan_orbit_speed * d_time;
-            }
-            
-            if(just_scrolled)
-            {
-                just_scrolled = false;
-                camera->orbit_distance -= d_scroll * 0.5 * (camera->orbit_distance);
-            }
-#endif
-            
-            Float angle_y_min = -1*pi/2.2f;
-            if(camera->orbit_angles.y < angle_y_min)
-                camera->orbit_angles.y = angle_y_min;
-            if(camera->orbit_angles.y > -angle_y_min)
-                camera->orbit_angles.y = -angle_y_min;
-            
-            
-            camera->pos.x = camera->orbit_distance * cos(camera->orbit_angles.y) * cos(camera->orbit_angles.x);
-            camera->pos.y = camera->orbit_distance * sin(camera->orbit_angles.y);
-            camera->pos.z = camera->orbit_distance * cos(camera->orbit_angles.y) * sin(camera->orbit_angles.x);
+            update_gameplay(game_state);
         }
-        
-        {
-            Camera *real_camera = &game_state->camera;
-            Float interp_speed = 50.0f;
-            real_camera->pos.interpolate_to(camera->pos, interp_speed * d_time);
-            real_camera->target.interpolate_to(camera->target, interp_speed * d_time);
-            real_camera->up.interpolate_to(camera->up, interp_speed * d_time);
-            real_camera->orbit_angles.interpolate_to(camera->orbit_angles, interp_speed * d_time);
-            real_camera->orbit_distance = interpolate(real_camera->orbit_distance,
-                                                      camera->orbit_distance,
-                                                      interp_speed * d_time);
-        }
+    }
+    else
+    {
+        update_main_menu(game_state);
     }
     
     update_field_data(game_state, &(game_state->field));
     fill_field_render_data(&(game_state->field));
     
+    
+    if(camera->orbiting)
+    {
+        Float camera_orbit_speed = 2.0f;
+        //if(KEYDOWN(GLFW_KEY_RIGHT))
+#if 0
+        if(keys->right.is_down)
+            camera->orbit_angles.x -= camera_orbit_speed * d_time;
+        if(keys->left.is_down)
+            camera->orbit_angles.x += camera_orbit_speed * d_time;
+        if(keys->up.is_down)
+            camera->orbit_angles.y += camera_orbit_speed * d_time;
+        if(keys->down.is_down)
+            camera->orbit_angles.y -= camera_orbit_speed * d_time;
+#endif
+        
+#if 0
+        // LATER: adjust by window resolution
+        if(glfwGetMouseButton(game_memory->window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+        {
+            Float camera_mouse_pan_orbit_speed = 2.0f;
+            camera->orbit_angles.y += input->d_mouse_pos.y * camera_mouse_pan_orbit_speed * d_time;
+            camera->orbit_angles.x += input->d_mouse_pos.x * camera_mouse_pan_orbit_speed * d_time;
+        }
+        
+        if(just_scrolled)
+        {
+            just_scrolled = false;
+            camera->orbit_distance -= d_scroll * 0.5 * (camera->orbit_distance);
+        }
+#endif
+        
+        Float angle_y_min = -1*pi/2.2f;
+        if(camera->orbit_angles.y < angle_y_min)
+            camera->orbit_angles.y = angle_y_min;
+        if(camera->orbit_angles.y > -angle_y_min)
+            camera->orbit_angles.y = -angle_y_min;
+        
+        
+        camera->pos.x = camera->orbit_distance * cos(camera->orbit_angles.y) * cos(camera->orbit_angles.x);
+        camera->pos.y = camera->orbit_distance * sin(camera->orbit_angles.y);
+        camera->pos.z = camera->orbit_distance * cos(camera->orbit_angles.y) * sin(camera->orbit_angles.x);
+    }
+    
+    {
+        Camera *real_camera = &game_state->camera;
+        Float interp_speed = 50.0f;
+        real_camera->pos.interpolate_to(camera->pos, interp_speed * d_time);
+        real_camera->target.interpolate_to(camera->target, interp_speed * d_time);
+        real_camera->up.interpolate_to(camera->up, interp_speed * d_time);
+        real_camera->orbit_angles.interpolate_to(camera->orbit_angles, interp_speed * d_time);
+        real_camera->orbit_distance = interpolate(real_camera->orbit_distance,
+                                                  camera->orbit_distance,
+                                                  interp_speed * d_time);
+    }
     
     reload_changed_shaders(game_state);
     
@@ -403,13 +436,18 @@ update_and_render(GameMemory *game_memory)
     draw_field(game_state);
     
     
+#if 0
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glUseProgram(game_state->font_sp.id);
     
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, game_state->font_texture);
     glUniform1i(glGetUniformLocation(game_state->font_sp.id, "texture1"), game_state->font_texture);
     
     glBindVertexArray(game_state->font_vao);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    //glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+#endif
     
     
     // LATER: improve this

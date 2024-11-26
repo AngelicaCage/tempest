@@ -288,7 +288,7 @@ field_draw_text(GameState *game_state, Field *field, const Char *str, V2 pos,
 }
 
 Void
-update_field_data(GameState *game_state, Field *field)
+update_field_data_in_game(GameState *game_state, Field *field)
 {
     Float playing_area_height = 1;
     if(game_state->paused)
@@ -336,12 +336,70 @@ update_field_data(GameState *game_state, Field *field)
         
     }
     
-    Char fps_text_buffer[20];
-    sprintf(fps_text_buffer, "%d fps", (Int)game_state->fps);
-    field_draw_text(game_state, field, fps_text_buffer, v2(-1.0f, -1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
+    //Char fps_text_buffer[20];
+    //sprintf(fps_text_buffer, "%d fps", (Int)game_state->fps);
+    //field_draw_text(game_state, field, fps_text_buffer, v2(-1.0f, -1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
     
-    field_draw_text(game_state, field, "0123456789", v2(-1.0f, 0), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
+    //field_draw_text(game_state, field, "0123456789", v2(-1.0f, 0), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
+}
+
+Void
+update_field_data_main_menu(GameState *game_state, Field *field)
+{
+    // TODO: have waves
+    F64 time = get_time();
     
+    for(Int y = 0; y < field->height; y++)
+    {
+        for(Int x = 0; x < field->width; x++)
+        {
+            FieldPoint *point = &(field->target_points[y][x]);
+            point->height = 0;
+            //point->height += random_float(0, 0.1f);
+            point->color = color(0.31, 0.58, 0.68, 1);
+            
+            //point->height += sin((x+0.5984f)*0.2f + time) * 0.1f;
+            point->height += sin((x+0.5984f)*0.1f + time) * 0.3f;
+            point->height += sin((-y+x)*0.2f + time) * 0.07f;
+            point->height += cos((y+x)*0.3f + time) * 0.07f;
+        }
+    }
+    
+    Float menu_text_left = -4.0f;
+    Float menu_text_spacing = 1.0f;
+    Float menu_text_y = -1.0f;
+    
+    field_draw_text(game_state, field, "Tempest", v2(menu_text_left, menu_text_y), 0.12f, color(0.92, 0.33, 0.53, 1.0f));
+    
+    // Later: standardize interpolate functions
+    Color normal_text_color = color(0.92, 0.69, 0.33, 1.0f);
+    Color selected_text_color = color(0.92, 0.85, 0.73, 1.0f);
+    selected_text_color.interpolate_to(color(1, 1, 1, 1), sin(time*5));
+    
+    Int selector = game_state->main_menu_selector;
+    
+    menu_text_y += menu_text_spacing * 1;
+    field_draw_text(game_state, field, "Play", v2(menu_text_left, menu_text_y), 0.12f,
+                    selector == 0 ? selected_text_color : normal_text_color);
+    menu_text_y += menu_text_spacing;
+    field_draw_text(game_state, field, "Settings", v2(menu_text_left, menu_text_y), 0.12f,
+                    selector == 1 ? selected_text_color : normal_text_color);
+    menu_text_y += menu_text_spacing;
+    field_draw_text(game_state, field, "Exit", v2(menu_text_left, menu_text_y), 0.12f,
+                    selector == 2 ? selected_text_color : normal_text_color);
+}
+
+Void
+update_field_data(GameState *game_state, Field *field)
+{
+    if(game_state->in_game)
+    {
+        update_field_data_in_game(game_state, field);
+    }
+    else
+    {
+        update_field_data_main_menu(game_state, field);
+    }
     
     for(Int y = 0; y < field->height; y++)
     {
@@ -351,8 +409,11 @@ update_field_data(GameState *game_state, Field *field)
             FieldPoint *point = &(field->points[y][x]);
             Float interp_speed = 60.0f * game_state->d_time;
             
-            point->height = target_point->height;//interpolate(point->height, target_point->height, interp_speed);
-            point->color = target_point->color;//.interpolate_to(target_point->color, interp_speed);
+            //point->height = target_point->height;
+            //point->color = target_point->color;
+            point->height = interpolate(point->height, target_point->height, interp_speed);
+            point->color.interpolate_to(target_point->color, interp_speed);
+            
         }
     }
 }
