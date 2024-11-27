@@ -128,6 +128,7 @@ Bullet bullet(V2 pos, V2 vel, Float radius, Color color)
 
 enum class EnemyType
 {
+    none,
     spread,
     stream,
     spin,
@@ -159,6 +160,7 @@ struct Enemy
         struct
         { // spin
             Float spin_speed;
+            Int spin_arm_count;
         };
         struct
         { // wall
@@ -169,7 +171,7 @@ struct Enemy
         };
         struct
         { // suicide
-            Float move_speed;
+            Float suicide_move_speed;
         };
     };
 };
@@ -189,14 +191,15 @@ create_enemy(V2 pos, EnemyType type)
         }; break;
         case EnemyType::stream:
         {
-            result.bullet_speed = 1.0f;
+            result.bullet_speed = 3.0f;
             result.time_between_fires = random_float(0.5f, 1.0f);
         }; break;
         case EnemyType::spin:
         {
-            result.spin_speed = 1.0f;
+            result.spin_speed = random_float(0.05f, 0.1f);
+            result.spin_arm_count = random_int(2, 5);
             result.bullet_speed = 1.0f;
-            result.time_between_fires = random_float(0.1f, 0.3f);
+            result.time_between_fires = random_float(0.3f, 0.6f);
         }; break;
         case EnemyType::wall:
         {
@@ -214,7 +217,7 @@ create_enemy(V2 pos, EnemyType type)
         }; break;
         case EnemyType::suicide:
         {
-            result.move_speed = 1.0f;
+            result.suicide_move_speed = 1.0f;
         }; break;
     }
     

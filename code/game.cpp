@@ -150,23 +150,44 @@ update_gameplay(GameState *game_state)
     V2 play_area_bottom_right = game_state->field.playing_area_dim / 2;
     player->pos = clamp(player->pos, play_area_top_left, play_area_bottom_right);
     
-    if(keys->e.just_pressed)
+    EnemyType new_enemy_type = EnemyType::none;
+    if(keys->number_1.just_pressed)
+        new_enemy_type = EnemyType::spread;
+    if(keys->number_2.just_pressed)
+        new_enemy_type = EnemyType::stream;
+    if(keys->number_3.just_pressed)
+        new_enemy_type = EnemyType::spin;
+    if(keys->number_4.just_pressed)
+        new_enemy_type = EnemyType::wall;
+    if(keys->number_5.just_pressed)
+        new_enemy_type = EnemyType::bomb;
+    if(keys->number_6.just_pressed)
+        new_enemy_type = EnemyType::suicide;
+    
+    if(new_enemy_type != EnemyType::none)
     {
         Float enemy_fire_time = 0.3f;
         V2 enemy_pos = v2(random_float(-playing_area_dim.x/2, playing_area_dim.x/2),
                           random_float(-playing_area_dim.y/2, playing_area_dim.y/2));
         
-        Enemy new_enemy = create_enemy(enemy_pos, EnemyType::spread);
-#if 0
-        Enemy new_enemy = {
-            enemy_pos,
-            0.3f,
-            0.05f,
-            enemy_fire_time,
-            enemy_fire_time
-        };
-#endif
+        Enemy new_enemy = create_enemy(enemy_pos, new_enemy_type);
+        
         game_state->enemies.add(new_enemy);
+    }
+    
+    if(keys->k.just_pressed)
+    {
+        for(Int i = 0; i < game_state->enemies.length; i++)
+        {
+            game_state->enemies.remove_at(i);
+            i--;
+        }
+        for(Int i = 0; i < game_state->enemy_bullets.length; i++)
+        {
+            game_state->enemy_bullets.remove_at(i);
+            i--;
+        }
+        
     }
     
     for(Int i = 0; i < game_state->enemies.length; i++)
@@ -196,8 +217,49 @@ update_gameplay(GameState *game_state)
         enemy->time_to_fire -= d_time;
         if(enemy->time_to_fire <= 0)
         {
-            
             enemy->time_to_fire = enemy->time_between_fires;
+            Float bullet_size = 0.2f;
+            
+            switch(enemy->type)
+            {
+                case EnemyType::spread:
+                {
+                    for(Int a = 1; a <= enemy->amount_per_spread; a++)
+                    {
+                        Float angle = ((Float)a / (Float)enemy->amount_per_spread) * pi*2;
+                        V2 bullet_dir = v2(cos(angle), sin(angle));
+                        game_state->enemy_bullets.add(bullet(enemy->pos + bullet_dir*enemy->radius, bullet_dir * enemy->bullet_speed,
+                                                             bullet_size, color(1.0f, 0.8f, 0.0f, 1.0f)));
+                    }
+                }; break;
+                case EnemyType::stream:
+                {
+                    V2 bullet_dir = player->pos - enemy->pos;
+                    bullet_dir.normalize();
+                    game_state->enemy_bullets.add(bullet(enemy->pos + bullet_dir*enemy->radius, bullet_dir * enemy->bullet_speed,
+                                                         bullet_size, color(1.0f, 0.8f, 0.0f, 1.0f)));
+                    
+                }; break;
+                case EnemyType::spin:
+                {
+                    Float initial_angle = get_time() * pi*2 * enemy->spin_speed;
+                    for(Int a = 0; a < enemy->spin_arm_count; a++)
+                    {
+                        Float angle = initial_angle + ((Float)a / (Float)enemy->spin_arm_count) * pi*2;
+                        V2 bullet_dir = v2(cos(angle), sin(angle));
+                        game_state->enemy_bullets.add(bullet(enemy->pos + bullet_dir*enemy->radius, bullet_dir * enemy->bullet_speed,
+                                                             bullet_size, color(1.0f, 0.8f, 0.0f, 1.0f)));
+                    }
+                }; break;
+                case EnemyType::wall:
+                {
+                }; break;
+                case EnemyType::bomb:
+                {
+                }; break;
+            }
+            
+#if 0
             Float bullet_speed = 5.0f;
             V2 bullet_dir = v2(random_float(-1, 1), random_float(-1, 1));
             if(bullet_dir.x == 0 && bullet_dir.y == 0)
@@ -205,6 +267,7 @@ update_gameplay(GameState *game_state)
             bullet_dir.normalize();
             game_state->enemy_bullets.add(bullet(enemy->pos, bullet_dir,
                                                  0.2f, color(1.0f, 0.8f, 0.0f, 1.0f)));
+#endif
             
         }
     }
@@ -287,6 +350,7 @@ update_and_render(GameMemory *game_memory)
     {
         // Initialize memory
         game_state->initialized = true;
+        srand(get_time());
         
         game_state->paused = false;
         game_state->should_quit = false;

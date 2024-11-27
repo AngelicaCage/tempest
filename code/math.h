@@ -171,6 +171,13 @@ random_float(F32 min, F32 max)
     return (F32)rand()/(F32)RAND_MAX * (max-min) + min;
 }
 
+// inc, exc
+Int
+random_int(Int min, Int max)
+{
+    return (F32)rand()/(F32)RAND_MAX * (max-min) + min;
+}
+
 Float clamp(Float val, Float min, Float max)
 {
     if(val < min) return min;
