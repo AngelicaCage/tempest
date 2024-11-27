@@ -140,19 +140,25 @@ struct Enemy
 {
     V2 pos;
     Float radius;
-    Color color;
+    //Color color;
     
     Float time_between_fires; // in seconds
     Float time_to_fire;
+    Float bullet_speed;
     
     EnemyType type;
     union
     {
         struct
         { // spread
+            Int amount_per_spread;
         };
         struct
         { // stream
+        };
+        struct
+        { // spin
+            Float spin_speed;
         };
         struct
         { // wall
@@ -163,9 +169,59 @@ struct Enemy
         };
         struct
         { // suicide
+            Float move_speed;
         };
     };
 };
+Enemy
+create_enemy(V2 pos, EnemyType type)
+{
+    Enemy result;
+    result.pos = pos;
+    result.radius = 0.3f;
+    switch(type)
+    {
+        case EnemyType::spread:
+        {
+            result.bullet_speed = 1.0f;
+            result.time_between_fires = random_float(0.5f, 2.0f);
+            result.amount_per_spread = 12;
+        }; break;
+        case EnemyType::stream:
+        {
+            result.bullet_speed = 1.0f;
+            result.time_between_fires = random_float(0.5f, 1.0f);
+        }; break;
+        case EnemyType::spin:
+        {
+            result.spin_speed = 1.0f;
+            result.bullet_speed = 1.0f;
+            result.time_between_fires = random_float(0.1f, 0.3f);
+        }; break;
+        case EnemyType::wall:
+        {
+            result.wall_dir = v2(random_float(-1, 1), random_float(-1, 1));
+            if(result.wall_dir.x == 0 && result.wall_dir.y == 0)
+                result.wall_dir.x = 1;
+            result.wall_dir.normalize();
+            result.bullet_speed = 1.0f;
+            result.time_between_fires = random_float(0.1f, 0.2f);
+        }; break;
+        case EnemyType::bomb:
+        {
+            result.bullet_speed = 1.0f;
+            result.time_between_fires = random_float(2.0f, 5.0f);
+        }; break;
+        case EnemyType::suicide:
+        {
+            result.move_speed = 1.0f;
+        }; break;
+    }
+    
+    result.time_to_fire = result.time_between_fires;
+    result.type = type;
+    return result;
+}
 
 // TODO: implement these
 struct EnemyExplosion

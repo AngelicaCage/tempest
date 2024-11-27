@@ -377,11 +377,12 @@ update_field_data_in_game(GameState *game_state, Field *field)
         for(Int i = 0; i < game_state->enemies.length; i++)
         {
             Enemy enemy = game_state->enemies[i];
-            field_draw_circle(field, enemy.pos, enemy.radius, 0.3f, enemy.color, true, playing_area_height);
+            field_draw_circle(field, enemy.pos, enemy.radius, 0.3f, color(1, 0, 0, 0), true, playing_area_height);
             
             Float max_enemy_charge_height = 1.5f;
             Float enemy_charge_height = (enemy.time_between_fires - enemy.time_to_fire) * max_enemy_charge_height;
-            field_draw_circle(field, enemy.pos, enemy.radius/2, enemy_charge_height, enemy.color);
+            // TODO: remove this?
+            field_draw_circle(field, enemy.pos, enemy.radius/2, enemy_charge_height, color(1, 0, 0, 0));
         }
         for(Int i = 0; i < game_state->player_bullets.length; i++)
         {
