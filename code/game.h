@@ -178,6 +178,17 @@ struct EnemyExplosion
     Float time_left_max;
     Float time_left;
 };
+EnemyExplosion enemy_explosion(Enemy *enemy)
+{
+    EnemyExplosion result;
+    result.pos = enemy->pos;
+    result.initial_radius = enemy->radius;
+    result.initial_height = 0.3f;
+    result.initial_color = color(1, 0, 0, 1);
+    result.time_left_max = 0.25f;
+    result.time_left = result.time_left_max;
+    return result;
+}
 
 struct GameState
 {
@@ -231,6 +242,7 @@ struct GameState
     List<Bullet> player_bullets;
     List<Enemy> enemies;
     List<Bullet> enemy_bullets;
+    List<EnemyExplosion> enemy_explosions;
 };
 
 #endif //GAME_H

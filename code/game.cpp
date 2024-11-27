@@ -174,6 +174,7 @@ update_gameplay(GameState *game_state)
             Bullet *bullet = &game_state->player_bullets.data[a];
             if(v2_dist(enemy->pos, bullet->pos) <= enemy->radius + bullet->radius)
             {
+                game_state->enemy_explosions.add(enemy_explosion(&(game_state->enemies.data[i])));
                 game_state->enemies.remove_at(i);
                 game_state->player_bullets.remove_at(a);
                 enemy_destroyed = true;
@@ -232,6 +233,17 @@ update_gameplay(GameState *game_state)
         }
     }
     
+    for(Int i = 0; i < game_state->enemy_explosions.length; i++)
+    {
+        EnemyExplosion *explosion = &game_state->enemy_explosions.data[i];
+        explosion->time_left -= d_time;
+        
+        if(explosion->time_left <= 0)
+        {
+            game_state->enemy_explosions.remove_at(i);
+            i--;
+        }
+    }
     
 }
 
@@ -395,6 +407,7 @@ update_and_render(GameMemory *game_memory)
         
         game_state->enemy_bullets = create_list<Bullet>();
         game_state->enemies = create_list<Enemy>();
+        game_state->enemy_explosions = create_list<EnemyExplosion>();
         
         generate_text_bitmaps(game_state);
         update_field_data(game_state, &(game_state->field));

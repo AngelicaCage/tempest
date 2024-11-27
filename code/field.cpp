@@ -247,7 +247,7 @@ field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Col
 }
 
 Void
-field_draw_playing_area(GameState *game_state, Field *field, Float height)
+field_draw_playing_area(GameState *game_state, Field *field, Float height, Color area_color)
 {
     field->playing_area_dim = v2(10.5, 7);
     V2 raised_area_top_left_field = coords_world_to_field(field, v2(field->playing_area_dim.x / -2, field->playing_area_dim.y / -2)) - v2(1, 1);
@@ -259,7 +259,7 @@ field_draw_playing_area(GameState *game_state, Field *field, Float height)
         {
             FieldPoint *point = &(field->target_points[y][x]);
             point->height = height;
-            point->color = color(0.17, 0.55, 0.42, 1);
+            point->color = area_color;
         }
     }
 }
@@ -338,6 +338,8 @@ Void
 update_field_data_in_game(GameState *game_state, Field *field)
 {
     F64 time = get_time();
+    Color ocean_color = color(0.31, 0.58, 0.68, 1);
+    Color play_area_color = color(0.17, 0.55, 0.42, 1);
     for(Int y = 0; y < field->height; y++)
     {
         for(Int x = 0; x < field->width; x++)
@@ -345,7 +347,7 @@ update_field_data_in_game(GameState *game_state, Field *field)
             FieldPoint *point = &(field->target_points[y][x]);
             point->height = 0;
             //point->height += random_float(0, 0.1f);
-            point->color = color(0.31, 0.58, 0.68, 1);
+            point->color = ocean_color;
             
             //point->height += sin((x+0.5984f)*0.2f + time) * 0.1f;
             point->height += sin((x+0.5984f)*0.1f + time) * 0.3f;
@@ -357,7 +359,7 @@ update_field_data_in_game(GameState *game_state, Field *field)
     Float playing_area_height = 1;
     if(game_state->paused)
     {
-        field_draw_playing_area(game_state, field, playing_area_height);
+        field_draw_playing_area(game_state, field, playing_area_height, play_area_color);
         field_draw_text(game_state, field, "paused", v2(-1.8f, -1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
         field_draw_text(game_state, field, "esc to resume", v2(-3.9f, 1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
     }
@@ -365,7 +367,7 @@ update_field_data_in_game(GameState *game_state, Field *field)
     {
         Player *player = &game_state->player;
         
-        field_draw_playing_area(game_state, field, playing_area_height);
+        field_draw_playing_area(game_state, field, playing_area_height, play_area_color);
         
         for(Int i = 0; i < game_state->enemy_bullets.length; i++)
         {
@@ -386,9 +388,21 @@ update_field_data_in_game(GameState *game_state, Field *field)
             Bullet bullet = game_state->player_bullets[i];
             field_draw_circle(field, bullet.pos, bullet.radius, 0.3f, bullet.color);
         }
+        for(Int i = 0; i < game_state->enemy_explosions.length; i++)
+        {
+            EnemyExplosion explosion = game_state->enemy_explosions[i];
+            
+            Float fraction = explosion.time_left / explosion.time_left_max;
+            Float radius = explosion.initial_radius * (1-fraction) * 3;
+            Float height = explosion.initial_height * fraction + 0.3f;
+            
+            field_draw_circle(field, explosion.pos, radius,
+                              height, explosion.initial_color);
+            field_draw_circle(field, explosion.pos, radius - 0.2f,
+                              -height, play_area_color);
+        }
         
         field_draw_circle(field, player->pos, 0.1f, 0.8f, color(1, 1, 1, 1));
-        
     }
     
 #if 0
