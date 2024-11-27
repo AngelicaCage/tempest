@@ -187,7 +187,7 @@ create_enemy(V2 pos, EnemyType type)
         {
             result.bullet_speed = 1.0f;
             result.time_between_fires = random_float(0.5f, 2.0f);
-            result.amount_per_spread = 12;
+            result.amount_per_spread = random_int(8, 20);
         }; break;
         case EnemyType::stream:
         {

@@ -253,9 +253,23 @@ update_gameplay(GameState *game_state)
                 }; break;
                 case EnemyType::wall:
                 {
+                    V2 bullet_dir = enemy->wall_dir;
+                    game_state->enemy_bullets.add(bullet(enemy->pos + bullet_dir*enemy->radius, bullet_dir * enemy->bullet_speed,
+                                                         bullet_size, color(1.0f, 0.8f, 0.0f, 1.0f)));
+                    bullet_dir = enemy->wall_dir * -1;
+                    game_state->enemy_bullets.add(bullet(enemy->pos + bullet_dir*enemy->radius, bullet_dir * enemy->bullet_speed,
+                                                         bullet_size, color(1.0f, 0.8f, 0.0f, 1.0f)));
                 }; break;
                 case EnemyType::bomb:
                 {
+                    V2 bullet_dir = player->pos - enemy->pos;
+                    Float wobble_amount = 0.2f;
+                    V2 wobble = v2(random_float(-wobble_amount, wobble_amount), random_float(-wobble_amount, wobble_amount));
+                    bullet_dir.normalize();
+                    bullet_dir += wobble;
+                    bullet_dir.normalize();
+                    game_state->enemy_bullets.add(bullet(enemy->pos + bullet_dir*enemy->radius, bullet_dir * enemy->bullet_speed,
+                                                         bullet_size * 4.5f, color(1.0f, 0.8f, 0.0f, 1.0f)));
                 }; break;
             }
             
