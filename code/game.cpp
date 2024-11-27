@@ -214,6 +214,14 @@ update_gameplay(GameState *game_state)
             continue;
         }
         
+        if(enemy->type == EnemyType::suicide)
+        {
+            V2 d_pos = player->pos - enemy->pos;
+            d_pos.normalize();
+            d_pos = d_pos * enemy->suicide_move_speed * d_time;
+            enemy->pos += d_pos;
+        }
+        
         enemy->time_to_fire -= d_time;
         if(enemy->time_to_fire <= 0)
         {

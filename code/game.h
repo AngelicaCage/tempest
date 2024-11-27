@@ -217,7 +217,7 @@ create_enemy(V2 pos, EnemyType type)
         }; break;
         case EnemyType::suicide:
         {
-            result.suicide_move_speed = 1.0f;
+            result.suicide_move_speed = 2.0f;
         }; break;
     }
     
