@@ -255,8 +255,23 @@ bomb: 60
                 
                 proportions[largest_index] -= cost;
                 
+                Float player_safety_radius = 1.5f;
                 V2 enemy_pos = v2(random_float(-playing_area_dim.x/2, playing_area_dim.x/2),
                                   random_float(-playing_area_dim.y/2, playing_area_dim.y/2));
+                Float dist_to_player = v2_dist(player->pos, enemy_pos);
+                if(dist_to_player <= player_safety_radius)
+                {
+                    V2 travel_dir = v2(0, 0) - enemy_pos;
+                    if(v2_dist(player->pos, v2(0, 0)) <= player_safety_radius)
+                    { // go outward
+                        travel_dir = enemy_pos - player->pos;
+                    }
+                    travel_dir.normalize();
+                    travel_dir = travel_dir * dist_to_player;
+                    enemy_pos += travel_dir;
+                }
+                
+                
                 Enemy new_enemy = create_enemy(enemy_pos, types[(largest_index + type_offset)%5]);
                 game_state->enemies.add(new_enemy);
             }
