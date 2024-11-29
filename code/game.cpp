@@ -73,6 +73,10 @@ update_main_menu(GameState *game_state)
         if(game_state->main_menu_selector == 0)
         {
             game_state->in_game = true;
+            game_state->player.pos = v2(0, 0);
+            game_state->player_bullets.length = 0;
+            game_state->enemy_bullets.length = 0;
+            game_state->enemies.length = 0;
         }
         else if(game_state->main_menu_selector == 1)
         {
@@ -211,6 +215,8 @@ bomb: 60
             max_enemies = 7;
         if(game_state->time_in_game > 120)
             max_enemies = 10;
+        if(game_state->time_in_game > 180)
+            max_enemies = 12;
         
         Int new_enemies_count = max_enemies - game_state->enemies.length;
         if(new_enemies_count > 0)
@@ -263,22 +269,32 @@ bomb: 60
     {
         Enemy *enemy = &(game_state->enemies.data[i]);
         
-        Bool enemy_destroyed = false;
+        Bool enemy_should_be_destroyed = false;
         for(Int a = 0; a < game_state->player_bullets.length; a++)
         {
             Bullet *bullet = &game_state->player_bullets.data[a];
             if(v2_dist(enemy->pos, bullet->pos) <= enemy->radius + bullet->radius)
             {
-                game_state->enemy_explosions.add(enemy_explosion(&(game_state->enemies.data[i])));
-                game_state->enemies.remove_at(i);
                 game_state->player_bullets.remove_at(a);
-                enemy_destroyed = true;
+                enemy_should_be_destroyed = true;
                 break;
             }
         }
         
-        if(enemy_destroyed)
+        if(game_state->life_lost_explosion_enabled)
         {
+            Float dist_to_explosion = v2_dist(game_state->life_lost_explosion_center, enemy->pos);
+            if(dist_to_explosion <= game_state->life_lost_explosion_radius + enemy->radius)
+            {
+                enemy_should_be_destroyed = true;
+            }
+        }
+        
+        
+        if(enemy_should_be_destroyed)
+        {
+            game_state->enemy_explosions.add(enemy_explosion(&(game_state->enemies.data[i])));
+            game_state->enemies.remove_at(i);
             i--;
             continue;
         }
@@ -363,10 +379,46 @@ bomb: 60
         }
     }
     
+    if(game_state->life_lost_explosion_enabled)
+    {
+        game_state->life_lost_explosion_radius += d_time * 10;
+        if(game_state->life_lost_explosion_radius >= 13)
+        {
+            game_state->life_lost_explosion_enabled = false;
+            game_state->life_lost_explosion_radius = 0;
+        }
+    }
+    
     for(Int i = 0; i < game_state->enemy_bullets.length; i++)
     {
-        // TODO: change this to use play_area_top_left etc.
         Bullet *bullet = &game_state->enemy_bullets.data[i];
+        
+        if(!game_state->life_lost_explosion_enabled)
+        {
+            Float dist_to_player = v2_dist(player->pos, bullet->pos);
+            if(dist_to_player <= bullet->radius)
+            {
+                // TODO: player death animation (and lives?)
+                player->lives--;
+                // TODO: clear all bullets and enemies on screen
+                game_state->life_lost_explosion_enabled = true;
+                game_state->life_lost_explosion_radius = 0;
+                game_state->life_lost_explosion_center = player->pos;
+            }
+        }
+        
+        if(game_state->life_lost_explosion_enabled)
+        {
+            Float dist_to_explosion = v2_dist(game_state->life_lost_explosion_center, bullet->pos);
+            if(dist_to_explosion <= game_state->life_lost_explosion_radius + bullet->radius)
+            {
+                game_state->enemy_bullets.remove_at(i);
+                i--;
+                continue;
+            }
+        }
+        
+        // Later: change this to use play_area_top_left etc.
         // Later: make * function for V2 and Float
         bullet->pos += v2(bullet->vel.x * d_time, bullet->vel.y * d_time);
         if(bullet->pos.x < -playing_area_dim.x/2 - bullet->radius ||
@@ -376,8 +428,10 @@ bomb: 60
         {
             game_state->enemy_bullets.remove_at(i);
             i--;
+            continue;
         }
     }
+    
     for(Int i = 0; i < game_state->player_bullets.length; i++)
     {
         Bullet *bullet = &game_state->player_bullets.data[i];
@@ -563,7 +617,10 @@ update_and_render(GameMemory *game_memory)
         player->color = color(1, 1, 1, 1);
         player->shot_cooldown_max = 0.5f;
         player->shot_cooldown = 0;
+        player->lives = 3;
         game_state->player_bullets = create_list<Bullet>();
+        game_state->life_lost_explosion_enabled = false;
+        game_state->life_lost_explosion_radius = 0;
         
         game_state->enemy_bullets = create_list<Bullet>();
         game_state->enemies = create_list<Enemy>();

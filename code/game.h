@@ -107,6 +107,7 @@ struct Player
     Float shot_cooldown;
     
     Int bomb_count; // TODO: reflective bomb, can store up to 2 or maybe 1
+    Int lives;
 };
 
 struct Bullet
@@ -297,11 +298,15 @@ struct GameState
     Int main_menu_selector;
     
     Field field;
-    Player player;
     List<Bullet> player_bullets;
     List<Enemy> enemies;
     List<Bullet> enemy_bullets;
     List<EnemyExplosion> enemy_explosions;
+    
+    Player player;
+    Bool life_lost_explosion_enabled;
+    Float life_lost_explosion_radius;
+    V2 life_lost_explosion_center;
     
     F64 last_spawn_time;
 };

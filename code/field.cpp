@@ -231,7 +231,7 @@ field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Col
             V2I coords = v2i(x, y);
             if(coords.x < 0 || coords.x >= field->width ||
                coords.y < 0 || coords.y >= field->height)
-                break;
+                continue;
             
             Float dist = v2_dist(center_field, v2(x, y));
             if(dist <= radius_field)
@@ -403,7 +403,23 @@ update_field_data_in_game(GameState *game_state, Field *field)
                               -height, play_area_color);
         }
         
+        if(game_state->life_lost_explosion_enabled)
+        {
+            Float height = 0.5f;
+            
+            field_draw_circle(field, game_state->life_lost_explosion_center, game_state->life_lost_explosion_radius,
+                              height, color(1, 0.7f, 1, 1));
+            field_draw_circle(field, game_state->life_lost_explosion_center, game_state->life_lost_explosion_radius - 0.5f,
+                              -height, play_area_color);
+        }
+        
         field_draw_circle(field, player->pos, 0.1f, 0.8f, color(1, 1, 1, 1));
+        for(Int a = 0; a < player->lives; a++)
+        {
+            Float angle = ((Float)a / (Float)3) * pi*2;
+            V2 dir = v2(cos(angle), sin(angle));
+            field_draw_circle(field, player->pos + dir*0.3f, 0.1f, 0.2f, color(1, 1, 1, 1));
+        }
     }
     
 #if 0
