@@ -171,7 +171,6 @@ update_gameplay(GameState *game_state)
                           random_float(-playing_area_dim.y/2, playing_area_dim.y/2));
         
         Enemy new_enemy = create_enemy(enemy_pos, new_enemy_type);
-        
         game_state->enemies.add(new_enemy);
     }
     
@@ -190,22 +189,9 @@ update_gameplay(GameState *game_state)
         
     }
     
-    if(game_state->time_in_game - game_state->spawner_last_points_given_time >= 1)
+    if(game_state->time_in_game - game_state->last_spawn_time >= 1)
     {
-        game_state->spawner_last_points_given_time = game_state->time_in_game;
-        game_state->spawner_points += sqrt(game_state->time_in_game);
-        if(game_state->time_in_game >= 30)
-        {
-            game_state->spawner_points += 10;
-        }
-        if(game_state->time_in_game >= 60)
-        {
-            game_state->spawner_points += 10;
-        }
-        if(game_state->time_in_game >= 120)
-        {
-            game_state->spawner_points += 40;
-        }
+        game_state->last_spawn_time = game_state->time_in_game;
         /* costs:
 stream: 5
 suicide: 10
@@ -213,64 +199,63 @@ spin: 30
 wall: 50
 bomb: 60
 */
+        // TODO: initial enemy spawn wave (before 5 seconds)
+        // TODO: penalty for not killing enemies. Maybe they get stronger the longer they're alive?
         // TODO: enemy spawn queue?
         // TODO: make sure enemies don't spawn right next to or on top of the player
-        V2 enemy_pos = v2(random_float(-playing_area_dim.x/2, playing_area_dim.x/2),
-                          random_float(-playing_area_dim.y/2, playing_area_dim.y/2));
         
-        Int iterations = 0;
-        Int stream_enemy_count = 0;
-        Int suicide_enemy_count = 0;
-        Int spin_enemy_count = 0;
-        Int wall_enemy_count = 0;
-        Int bomb_enemy_count = 0;
-        while(game_state->spawner_points >= 5 && iterations < 20)
+        Int max_enemies = 3;
+        if(game_state->time_in_game > 30)
+            max_enemies = 5;
+        if(game_state->time_in_game > 60)
+            max_enemies = 7;
+        if(game_state->time_in_game > 120)
+            max_enemies = 10;
+        
+        Int new_enemies_count = max_enemies - game_state->enemies.length;
+        if(new_enemies_count > 0)
         {
-            iterations++;
+            Float spawning_preference = sin(game_state->time_in_game * 0.2f);
             
-            Float counts[] = {
-                random_float(0, 1),
-                random_float(0, 1),
-                random_float(0, 1),
-                random_float(0, 1),
-                random_float(0, 1),
+            Float proportions[5] = {
+                random_float(0, 0.4),
+                random_float(0, 0.3),
+                random_float(0, 0.1),
+                random_float(0, 0.1),
+                random_float(0, 0.1),
             };
             
-            if(counts[4] > 0.9f && game_state->spawner_points > 60 && bomb_enemy_count < 1)
-            { // bomb
-                bomb_enemy_count++;
-                Enemy new_enemy = create_enemy(enemy_pos, EnemyType::bomb);
+            EnemyType types[5] = {
+                EnemyType::stream,
+                EnemyType::suicide,
+                EnemyType::spin,
+                EnemyType::wall,
+                EnemyType::bomb,
+            };
+            
+            Int type_offset = (Int)((spawning_preference+1)/2*4);
+            
+            Float *enemy_types = (Float *)alloc(sizeof(Float) * new_enemies_count);
+            
+            for(Int i = 0; i < new_enemies_count; i++)
+            {
+                Float cost = 1.0f / (Float)new_enemies_count;
+                Int largest_index = 0;
+                for(Int a = 1; a < 5; a++)
+                {
+                    if(proportions[a] > proportions[largest_index])
+                        largest_index = a;
+                }
+                
+                proportions[largest_index] -= cost;
+                
+                V2 enemy_pos = v2(random_float(-playing_area_dim.x/2, playing_area_dim.x/2),
+                                  random_float(-playing_area_dim.y/2, playing_area_dim.y/2));
+                Enemy new_enemy = create_enemy(enemy_pos, types[(largest_index + type_offset)%5]);
                 game_state->enemies.add(new_enemy);
-                game_state->spawner_points -= 60;
             }
-            if(counts[3] > 0.9f && game_state->spawner_points > 50 && wall_enemy_count < 1)
-            { // wall
-                wall_enemy_count++;
-                Enemy new_enemy = create_enemy(enemy_pos, EnemyType::wall);
-                game_state->enemies.add(new_enemy);
-                game_state->spawner_points -= 50;
-            }
-            if(counts[2] > 0.7f && game_state->spawner_points > 30 && spin_enemy_count < 2)
-            { // spin
-                spin_enemy_count++;
-                Enemy new_enemy = create_enemy(enemy_pos, EnemyType::spin);
-                game_state->enemies.add(new_enemy);
-                game_state->spawner_points -= 30;
-            }
-            if(counts[1] > 0.5f && game_state->spawner_points > 10 && suicide_enemy_count < 4)
-            { // suicide
-                suicide_enemy_count++;
-                Enemy new_enemy = create_enemy(enemy_pos, EnemyType::suicide);
-                game_state->enemies.add(new_enemy);
-                game_state->spawner_points -= 10;
-            }
-            if(counts[0] > 0.3f && game_state->spawner_points > 5 && stream_enemy_count < 4)
-            { // stream
-                stream_enemy_count++;
-                Enemy new_enemy = create_enemy(enemy_pos, EnemyType::stream);
-                game_state->enemies.add(new_enemy);
-                game_state->spawner_points -= 5;
-            }
+            
+            free(enemy_types);
         }
     }
     
@@ -594,8 +579,7 @@ update_and_render(GameMemory *game_memory)
         game_state->in_game = true;
         game_state->time_in_game = 0;
         
-        game_state->spawner_last_points_given_time = game_state->time_in_game;
-        game_state->spawner_points = 0;
+        game_state->last_spawn_time = game_state->time_in_game;
     }
     player->shot_cooldown_max = 0.15f;
     
