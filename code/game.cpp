@@ -261,14 +261,15 @@ bomb: 60
                 Float dist_to_player = v2_dist(player->pos, enemy_pos);
                 if(dist_to_player <= player_safety_radius)
                 {
-                    V2 travel_dir = v2(0, 0) - enemy_pos;
-                    if(v2_dist(player->pos, v2(0, 0)) <= player_safety_radius)
-                    { // go outward
-                        travel_dir = enemy_pos - player->pos;
-                    }
+                    V2 travel_dir = enemy_pos - player->pos;
                     travel_dir.normalize();
                     travel_dir = travel_dir * dist_to_player;
                     enemy_pos += travel_dir;
+                    if(enemy_pos.x < -playing_area_dim.x/2 || enemy_pos.y < -playing_area_dim.y/2 ||
+                       enemy_pos.x > playing_area_dim.x/2 || enemy_pos.y > playing_area_dim.y/2)
+                    {
+                        enemy_pos = v2(random_float(-0.5, 0.5), random_float(-0.5, 0.5));
+                    }
                 }
                 
                 
