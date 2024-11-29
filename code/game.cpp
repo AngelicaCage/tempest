@@ -58,9 +58,9 @@ update_main_menu(GameState *game_state)
     F32 d_time = game_state->d_time;
     Keys *keys = &game_state->input.keys;
     
-    if(keys->down.just_pressed)
+    if(keys->down.just_pressed || keys->s.just_pressed)
         game_state->main_menu_selector++;
-    if(keys->up.just_pressed)
+    if(keys->up.just_pressed || keys->w.just_pressed)
         game_state->main_menu_selector--;
     // Later: write clamp function
     if(game_state->main_menu_selector < 0)
@@ -74,9 +74,12 @@ update_main_menu(GameState *game_state)
         {
             game_state->in_game = true;
             game_state->player.pos = v2(0, 0);
+            game_state->player.lives = 3;
             game_state->player_bullets.length = 0;
             game_state->enemy_bullets.length = 0;
             game_state->enemies.length = 0;
+            game_state->life_lost_explosion_enabled = false;
+            game_state->time_in_game = 0;
         }
         else if(game_state->main_menu_selector == 1)
         {
@@ -89,13 +92,27 @@ update_main_menu(GameState *game_state)
 }
 
 Void
+player_subtract_life(GameState *game_state)
+{
+    game_state->player.lives--;
+    // TODO: clear all bullets and enemies on screen
+    game_state->life_lost_explosion_enabled = true;
+    game_state->life_lost_explosion_radius = 0;
+    game_state->life_lost_explosion_center = game_state->player.pos;
+    
+    if(game_state->player.lives < 0)
+    {
+        game_state->in_game = false;
+    }
+}
+
+Void
 update_gameplay(GameState *game_state)
 {
     F32 d_time = game_state->d_time;
     Player *player = &game_state->player;
     Keys *keys = &game_state->input.keys;
     V2 playing_area_dim = game_state->field.playing_area_dim;
-    
     
     Float player_speed = 5.0f;
     if(keys->shift_left.is_down)
@@ -323,6 +340,15 @@ bomb: 60
             enemy->pos += d_pos;
         }
         
+        if(!game_state->life_lost_explosion_enabled)
+        {
+            Float dist_to_player = v2_dist(player->pos, enemy->pos);
+            if(dist_to_player <= enemy->radius)
+            {
+                player_subtract_life(game_state);
+            }
+        }
+        
         enemy->time_to_fire -= d_time;
         if(enemy->time_to_fire <= 0)
         {
@@ -381,17 +407,6 @@ bomb: 60
                                                          bullet_size * 4.5f, color(1.0f, 0.8f, 0.0f, 1.0f)));
                 }; break;
             }
-            
-#if 0
-            Float bullet_speed = 5.0f;
-            V2 bullet_dir = v2(random_float(-1, 1), random_float(-1, 1));
-            if(bullet_dir.x == 0 && bullet_dir.y == 0)
-                bullet_dir.x = 1;
-            bullet_dir.normalize();
-            game_state->enemy_bullets.add(bullet(enemy->pos, bullet_dir,
-                                                 0.2f, color(1.0f, 0.8f, 0.0f, 1.0f)));
-#endif
-            
         }
     }
     
@@ -414,12 +429,7 @@ bomb: 60
             Float dist_to_player = v2_dist(player->pos, bullet->pos);
             if(dist_to_player <= bullet->radius)
             {
-                // TODO: player death animation (and lives?)
-                player->lives--;
-                // TODO: clear all bullets and enemies on screen
-                game_state->life_lost_explosion_enabled = true;
-                game_state->life_lost_explosion_radius = 0;
-                game_state->life_lost_explosion_center = player->pos;
+                player_subtract_life(game_state);
             }
         }
         
@@ -649,7 +659,7 @@ update_and_render(GameMemory *game_memory)
         game_state->main_menu_selector = 0;
         
         game_state->d_time = 0.06f;
-        game_state->in_game = true;
+        game_state->in_game = false;
         game_state->time_in_game = 0;
         
         game_state->last_spawn_time = game_state->time_in_game;

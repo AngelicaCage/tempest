@@ -381,8 +381,9 @@ update_field_data_in_game(GameState *game_state, Field *field)
             
             Float max_enemy_charge_height = 1.5f;
             Float enemy_charge_height = (enemy.time_between_fires - enemy.time_to_fire) * max_enemy_charge_height;
-            // TODO: remove this?
-            field_draw_circle(field, enemy.pos, enemy.radius/2, enemy_charge_height, color(1, 0, 0, 0));
+            // TODO: fix this
+            if(enemy.type != EnemyType::suicide)
+                field_draw_circle(field, enemy.pos, enemy.radius/2, enemy_charge_height, color(1, 0, 0, 0));
         }
         for(Int i = 0; i < game_state->player_bullets.length; i++)
         {
@@ -411,6 +412,14 @@ update_field_data_in_game(GameState *game_state, Field *field)
                               height, color(1, 0.7f, 1, 1));
             field_draw_circle(field, game_state->life_lost_explosion_center, game_state->life_lost_explosion_radius - 0.5f,
                               -height, play_area_color);
+            
+            Char life_warning_text_buffer[40];
+            if(game_state->player.lives == 0)
+                sprintf(life_warning_text_buffer, "last life");
+            else
+                sprintf(life_warning_text_buffer, "%d lives left", (Int)game_state->player.lives + 1);
+            field_draw_text(game_state, field, life_warning_text_buffer, v2(-4.0f, 0), 0.12f, color(1, 1, 1, 1.0f));
+            
         }
         
         field_draw_circle(field, player->pos, 0.1f, 0.8f, color(1, 1, 1, 1));
@@ -422,10 +431,16 @@ update_field_data_in_game(GameState *game_state, Field *field)
         }
     }
     
-#if 0
+#if 1
     Char fps_text_buffer[40];
-    sprintf(fps_text_buffer, "%d", (Int)game_state->spawner_points);
-    field_draw_text(game_state, field, fps_text_buffer, v2(-1.0f, -1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
+    sprintf(fps_text_buffer, "%d", (Int)game_state->time_in_game);
+    Float x_offset = 0;
+    if(strlen(fps_text_buffer) == 1)
+        x_offset = 12;
+    else if(strlen(fps_text_buffer) == 2)
+        x_offset = 6;
+    x_offset = scale_field_to_world(field, x_offset);
+    field_draw_text(game_state, field, fps_text_buffer, v2(-8.0f + x_offset, -3), 0.12f, color(1, 1, 1, 1.0f));
 #endif
     
     //Char fps_text_buffer[20];
