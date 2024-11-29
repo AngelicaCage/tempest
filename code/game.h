@@ -302,6 +302,9 @@ struct GameState
     List<Enemy> enemies;
     List<Bullet> enemy_bullets;
     List<EnemyExplosion> enemy_explosions;
+    
+    F64 spawner_last_points_given_time;
+    Float spawner_points;
 };
 
 #endif //GAME_H

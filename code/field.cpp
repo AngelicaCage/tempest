@@ -406,9 +406,9 @@ update_field_data_in_game(GameState *game_state, Field *field)
         field_draw_circle(field, player->pos, 0.1f, 0.8f, color(1, 1, 1, 1));
     }
     
-#if 0
-    Char fps_text_buffer[20];
-    sprintf(fps_text_buffer, "%d", (Int)game_state->time_in_game);
+#if 1
+    Char fps_text_buffer[40];
+    sprintf(fps_text_buffer, "%d", (Int)game_state->spawner_points);
     field_draw_text(game_state, field, fps_text_buffer, v2(-1.0f, -1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
 #endif
     
