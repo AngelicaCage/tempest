@@ -304,6 +304,7 @@ struct GameState
     List<EnemyExplosion> enemy_explosions;
     
     Player player;
+    Int kills;
     Bool life_lost_explosion_enabled;
     Float life_lost_explosion_radius;
     V2 life_lost_explosion_center;

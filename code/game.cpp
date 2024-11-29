@@ -80,6 +80,7 @@ update_main_menu(GameState *game_state)
             game_state->enemies.length = 0;
             game_state->life_lost_explosion_enabled = false;
             game_state->time_in_game = 0;
+            game_state->kills = 0;
         }
         else if(game_state->main_menu_selector == 1)
         {
@@ -113,6 +114,8 @@ update_gameplay(GameState *game_state)
     Player *player = &game_state->player;
     Keys *keys = &game_state->input.keys;
     V2 playing_area_dim = game_state->field.playing_area_dim;
+    
+    game_state->time_in_game += d_time;
     
     Float player_speed = 5.0f;
     if(keys->shift_left.is_down)
@@ -310,6 +313,7 @@ bomb: 60
             {
                 game_state->player_bullets.remove_at(a);
                 enemy_should_be_destroyed = true;
+                game_state->kills++;
                 break;
             }
         }
@@ -631,10 +635,10 @@ update_and_render(GameMemory *game_memory)
         
         // Field
         //*field = create_field(400, 300);
-        *field = create_field(200, 150);
+        *field = create_field(220, 150);
         field->render_data_allocated = false;
         field->center_world = v2(0, 0);
-        Float field_phys_width = 20;
+        Float field_phys_width = 22;
         field->dim_world = v2(field_phys_width, field_phys_width * ((Float)field->height / (Float)field->width));
         
         player->pos = v2(0, 0);
@@ -644,6 +648,7 @@ update_and_render(GameMemory *game_memory)
         player->shot_cooldown_max = 0.5f;
         player->shot_cooldown = 0;
         player->lives = 3;
+        game_state->kills = 0;
         game_state->player_bullets = create_list<Bullet>();
         game_state->life_lost_explosion_enabled = false;
         game_state->life_lost_explosion_radius = 0;
@@ -696,7 +701,6 @@ update_and_render(GameMemory *game_memory)
     
     if(game_state->in_game)
     {
-        game_state->time_in_game += d_time;
         if(keys->escape.just_pressed)
             game_state->paused = !game_state->paused;
         
@@ -729,7 +733,7 @@ update_and_render(GameMemory *game_memory)
             camera->orbit_angles.y -= camera_orbit_speed * d_time;
 #endif
         
-#if 0
+#if 1
         // LATER: adjust by window resolution
         if(glfwGetMouseButton(game_memory->window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
         {

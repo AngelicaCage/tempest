@@ -432,15 +432,30 @@ update_field_data_in_game(GameState *game_state, Field *field)
     }
     
 #if 1
-    Char fps_text_buffer[40];
-    sprintf(fps_text_buffer, "%d", (Int)game_state->time_in_game);
-    Float x_offset = 0;
-    if(strlen(fps_text_buffer) == 1)
-        x_offset = 12;
-    else if(strlen(fps_text_buffer) == 2)
-        x_offset = 6;
-    x_offset = scale_field_to_world(field, x_offset);
-    field_draw_text(game_state, field, fps_text_buffer, v2(-8.0f + x_offset, -3), 0.12f, color(1, 1, 1, 1.0f));
+    {
+        Char text_buffer[40];
+        sprintf(text_buffer, "%d", (Int)game_state->time_in_game);
+        Float x_offset = 0;
+        if(strlen(text_buffer) == 1)
+            x_offset = 12;
+        else if(strlen(text_buffer) == 2)
+            x_offset = 6;
+        x_offset = scale_field_to_world(field, x_offset);
+        field_draw_text(game_state, field, "time", v2(-8.5f, -4.0f), 0.12f, color(1, 1, 1, 1.0f));
+        field_draw_text(game_state, field, text_buffer, v2(-8.0f + x_offset, -3), 0.12f, color(1, 1, 1, 1.0f));
+    }
+    {
+        Char text_buffer[40];
+        sprintf(text_buffer, "%d", (Int)game_state->kills);
+        Float x_offset = 0;
+        if(strlen(text_buffer) == 1)
+            x_offset = 12;
+        else if(strlen(text_buffer) == 2)
+            x_offset = 6;
+        x_offset = scale_field_to_world(field, x_offset);
+        field_draw_text(game_state, field, "kill", v2(6.0f, -4.0f), 0.12f, color(1, 1, 1, 1.0f));
+        field_draw_text(game_state, field, text_buffer, v2(6.0f + x_offset, -3), 0.12f, color(1, 1, 1, 1.0f));
+    }
 #endif
     
     //Char fps_text_buffer[20];
