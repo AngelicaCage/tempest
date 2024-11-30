@@ -28,6 +28,7 @@ UInt fragment_shader_fallback_id = 0;
 
 U64 (*get_file_last_write_time)(const Char *);
 FileContents (*read_file_contents)(const Char *);
+Bool (*write_file_contents)(const Char *, U8 *, U64);
 F64 (*get_time)();
 Void (*sleep)(F64);
 
@@ -52,6 +53,45 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     just_scrolled = true;
     d_scroll = (Float)yoffset;
     //ASSERT(false);
+}
+
+Void
+write_to_save_file(GameState *game_state)
+{
+    U64 size = sizeof(Bool)*2 + sizeof(F64) + sizeof(Int);
+    U8 *save_file_buffer = (U8 *)alloc(size);
+    
+    // Later: make a generic way to do this
+    // SEE OTHER Later when we read
+    
+    U8 *data_pointer = save_file_buffer;
+    
+    *(B32 *)data_pointer = game_state->save.has_seen_tutorial;
+    data_pointer += sizeof(B32);
+    
+    *(B32 *)data_pointer = game_state->save.has_finished_a_game;
+    data_pointer += sizeof(B32);
+    
+    *(F64 *)data_pointer = game_state->save.highest_time;
+    data_pointer += sizeof(F64);
+    
+    *(I32 *)data_pointer = game_state->save.highest_kills;
+    
+    Bool success = write_file_contents("save.tempest_save", save_file_buffer, size);
+}
+
+Void
+exit_to_main_menu(GameState *game_state)
+{
+    game_state->in_game = false;
+    game_state->main_menu_selector = 0;
+    if(game_state->kills > game_state->save.highest_kills)
+        game_state->save.highest_kills = game_state->kills;
+    if(game_state->time_in_game > game_state->save.highest_time)
+        game_state->save.highest_time = game_state->time_in_game;
+    
+    // TODO: write current game data to save struct
+    write_to_save_file(game_state);
 }
 
 Void
@@ -108,7 +148,7 @@ player_subtract_life(GameState *game_state)
     
     if(game_state->player.lives < 0)
     {
-        game_state->in_game = false;
+        exit_to_main_menu(game_state);
     }
 }
 
@@ -514,6 +554,7 @@ update_and_render(GameMemory *game_memory)
     {
         get_file_last_write_time = game_memory->get_file_last_write_time;
         read_file_contents = game_memory->read_file_contents;
+        write_file_contents = game_memory->write_file_contents;
         get_time = game_memory->get_time;
         sleep = game_memory->sleep;
         
@@ -675,6 +716,41 @@ update_and_render(GameMemory *game_memory)
         game_state->last_spawn_time = game_state->time_in_game;
         
         game_state->fullscreen = false;
+        
+        
+        FileContents save_file_contents = read_file_contents("save.tempest_save");
+        game_state->save = {0};
+        if(save_file_contents.file_found &&
+           save_file_contents.allocated &&
+           save_file_contents.contains_proper_data)
+        {
+            if(save_file_contents.size >= sizeof(Bool)*2 + sizeof(F64) + sizeof(Int))
+            {
+                // Later: make a generic way to do this
+                // ex: file_contents.read_bool();
+                // and the same the other way around, with writing
+                // find a good way to write structs, piece by piece so no weird packing issues
+                Char *data_pointer = save_file_contents.data;
+                
+                game_state->save.has_seen_tutorial = *(B32 *)data_pointer;
+                data_pointer += sizeof(B32);
+                
+                game_state->save.has_finished_a_game = *(B32 *)data_pointer;
+                data_pointer += sizeof(B32);
+                
+                game_state->save.highest_time = *(F64 *)data_pointer;
+                data_pointer += sizeof(F64);
+                
+                game_state->save.highest_kills = *(I32 *)data_pointer;
+            }
+            else
+            {
+                ASSERT(false);
+            }
+        }
+        
+        if(save_file_contents.allocated)
+            free(save_file_contents.data);
     }
     player->shot_cooldown_max = 0.15f;
     
@@ -703,7 +779,6 @@ update_and_render(GameMemory *game_memory)
         glfwGetWindowPos(game_memory->window,
                          &game_state->windowed_pos.x,
                          &game_state->windowed_pos.y);
-        
     }
     
     if(keys->f11.just_pressed)
@@ -773,8 +848,7 @@ update_and_render(GameMemory *game_memory)
                     game_state->paused = false;
                 else if(game_state->pause_menu_selector == 1)
                 {
-                    game_state->main_menu_selector = 0;
-                    game_state->in_game = false;
+                    exit_to_main_menu(game_state);
                 }
             }
         }

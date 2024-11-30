@@ -114,11 +114,6 @@ fill_field_render_data(Field *field)
             field->vertices[y*field->width*stride + x*stride + 4] = field->points[y][x].color.g;
             field->vertices[y*field->width*stride + x*stride + 5] = field->points[y][x].color.b;
             
-#if 0
-            field->vertices[y*field->width*stride + x*stride + 6] = 0;
-            field->vertices[y*field->width*stride + x*stride + 7] = 1;
-            field->vertices[y*field->width*stride + x*stride + 8] = 0;
-#endif
         }
     }
     
@@ -311,30 +306,47 @@ update_field_data_main_menu(GameState *game_state, Field *field)
         }
     }
     
-    Float menu_text_left = -4.0f;
-    Float menu_text_spacing = 1.0f;
-    Float menu_text_y = -2.0f;
+    {
+        Float menu_text_left = -5.0f;
+        Float menu_text_spacing = 1.0f;
+        Float menu_text_y = -2.0f;
+        
+        field_draw_text(game_state, field, "Tempest", v2(menu_text_left, menu_text_y), 0.12f, color(0.92, 0.33, 0.53, 1.0f));
+        
+        // Later: standardize interpolate functions
+        Color normal_text_color = color(0.92, 0.69, 0.33, 1.0f);
+        Color selected_text_color = color(0.92, 0.85, 0.73, 1.0f);
+        selected_text_color.interpolate_to(color(1, 1, 1, 1), sin(time*5));
+        
+        Int selector = game_state->main_menu_selector;
+        
+        menu_text_y += menu_text_spacing * 2;
+        field_draw_text(game_state, field, "Play", v2(menu_text_left, menu_text_y), 0.12f,
+                        selector == 0 ? selected_text_color : normal_text_color);
+        menu_text_y += menu_text_spacing;
+        field_draw_text(game_state, field, "Exit", v2(menu_text_left, menu_text_y), 0.12f,
+                        selector == 1 ? selected_text_color : normal_text_color);
+    }
     
-    field_draw_text(game_state, field, "Tempest", v2(menu_text_left, menu_text_y), 0.12f, color(0.92, 0.33, 0.53, 1.0f));
-    
-    // Later: standardize interpolate functions
-    Color normal_text_color = color(0.92, 0.69, 0.33, 1.0f);
-    Color selected_text_color = color(0.92, 0.85, 0.73, 1.0f);
-    selected_text_color.interpolate_to(color(1, 1, 1, 1), sin(time*5));
-    
-    Int selector = game_state->main_menu_selector;
-    
-    menu_text_y += menu_text_spacing * 2;
-    field_draw_text(game_state, field, "Play", v2(menu_text_left, menu_text_y), 0.12f,
-                    selector == 0 ? selected_text_color : normal_text_color);
-#if 0
-    menu_text_y += menu_text_spacing;
-    field_draw_text(game_state, field, "Settings", v2(menu_text_left, menu_text_y), 0.12f,
-                    selector == 1 ? selected_text_color : normal_text_color);
-#endif
-    menu_text_y += menu_text_spacing;
-    field_draw_text(game_state, field, "Exit", v2(menu_text_left, menu_text_y), 0.12f,
-                    selector == 1 ? selected_text_color : normal_text_color);
+    {
+        Char text_buffer[40];
+        Color normal_text_color = color(0.92, 0.69, 0.33, 1.0f);
+        
+        Float menu_text_left = 1.0f;
+        Float menu_text_spacing = 1.0f;
+        Float menu_text_y = -2.0f;
+        
+        // Later: color literals (Color.white, Color.red, etc)
+        field_draw_text(game_state, field, "Records", v2(menu_text_left, menu_text_y), 0.12f, normal_text_color);
+        
+        menu_text_y += menu_text_spacing * 2;
+        sprintf(text_buffer, "time %d", (Int)game_state->save.highest_time);
+        field_draw_text(game_state, field, text_buffer, v2(menu_text_left, menu_text_y), 0.12f, normal_text_color);
+        
+        menu_text_y += menu_text_spacing;
+        sprintf(text_buffer, "kills %d", (Int)game_state->save.highest_kills);
+        field_draw_text(game_state, field, text_buffer, v2(menu_text_left, menu_text_y), 0.12f, normal_text_color);
+    }
 }
 
 Void

@@ -58,9 +58,15 @@ _ansi_colors ansi_colors;
 typedef const Char * ansi_color;
 
 
+#ifndef TEMPEST_RELEASE
 #define _assert(X) { if(!(X)) {\
 Char *NullAddr = (Char *) 0; *NullAddr = 0;\
 } }
+#else
+#define _assert(X) { if(!(X)) {\
+} }
+#endif
+
 
 #define ASSERT(X) {\
 if(!(X))\

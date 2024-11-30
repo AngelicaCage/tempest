@@ -11,8 +11,10 @@
 struct
 FileContents
 {
+    Bool file_found;
     Bool allocated;
     Bool contains_proper_data;
+    // Later: change this to U8 * ?
     Char *data;
     U64 size;
 };
@@ -29,8 +31,10 @@ struct GameMemory
     Log *global_log;
     GLFWwindow *window;
     
+    // Later: put names in the arguments?
     U64 (*get_file_last_write_time)(const Char *);
     FileContents (*read_file_contents)(const Char *);
+    Bool (*write_file_contents)(const Char *, U8 *, U64);
     F64 (*get_time)();
     Void (*sleep)(F64);
 };

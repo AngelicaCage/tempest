@@ -266,6 +266,15 @@ EnemyExplosion enemy_explosion(Enemy *enemy)
     return result;
 }
 
+struct SaveData
+{
+    B32 has_seen_tutorial;
+    
+    B32 has_finished_a_game;
+    F64 highest_time;
+    I32 highest_kills;
+};
+
 struct GameState
 {
     Bool initialized;
@@ -278,7 +287,7 @@ struct GameState
     Float fps;
     Float target_fps;
     F64 last_frame_start_time;
-    F32 d_time;
+    Float d_time;
     
     Bool fullscreen;
     // Later: convert to rect
@@ -332,6 +341,8 @@ struct GameState
     V2 life_lost_explosion_center;
     
     F64 last_spawn_time;
+    
+    SaveData save;
 };
 
 #endif //GAME_H

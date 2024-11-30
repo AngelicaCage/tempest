@@ -20,6 +20,7 @@
 #endif
 
 
+// Later: more extensive error logging on all of these
 
 void
 log_windows_error(DWORD error_code)
@@ -175,16 +176,18 @@ read_file_contents(const Char *path)
     
     if(file_handle == INVALID_HANDLE_VALUE)
     {
-        print_error("couldn't open file");
+        log_warning("couldn't open file");
         return result;
     }
+    
+    result.file_found = true;
     
     LARGE_INTEGER file_size;
     Bool get_file_size_result = GetFileSizeEx(file_handle,
                                               &file_size);
     if(!get_file_size_result)
     {
-        print_error("couldn't get file size");
+        log_warning("couldn't get file size");
         return result;
     }
     
@@ -201,13 +204,51 @@ read_file_contents(const Char *path)
     
     if(!read_file_result)
     {
-        print_error("couldn't read file");
+        print_warning("couldn't read file");
         return result;
     }
     
     result.contains_proper_data = true;
     return result;
 };
+
+Bool
+write_file_contents(const Char *path, U8 *data, U64 size)
+{
+    if(size == 0 || !data)
+    {
+        log_warning("size == 0 or data is null");
+        return false;
+    }
+    
+    HANDLE file_handle = CreateFileA(path,
+                                     GENERIC_WRITE,
+                                     FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                     NULL,
+                                     OPEN_ALWAYS,
+                                     FILE_ATTRIBUTE_NORMAL,
+                                     NULL);
+    
+    if(file_handle == INVALID_HANDLE_VALUE)
+    {
+        log_warning("couldn't open file");
+        return false;
+    }
+    
+    DWORD bytes_written;
+    Bool write_result = WriteFile(file_handle,
+                                  data,
+                                  size,
+                                  &bytes_written,
+                                  NULL);
+    if(!write_result)
+    {
+        log_warning("couldn's write to file");
+        return false;
+    }
+    
+    return true;
+}
 
 
 Void error_callback( Int error, const Char *msg ) {
@@ -276,6 +317,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     game_memory.window = window;
     game_memory.get_file_last_write_time = get_file_last_write_time;
     game_memory.read_file_contents = read_file_contents;
+    game_memory.write_file_contents = write_file_contents;
     game_memory.get_time = get_time;
     game_memory.sleep = sleep;
     
@@ -288,8 +330,6 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     
     framebuffer_size_callback(window, 1920, 1080);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    
-    // Set schedular granularity to 1ms
     
     while(game_memory.game_running)
     {
