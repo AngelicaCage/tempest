@@ -317,6 +317,7 @@ struct GameState
     F64 time_in_game;
     
     Int main_menu_selector;
+    Int pause_menu_selector;
     
     Field field;
     List<Bullet> player_bullets;

@@ -70,7 +70,7 @@ update_main_menu(GameState *game_state)
     if(game_state->main_menu_selector > 1)
         game_state->main_menu_selector = 0;
     
-    if(keys->enter.is_down)
+    if(keys->enter.just_pressed)
     {
         if(game_state->main_menu_selector == 0)
         {
@@ -85,6 +85,7 @@ update_main_menu(GameState *game_state)
             game_state->kills = 0;
             game_state->player.powerup = PowerupType::none;
             game_state->last_spawn_time = 0;
+            game_state->paused = false;
         }
         else if(game_state->main_menu_selector == 1)
         {
@@ -749,9 +750,35 @@ update_and_render(GameMemory *game_memory)
     if(game_state->in_game)
     {
         if(keys->escape.just_pressed)
+        {
             game_state->paused = !game_state->paused;
+            game_state->pause_menu_selector = 0;
+        }
         
-        if(!game_state->paused)
+        if(game_state->paused)
+        {
+            if(keys->down.just_pressed || keys->s.just_pressed)
+                game_state->pause_menu_selector++;
+            if(keys->up.just_pressed || keys->w.just_pressed)
+                game_state->pause_menu_selector--;
+            
+            if(game_state->pause_menu_selector > 1)
+                game_state->pause_menu_selector = 0;
+            else if(game_state->pause_menu_selector < 0)
+                game_state->pause_menu_selector = 1;
+            
+            if(keys->enter.just_pressed)
+            {
+                if(game_state->pause_menu_selector == 0)
+                    game_state->paused = false;
+                else if(game_state->pause_menu_selector == 1)
+                {
+                    game_state->main_menu_selector = 0;
+                    game_state->in_game = false;
+                }
+            }
+        }
+        else
         {
             update_gameplay(game_state);
         }

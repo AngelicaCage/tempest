@@ -363,8 +363,29 @@ update_field_data_in_game(GameState *game_state, Field *field)
     if(game_state->paused)
     {
         field_draw_playing_area(game_state, field, playing_area_height, play_area_color);
-        field_draw_text(game_state, field, "paused", v2(-1.8f, -1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
-        field_draw_text(game_state, field, "esc to resume", v2(-3.9f, 1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
+        //field_draw_text(game_state, field, "paused", v2(-1.8f, -1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
+        //field_draw_text(game_state, field, "esc to resume", v2(-3.9f, 1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
+        
+        Float menu_text_left = -3.0f;
+        Float menu_text_spacing = 1.0f;
+        Float menu_text_y = -2.0f;
+        
+        Color normal_text_color = color(0.92, 0.69, 0.33, 1.0f);
+        Color selected_text_color = color(0.92, 0.85, 0.73, 1.0f);
+        selected_text_color.interpolate_to(color(1, 1, 1, 1), sin(time*5));
+        
+        Int selector = game_state->pause_menu_selector;
+        
+        field_draw_text(game_state, field, "Paused", v2(menu_text_left, menu_text_y), 0.12f, color(0.92, 0.33, 0.53, 1.0f));
+        menu_text_y += menu_text_spacing * 2;
+        
+        field_draw_text(game_state, field, "Resume", v2(menu_text_left, menu_text_y), 0.12f,
+                        selector == 0 ? selected_text_color : normal_text_color);
+        menu_text_y += menu_text_spacing;
+        
+        field_draw_text(game_state, field, "Main Menu", v2(menu_text_left, menu_text_y), 0.12f,
+                        selector == 1 ? selected_text_color : normal_text_color);
+        
     }
     else
     {
