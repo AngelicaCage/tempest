@@ -108,12 +108,30 @@ start_game(GameState *game_state)
     game_state->kills = 0;
     game_state->player.powerup = PowerupType::none;
     game_state->last_spawn_time = 0;
+    game_state->player_dead = false;
     game_state->paused = false;
     
     if(!game_state->save.has_seen_tutorial)
     {
         game_state->in_tutorial = true;
         game_state->tutorial_phase = 0;
+    }
+}
+
+Void
+player_subtract_life(GameState *game_state)
+{
+    if(!game_state->in_tutorial)
+        game_state->player.lives--;
+    
+    // TODO: clear all bullets and enemies on screen
+    game_state->life_lost_explosion_enabled = true;
+    game_state->life_lost_explosion_radius = 0;
+    game_state->life_lost_explosion_center = game_state->player.pos;
+    
+    if(game_state->player.lives < 0)
+    {
+        game_state->player_dead = true;
     }
 }
 
@@ -150,23 +168,6 @@ update_main_menu(GameState *game_state)
 }
 
 Void
-player_subtract_life(GameState *game_state)
-{
-    if(!game_state->in_tutorial)
-        game_state->player.lives--;
-    
-    // TODO: clear all bullets and enemies on screen
-    game_state->life_lost_explosion_enabled = true;
-    game_state->life_lost_explosion_radius = 0;
-    game_state->life_lost_explosion_center = game_state->player.pos;
-    
-    if(game_state->player.lives < 0)
-    {
-        exit_to_main_menu(game_state);
-    }
-}
-
-Void
 update_gameplay(GameState *game_state)
 {
     F32 d_time = game_state->d_time;
@@ -174,7 +175,7 @@ update_gameplay(GameState *game_state)
     Keys *keys = &game_state->input.keys;
     V2 playing_area_dim = game_state->field.playing_area_dim;
     
-    if(!game_state->in_tutorial)
+    if(!game_state->in_tutorial && !game_state->player_dead)
     {
         game_state->time_in_game += d_time;
     }
@@ -183,10 +184,7 @@ update_gameplay(GameState *game_state)
     {
         if(keys->enter.just_pressed)
         {
-            if(game_state->tutorial_phase == 2)
-            {
-            }
-            else
+            if(game_state->tutorial_phase != 2)
             {
                 game_state->tutorial_phase++;
                 if(game_state->tutorial_phase == 2)
@@ -213,57 +211,66 @@ update_gameplay(GameState *game_state)
         }
     }
     
+    if(game_state->player_dead)
+    {
+        if(keys->enter.just_pressed)
+            exit_to_main_menu(game_state);
+    }
+    
     Float player_speed = 5.0f;
     if(keys->shift_left.is_down)
         player_speed = 2.5f;
     
-    if(keys->d.is_down)
-        player->pos.x += player_speed * d_time;
-    if(keys->a.is_down)
-        player->pos.x -= player_speed * d_time;
-    if(keys->w.is_down)
-        player->pos.y -= player_speed * d_time;
-    if(keys->s.is_down)
-        player->pos.y += player_speed * d_time;
-    
-    if(player->shot_cooldown <= 0)
+    if(!game_state->player_dead)
     {
-        V2 bullet_dir = v2(0, 0);
-        Bool should_shoot = false;
-        if(keys->up.is_down)
-        {
-            bullet_dir += v2(0, -1);
-            should_shoot = true;
-        }
-        if(keys->down.is_down)
-        {
-            bullet_dir += v2(0, 1);
-            should_shoot = true;
-        }
-        if(keys->left.is_down)
-        {
-            bullet_dir += v2(-1, 0);
-            should_shoot = true;
-        }
-        if(keys->right.is_down)
-        {
-            bullet_dir += v2(1, 0);
-            should_shoot = true;
-        }
-        bullet_dir.normalize();
+        if(keys->d.is_down)
+            player->pos.x += player_speed * d_time;
+        if(keys->a.is_down)
+            player->pos.x -= player_speed * d_time;
+        if(keys->w.is_down)
+            player->pos.y -= player_speed * d_time;
+        if(keys->s.is_down)
+            player->pos.y += player_speed * d_time;
         
-        if(should_shoot)
+        if(player->shot_cooldown <= 0)
         {
-            V2 bullet_vel = bullet_dir * 10.0f;
-            player->shot_cooldown = player->shot_cooldown_max;
-            game_state->player_bullets.add(bullet(player->pos, bullet_vel,
-                                                  0.15f, color(0.88f, 0.42f, 0.88f, 1.0f)));
+            V2 bullet_dir = v2(0, 0);
+            Bool should_shoot = false;
+            if(keys->up.is_down)
+            {
+                bullet_dir += v2(0, -1);
+                should_shoot = true;
+            }
+            if(keys->down.is_down)
+            {
+                bullet_dir += v2(0, 1);
+                should_shoot = true;
+            }
+            if(keys->left.is_down)
+            {
+                bullet_dir += v2(-1, 0);
+                should_shoot = true;
+            }
+            if(keys->right.is_down)
+            {
+                bullet_dir += v2(1, 0);
+                should_shoot = true;
+            }
+            bullet_dir.normalize();
             
+            if(should_shoot)
+            {
+                V2 bullet_vel = bullet_dir * 10.0f;
+                player->shot_cooldown = player->shot_cooldown_max;
+                game_state->player_bullets.add(bullet(player->pos, bullet_vel,
+                                                      0.15f, color(0.88f, 0.42f, 0.88f, 1.0f)));
+                
+            }
         }
-    }
-    else
-    {
-        player->shot_cooldown -= d_time;
+        else
+        {
+            player->shot_cooldown -= d_time;
+        }
     }
     
     V2 play_area_top_left = game_state->field.playing_area_dim / -2;
@@ -310,7 +317,8 @@ update_gameplay(GameState *game_state)
     }
 #endif
     
-    if(game_state->time_in_game - game_state->last_spawn_time >= 1 && !game_state->in_tutorial)
+    if(game_state->time_in_game - game_state->last_spawn_time >= 1 &&
+       !game_state->in_tutorial && !game_state->player_dead)
     {
         game_state->last_spawn_time = game_state->time_in_game;
         /* costs:
@@ -977,10 +985,12 @@ update_and_render(GameMemory *game_memory)
                                                   interp_speed * d_time);
     }
     
+#ifndef TEMPEST_RELEASE
     if(keys->q.is_down)
     {
         game_state->should_quit = true;
     }
+#endif
     
     if(game_state->should_quit)
     {
@@ -988,7 +998,9 @@ update_and_render(GameMemory *game_memory)
         return;
     }
     
+#ifndef TEMPEST_RELEASE
     reload_changed_shaders(game_state);
+#endif
     
     gpu_update_camera_in_shaders(game_state);
     

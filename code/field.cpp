@@ -449,7 +449,7 @@ update_field_data_in_game(GameState *game_state, Field *field)
             field_draw_circle(field, game_state->life_lost_explosion_center, game_state->life_lost_explosion_radius - 0.5f,
                               -height, play_area_color);
             
-            if(!game_state->in_tutorial)
+            if(!game_state->in_tutorial && !game_state->player_dead)
             {
                 Char life_warning_text_buffer[40];
                 if(game_state->player.lives == 0)
@@ -460,12 +460,41 @@ update_field_data_in_game(GameState *game_state, Field *field)
             }
         }
         
-        field_draw_circle(field, player->pos, 0.1f, 0.8f, color(1, 1, 1, 1));
-        for(Int a = 0; a < player->lives; a++)
+        
+        if(game_state->player_dead)
         {
-            Float angle = ((Float)a / (Float)3) * pi*2;
-            V2 dir = v2(cos(angle), sin(angle));
-            field_draw_circle(field, player->pos + dir*0.3f, 0.1f, 0.2f, color(1, 1, 1, 1));
+            Float left = -4.0f;
+            Float top = -1.5f;
+            Float x = left;
+            Float y = top;
+            
+            Color normal_color = color(1, 1, 1, 1);
+            Color highlight_color = color(0.92, 0.33, 0.53, 1.0f);
+            
+            field_draw_text(game_state, field, "You died", v2(x, y), 0.12f, normal_color);
+            
+            x = left;
+            y += scale_field_to_world(field, 14);
+            field_draw_text(game_state, field, "Press ", v2(x, y), 0.12f, normal_color);
+            x += scale_field_to_world(field, 6*6);
+            field_draw_text(game_state, field, "Enter ", v2(x, y), 0.12f, highlight_color);
+            x = left;
+            y += scale_field_to_world(field, 8);
+            field_draw_text(game_state, field, "to return to", v2(x, y), 0.12f, normal_color);
+            x = left;
+            y += scale_field_to_world(field, 8);
+            field_draw_text(game_state, field, "the main menu", v2(x, y), 0.12f, normal_color);
+        }
+        
+        if(!game_state->player_dead)
+        {
+            field_draw_circle(field, player->pos, 0.1f, 0.8f, color(1, 1, 1, 1));
+            for(Int a = 0; a < player->lives; a++)
+            {
+                Float angle = ((Float)a / (Float)3) * pi*2;
+                V2 dir = v2(cos(angle), sin(angle));
+                field_draw_circle(field, player->pos + dir*0.3f, 0.1f, 0.2f, color(1, 1, 1, 1));
+            }
         }
     }
     
@@ -582,12 +611,6 @@ update_field_data_in_game(GameState *game_state, Field *field)
             field_draw_text(game_state, field, "as you can", v2(x, instruction_text_y), 0.12f, normal_color);
         }
     }
-    
-    //Char fps_text_buffer[20];
-    //sprintf(fps_text_buffer, "%d fps", (Int)game_state->fps);
-    //field_draw_text(game_state, field, fps_text_buffer, v2(-1.0f, -1), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
-    
-    //field_draw_text(game_state, field, "0123456789", v2(-1.0f, 0), 0.12f, color(0.96, 0.78, 0.02, 1.0f));
 }
 
 Void

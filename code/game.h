@@ -345,6 +345,8 @@ struct GameState
     Bool in_tutorial;
     Int tutorial_phase;
     
+    Bool player_dead;
+    
     SaveData save;
 };
 
