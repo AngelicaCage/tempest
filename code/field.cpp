@@ -449,13 +449,15 @@ update_field_data_in_game(GameState *game_state, Field *field)
             field_draw_circle(field, game_state->life_lost_explosion_center, game_state->life_lost_explosion_radius - 0.5f,
                               -height, play_area_color);
             
-            Char life_warning_text_buffer[40];
-            if(game_state->player.lives == 0)
-                sprintf(life_warning_text_buffer, "last life");
-            else
-                sprintf(life_warning_text_buffer, "%d lives left", (Int)game_state->player.lives + 1);
-            field_draw_text(game_state, field, life_warning_text_buffer, v2(-4.0f, 0), 0.12f, color(1, 1, 1, 1.0f));
-            
+            if(!game_state->in_tutorial)
+            {
+                Char life_warning_text_buffer[40];
+                if(game_state->player.lives == 0)
+                    sprintf(life_warning_text_buffer, "last life");
+                else
+                    sprintf(life_warning_text_buffer, "%d lives left", (Int)game_state->player.lives + 1);
+                field_draw_text(game_state, field, life_warning_text_buffer, v2(-4.0f, 0), 0.12f, color(1, 1, 1, 1.0f));
+            }
         }
         
         field_draw_circle(field, player->pos, 0.1f, 0.8f, color(1, 1, 1, 1));
@@ -493,6 +495,93 @@ update_field_data_in_game(GameState *game_state, Field *field)
         field_draw_text(game_state, field, text_buffer, v2(6.0f + x_offset, -3), 0.12f, color(1, 1, 1, 1.0f));
     }
 #endif
+    
+    if(game_state->in_tutorial)
+    {
+        Float left = -5.0f;
+        Color normal_color = color(1, 1, 1, 1);
+        Color highlight_color = color(0.92, 0.33, 0.53, 1.0f);
+        
+        Float continue_text_y = 2.0f;
+        Float x = left;
+        
+        field_draw_text(game_state, field, "Press ", v2(x, continue_text_y), 0.12f, normal_color);
+        x += scale_field_to_world(field, 6*6);
+        field_draw_text(game_state, field, "Enter ", v2(x, continue_text_y), 0.12f, highlight_color);
+        
+        if(game_state->tutorial_phase == 3)
+        {
+            x = left;
+            field_draw_text(game_state, field, "to ", v2(x, continue_text_y + scale_field_to_world(field, 6)), 0.12f, normal_color);
+            x += scale_field_to_world(field, 3*6);
+            field_draw_text(game_state, field, "start game", v2(x, continue_text_y + scale_field_to_world(field, 6)), 0.12f, highlight_color);
+        }
+        else
+        {
+            field_draw_text(game_state, field, "to continue", v2(left, continue_text_y + scale_field_to_world(field, 6)), 0.12f, normal_color);
+        }
+        
+        Float instruction_text_y = -3.0f;
+        if(game_state->tutorial_phase == 0)
+        {
+            x = left;
+            field_draw_text(game_state, field, "wasd", v2(x, instruction_text_y), 0.12f, highlight_color);
+            x += scale_field_to_world(field, 5*6);
+            field_draw_text(game_state, field, "to move", v2(x, instruction_text_y), 0.12f, normal_color);
+            
+            instruction_text_y += scale_field_to_world(field, 8);
+            x = left;
+            field_draw_text(game_state, field, "arrows ", v2(x, instruction_text_y), 0.12f, highlight_color);
+            x += scale_field_to_world(field, 7*6);
+            field_draw_text(game_state, field, "to shoot", v2(x, instruction_text_y), 0.12f, normal_color);
+            
+        }
+        else if(game_state->tutorial_phase == 1)
+        {
+            x = left;
+            field_draw_text(game_state, field, "enemies ", v2(x, instruction_text_y), 0.12f, highlight_color);
+            x += scale_field_to_world(field, 8*6 - 3);
+            field_draw_text(game_state, field, "are ", v2(x, instruction_text_y), 0.12f, normal_color);
+            x += scale_field_to_world(field, 4*6 - 3);
+            field_draw_text(game_state, field, "red", v2(x, instruction_text_y), 0.12f, color(1, 0, 0, 1));
+            
+            instruction_text_y += scale_field_to_world(field, 8);
+            x = left;
+            field_draw_text(game_state, field, "bullets ", v2(x, instruction_text_y), 0.12f, highlight_color);
+            x += scale_field_to_world(field, 8*6 - 3);
+            field_draw_text(game_state, field, "are", v2(x, instruction_text_y), 0.12f, normal_color);
+            x += scale_field_to_world(field, 4*6 - 3);
+            field_draw_text(game_state, field, "yellow", v2(x, instruction_text_y), 0.12f, color(1, 1, 0, 1));
+            
+            
+            
+        }
+        else if(game_state->tutorial_phase == 2)
+        {
+            x = left;
+            field_draw_text(game_state, field, "kill them", v2(x, instruction_text_y), 0.12f, normal_color);
+        }
+        else if(game_state->tutorial_phase == 3)
+        {
+            x = left;
+            // TODO: add exclamation point!
+            field_draw_text(game_state, field, "good job", v2(x, instruction_text_y), 0.12f, normal_color);
+            
+            instruction_text_y += scale_field_to_world(field, 8);
+            x = left;
+            field_draw_text(game_state, field, "end of tutorial", v2(x, instruction_text_y), 0.12f, normal_color);
+            
+            instruction_text_y += scale_field_to_world(field, 13);
+            x = left;
+            field_draw_text(game_state, field, "survive as long", v2(x, instruction_text_y), 0.12f, normal_color);
+            instruction_text_y += scale_field_to_world(field, 8);
+            x = left;
+            field_draw_text(game_state, field, "and kill as many", v2(x, instruction_text_y), 0.12f, normal_color);
+            instruction_text_y += scale_field_to_world(field, 8);
+            x = left;
+            field_draw_text(game_state, field, "as you can", v2(x, instruction_text_y), 0.12f, normal_color);
+        }
+    }
     
     //Char fps_text_buffer[20];
     //sprintf(fps_text_buffer, "%d fps", (Int)game_state->fps);

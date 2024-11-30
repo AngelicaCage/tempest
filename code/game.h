@@ -342,6 +342,9 @@ struct GameState
     
     F64 last_spawn_time;
     
+    Bool in_tutorial;
+    Int tutorial_phase;
+    
     SaveData save;
 };
 

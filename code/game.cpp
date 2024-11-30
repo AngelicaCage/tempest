@@ -95,6 +95,29 @@ exit_to_main_menu(GameState *game_state)
 }
 
 Void
+start_game(GameState *game_state)
+{
+    game_state->in_game = true;
+    game_state->player.pos = v2(0, 0);
+    game_state->player.lives = 3;
+    game_state->player_bullets.length = 0;
+    game_state->enemy_bullets.length = 0;
+    game_state->enemies.length = 0;
+    game_state->life_lost_explosion_enabled = false;
+    game_state->time_in_game = 0;
+    game_state->kills = 0;
+    game_state->player.powerup = PowerupType::none;
+    game_state->last_spawn_time = 0;
+    game_state->paused = false;
+    
+    if(!game_state->save.has_seen_tutorial)
+    {
+        game_state->in_tutorial = true;
+        game_state->tutorial_phase = 0;
+    }
+}
+
+Void
 update_main_menu(GameState *game_state)
 {
     F32 d_time = game_state->d_time;
@@ -114,18 +137,7 @@ update_main_menu(GameState *game_state)
     {
         if(game_state->main_menu_selector == 0)
         {
-            game_state->in_game = true;
-            game_state->player.pos = v2(0, 0);
-            game_state->player.lives = 3;
-            game_state->player_bullets.length = 0;
-            game_state->enemy_bullets.length = 0;
-            game_state->enemies.length = 0;
-            game_state->life_lost_explosion_enabled = false;
-            game_state->time_in_game = 0;
-            game_state->kills = 0;
-            game_state->player.powerup = PowerupType::none;
-            game_state->last_spawn_time = 0;
-            game_state->paused = false;
+            start_game(game_state);
         }
         else if(game_state->main_menu_selector == 1)
         {
@@ -140,7 +152,9 @@ update_main_menu(GameState *game_state)
 Void
 player_subtract_life(GameState *game_state)
 {
-    game_state->player.lives--;
+    if(!game_state->in_tutorial)
+        game_state->player.lives--;
+    
     // TODO: clear all bullets and enemies on screen
     game_state->life_lost_explosion_enabled = true;
     game_state->life_lost_explosion_radius = 0;
@@ -160,7 +174,44 @@ update_gameplay(GameState *game_state)
     Keys *keys = &game_state->input.keys;
     V2 playing_area_dim = game_state->field.playing_area_dim;
     
-    game_state->time_in_game += d_time;
+    if(!game_state->in_tutorial)
+    {
+        game_state->time_in_game += d_time;
+    }
+    
+    if(game_state->in_tutorial)
+    {
+        if(keys->enter.just_pressed)
+        {
+            if(game_state->tutorial_phase == 2)
+            {
+            }
+            else
+            {
+                game_state->tutorial_phase++;
+                if(game_state->tutorial_phase == 2)
+                {
+                    game_state->enemies.add(create_enemy(v2(4, 1), EnemyType::stream));
+                    game_state->enemies.add(create_enemy(v2(4, -1), EnemyType::stream));
+                }
+                
+                if(game_state->tutorial_phase >= 4)
+                {
+                    game_state->in_tutorial = false;
+                    game_state->save.has_seen_tutorial = true;
+                    start_game(game_state);
+                }
+            }
+        }
+    }
+    
+    if(game_state->tutorial_phase == 2)
+    {
+        if(game_state->enemies.length == 0)
+        {
+            game_state->tutorial_phase++;
+        }
+    }
     
     Float player_speed = 5.0f;
     if(keys->shift_left.is_down)
@@ -243,6 +294,7 @@ update_gameplay(GameState *game_state)
         game_state->enemies.add(new_enemy);
     }
     
+#if 0
     if(keys->k.just_pressed)
     {
         for(Int i = 0; i < game_state->enemies.length; i++)
@@ -255,10 +307,10 @@ update_gameplay(GameState *game_state)
             game_state->enemy_bullets.remove_at(i);
             i--;
         }
-        
     }
+#endif
     
-    if(game_state->time_in_game - game_state->last_spawn_time >= 1)
+    if(game_state->time_in_game - game_state->last_spawn_time >= 1 && !game_state->in_tutorial)
     {
         game_state->last_spawn_time = game_state->time_in_game;
         /* costs:
@@ -358,7 +410,10 @@ bomb: 60
             {
                 game_state->player_bullets.remove_at(a);
                 enemy_should_be_destroyed = true;
-                game_state->kills++;
+                if(!game_state->in_tutorial)
+                {
+                    game_state->kills++;
+                }
                 break;
             }
         }
@@ -366,7 +421,8 @@ bomb: 60
         if(game_state->life_lost_explosion_enabled)
         {
             Float dist_to_explosion = v2_dist(game_state->life_lost_explosion_center, enemy->pos);
-            if(dist_to_explosion <= game_state->life_lost_explosion_radius + enemy->radius)
+            if(dist_to_explosion <= game_state->life_lost_explosion_radius + enemy->radius &&
+               !game_state->in_tutorial)
             {
                 enemy_should_be_destroyed = true;
             }

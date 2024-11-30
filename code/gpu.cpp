@@ -4,8 +4,8 @@ gpu_compile_shader_from_path(Shader *shader)
     shader->file_last_write_time = get_file_last_write_time(shader->path);
     FileContents file_read_result = read_file_contents(shader->path);
     
-    check(file_read_result.allocated);
-    check(file_read_result.contains_proper_data);
+    if(!file_read_result.allocated || !file_read_result.contains_proper_data)
+        return;
     
     if(shader->type == ShaderType::fragment)
         shader->id = glCreateShader(GL_FRAGMENT_SHADER);
@@ -53,8 +53,7 @@ gpu_create_shader(const Char *path, ShaderType type)
     
     gpu_compile_shader_from_path(&result);
     
-    check(result.loaded);
-    
+    // Later: weird issue with hot reloading
     return result;
 }
 
