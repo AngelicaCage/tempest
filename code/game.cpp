@@ -86,6 +86,7 @@ update_main_menu(GameState *game_state)
             game_state->time_in_game = 0;
             game_state->kills = 0;
             game_state->player.powerup = PowerupType::none;
+            game_state->last_spawn_time = 0;
         }
         else if(game_state->main_menu_selector == 1)
         {

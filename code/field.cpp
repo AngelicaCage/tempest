@@ -143,7 +143,8 @@ fill_field_render_data(Field *field)
     glBindVertexArray(field->vao);
     
     glBindBuffer(GL_ARRAY_BUFFER, field->vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * field->width*9 * field->height, field->vertices, GL_DYNAMIC_DRAW);
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * field->width*9 * field->height, field->vertices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * field->width*9 * field->height, field->vertices, GL_STREAM_DRAW);
     
     for(Int i = 0; i < field->height-1; i++)
     {
@@ -485,12 +486,21 @@ update_field_data(GameState *game_state, Field *field)
         {
             FieldPoint *target_point = &(field->target_points[y][x]);
             FieldPoint *point = &(field->points[y][x]);
-            Float interp_speed = 60.0f * game_state->d_time;
+            Float up_interp_speed = 60.0f * game_state->d_time;
+            Float down_interp_speed = 60.0f * game_state->d_time;
             
             //point->height = target_point->height;
             //point->color = target_point->color;
-            point->height = interpolate(point->height, target_point->height, interp_speed);
-            point->color.interpolate_to(target_point->color, interp_speed);
+            if(point->height < target_point->height)
+            {
+                point->height = interpolate(point->height, target_point->height, up_interp_speed);
+                point->color.interpolate_to(target_point->color, up_interp_speed);
+            }
+            else
+            {
+                point->height = interpolate(point->height, target_point->height, down_interp_speed);
+                point->color.interpolate_to(target_point->color, down_interp_speed);
+            }
             
         }
     }
