@@ -312,7 +312,7 @@ update_field_data_main_menu(GameState *game_state, Field *field)
     
     Float menu_text_left = -4.0f;
     Float menu_text_spacing = 1.0f;
-    Float menu_text_y = -1.0f;
+    Float menu_text_y = -2.0f;
     
     field_draw_text(game_state, field, "Tempest", v2(menu_text_left, menu_text_y), 0.12f, color(0.92, 0.33, 0.53, 1.0f));
     
@@ -323,15 +323,17 @@ update_field_data_main_menu(GameState *game_state, Field *field)
     
     Int selector = game_state->main_menu_selector;
     
-    menu_text_y += menu_text_spacing * 1;
+    menu_text_y += menu_text_spacing * 2;
     field_draw_text(game_state, field, "Play", v2(menu_text_left, menu_text_y), 0.12f,
                     selector == 0 ? selected_text_color : normal_text_color);
+#if 0
     menu_text_y += menu_text_spacing;
     field_draw_text(game_state, field, "Settings", v2(menu_text_left, menu_text_y), 0.12f,
                     selector == 1 ? selected_text_color : normal_text_color);
+#endif
     menu_text_y += menu_text_spacing;
     field_draw_text(game_state, field, "Exit", v2(menu_text_left, menu_text_y), 0.12f,
-                    selector == 2 ? selected_text_color : normal_text_color);
+                    selector == 1 ? selected_text_color : normal_text_color);
 }
 
 Void

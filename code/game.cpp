@@ -64,8 +64,8 @@ update_main_menu(GameState *game_state)
         game_state->main_menu_selector--;
     // Later: write clamp function
     if(game_state->main_menu_selector < 0)
-        game_state->main_menu_selector = 2;
-    if(game_state->main_menu_selector > 2)
+        game_state->main_menu_selector = 1;
+    if(game_state->main_menu_selector > 1)
         game_state->main_menu_selector = 0;
     
     if(keys->enter.is_down)
@@ -81,13 +81,14 @@ update_main_menu(GameState *game_state)
             game_state->life_lost_explosion_enabled = false;
             game_state->time_in_game = 0;
             game_state->kills = 0;
+            game_state->player.powerup = PowerupType::none;
         }
         else if(game_state->main_menu_selector == 1)
         {
+            game_state->should_quit = true;
         }
         else if(game_state->main_menu_selector == 2)
         {
-            game_state->should_quit = true;
         }
     }
 }
@@ -644,10 +645,10 @@ update_and_render(GameMemory *game_memory)
         player->pos = v2(0, 0);
         player->vel = v2(0, 0);
         player->max_speed = 100;
-        player->color = color(1, 1, 1, 1);
         player->shot_cooldown_max = 0.5f;
         player->shot_cooldown = 0;
         player->lives = 3;
+        player->powerup = PowerupType::none;
         game_state->kills = 0;
         game_state->player_bullets = create_list<Bullet>();
         game_state->life_lost_explosion_enabled = false;
@@ -733,7 +734,7 @@ update_and_render(GameMemory *game_memory)
             camera->orbit_angles.y -= camera_orbit_speed * d_time;
 #endif
         
-#if 1
+#if 0
         // LATER: adjust by window resolution
         if(glfwGetMouseButton(game_memory->window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
         {

@@ -96,18 +96,34 @@ struct SmallFieldBitmap
 };
 
 
+enum class PowerupType
+{
+    none,
+    pierce,
+    caliber,
+    machinegun,
+    extra_life,
+};
+struct Powerup
+{
+    V2 pos;
+    PowerupType type;
+    F64 time_left;
+};
+
 struct Player
 {
     V2 pos;
     V2 vel;
     Float max_speed;
-    Color color;
     
     Float shot_cooldown_max;
     Float shot_cooldown;
     
-    Int bomb_count; // TODO: reflective bomb, can store up to 2 or maybe 1
     Int lives;
+    
+    PowerupType powerup;
+    F64 powerup_time_left;
 };
 
 struct Bullet
