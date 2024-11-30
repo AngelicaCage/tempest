@@ -85,6 +85,7 @@ struct Keys
                 KeyData caps_lock;
                 KeyData escape;
                 
+                // Later: switch the order of these names
                 KeyData shift_left;
                 KeyData shift_right;
                 KeyData control_left;
@@ -93,18 +94,18 @@ struct Keys
                 KeyData alt_right;
                 KeyData function;
                 
-                KeyData f_1;
-                KeyData f_2;
-                KeyData f_3;
-                KeyData f_4;
-                KeyData f_5;
-                KeyData f_6;
-                KeyData f_7;
-                KeyData f_8;
-                KeyData f_9;
-                KeyData f_10;
-                KeyData f_11;
-                KeyData f_12;
+                KeyData f1;
+                KeyData f2;
+                KeyData f3;
+                KeyData f4;
+                KeyData f5;
+                KeyData f6;
+                KeyData f7;
+                KeyData f8;
+                KeyData f9;
+                KeyData f10;
+                KeyData f11;
+                KeyData f12;
             };
             struct
             {
@@ -218,18 +219,18 @@ fill_key_data(Input *input)
     keys->alt_right.key_code = GLFW_KEY_RIGHT_ALT;
     keys->function.key_code = GLFW_KEY_RIGHT_SUPER;
     //keys->Key.key_code = GLFW_KEY_;
-    keys->f_1.key_code = GLFW_KEY_F1;
-    keys->f_2.key_code = GLFW_KEY_F2;
-    keys->f_3.key_code = GLFW_KEY_F3;
-    keys->f_4.key_code = GLFW_KEY_F4;
-    keys->f_5.key_code = GLFW_KEY_F5;
-    keys->f_6.key_code = GLFW_KEY_F6;
-    keys->f_7.key_code = GLFW_KEY_F7;
-    keys->f_8.key_code = GLFW_KEY_F8;
-    keys->f_9.key_code = GLFW_KEY_F9;
-    keys->f_10.key_code = GLFW_KEY_F10;
-    keys->f_11.key_code = GLFW_KEY_F11;
-    keys->f_12.key_code = GLFW_KEY_F12;
+    keys->f1.key_code = GLFW_KEY_F1;
+    keys->f2.key_code = GLFW_KEY_F2;
+    keys->f3.key_code = GLFW_KEY_F3;
+    keys->f4.key_code = GLFW_KEY_F4;
+    keys->f5.key_code = GLFW_KEY_F5;
+    keys->f6.key_code = GLFW_KEY_F6;
+    keys->f7.key_code = GLFW_KEY_F7;
+    keys->f8.key_code = GLFW_KEY_F8;
+    keys->f9.key_code = GLFW_KEY_F9;
+    keys->f10.key_code = GLFW_KEY_F10;
+    keys->f11.key_code = GLFW_KEY_F11;
+    keys->f12.key_code = GLFW_KEY_F12;
 }
 
 #if 0

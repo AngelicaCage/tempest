@@ -280,6 +280,11 @@ struct GameState
     F64 last_frame_start_time;
     F32 d_time;
     
+    Bool fullscreen;
+    // Later: convert to rect
+    V2I windowed_resolution;
+    V2I windowed_pos;
+    
     Input input;
     
     union

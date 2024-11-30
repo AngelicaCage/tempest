@@ -1,5 +1,3 @@
-//#include <windows.h>
-
 #include "glad/glad.c"
 #include "glfw/glfw3.h"
 #include "glm/glm.hpp"
@@ -674,6 +672,8 @@ update_and_render(GameMemory *game_memory)
         game_state->time_in_game = 0;
         
         game_state->last_spawn_time = game_state->time_in_game;
+        
+        game_state->fullscreen = false;
     }
     player->shot_cooldown_max = 0.15f;
     
@@ -694,11 +694,52 @@ update_and_render(GameMemory *game_memory)
     
     Float d_time = game_state->d_time;
     
+    if(!game_state->fullscreen)
+    {
+        glfwGetWindowSize(game_memory->window,
+                          &game_state->windowed_resolution.x,
+                          &game_state->windowed_resolution.y);
+        glfwGetWindowPos(game_memory->window,
+                         &game_state->windowed_pos.x,
+                         &game_state->windowed_pos.y);
+        
+    }
     
-    
+    if(keys->f11.just_pressed)
+    {
+        if(game_state->fullscreen)
+        {
+            game_state->fullscreen = false;
+            GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+            const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+            glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+            glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+            glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+            glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+            glfwSetWindowMonitor(game_memory->window, NULL,
+                                 game_state->windowed_pos.x,
+                                 game_state->windowed_pos.y,
+                                 game_state->windowed_resolution.x,
+                                 game_state->windowed_resolution.y,
+                                 mode->refreshRate);
+        }
+        else
+        {
+            game_state->fullscreen = true;
+            GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+            const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+            glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+            glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+            glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+            glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+            glfwSetWindowMonitor(game_memory->window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+        }
+    }
     
     
     update_key_input(input, game_memory->window, d_time);
+    
+    
     F64 new_mouse_pos[2];
     glfwGetCursorPos(game_memory->window, &new_mouse_pos[0], &new_mouse_pos[1]);
     input->d_mouse_pos = v2((Float)new_mouse_pos[0] - input->mouse_pos.x,
