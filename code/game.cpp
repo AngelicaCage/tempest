@@ -7,8 +7,8 @@
 #include "glm/gtc/type_ptr.hpp"
 //#define STB_PERLIN_IMPLEMENTATION
 //#include "stb/stb_perlin.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb/stb_image.h"
+//#define STB_IMAGE_IMPLEMENTATION
+//#include "stb/stb_image.h"
 
 #include "ciel/base.h"
 #include "ciel/list.h"
@@ -37,7 +37,11 @@ Void (*sleep)(F64);
 #include "shaders.cpp"
 #include "field.cpp"
 
+#ifndef TEMPEST_RELEASE
 #define GAME_DATA_DIRECTORY "../data"
+#else
+#define GAME_DATA_DIRECTORY "data"
+#endif
 
 #define KEYDOWN(key) (glfwGetKey(game_memory->window, (key)) == GLFW_PRESS)
 

@@ -12,8 +12,13 @@
 #include "game_loader.h"
 #include "gpu.h"
 
+#ifndef TEMPEST_RELEASE
 #define GAME_DLL_PATH "game.dll"
 #define GAME_DLL_COPY_PATH "game_temp_copy.dll"
+#else
+#define GAME_DLL_PATH "tempest.dll"
+#endif
+
 
 
 void
@@ -122,9 +127,13 @@ unload_game_dll(GameCode *game_code, HINSTANCE *module_handle)
 Int
 load_game_dll(GameCode *game_code, HINSTANCE *module_handle)
 {
+#ifndef TEMPEST_RELEASE
     CopyFile(GAME_DLL_PATH, GAME_DLL_COPY_PATH, false);
     
     *module_handle = LoadLibrary(TEXT(GAME_DLL_COPY_PATH));
+#else
+    *module_handle = LoadLibrary(TEXT(GAME_DLL_PATH));
+#endif
     
     if(module_handle == NULL)
     {
@@ -284,6 +293,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     
     while(game_memory.game_running)
     {
+#ifndef TEMPEST_RELEASE
         FILETIME old_dll_last_write_time = dll_last_write_time;
         get_game_dll_last_write_time(&dll_last_write_time);
         if(CompareFileTime(&dll_last_write_time, &old_dll_last_write_time) != 0)
@@ -302,7 +312,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
             
             game_memory.functions_loaded = false;
         }
-        
+#endif
         if(glfwWindowShouldClose(window))
             break;
         

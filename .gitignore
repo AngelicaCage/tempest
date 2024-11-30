@@ -1,4 +1,5 @@
 build
+release
 code/glfw
 code/glad
 code/glm
