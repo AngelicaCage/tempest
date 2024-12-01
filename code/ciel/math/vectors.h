@@ -225,12 +225,7 @@ operator+(V2 a, V2 b)
 {
     return {a.x + b.x, a.y + b.y};
 }
-inline V2 &
-operator+=(V2 &a, V2 b)
-{
-    a=a+b;
-    return a;
-}
+
 inline V2
 operator-(V2 a, V2 b)
 {
@@ -251,6 +246,18 @@ inline V2 &
 operator-=(V2 &a, V2 b)
 {
     a=a-b;
+    return a;
+}
+inline V2 &
+operator+=(V2 &a, V2 b)
+{
+    a=a+b;
+    return a;
+}
+inline V2 &
+operator*=(V2 &a, Float scalar)
+{
+    a=a*scalar;
     return a;
 }
 

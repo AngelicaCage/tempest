@@ -537,9 +537,9 @@ bomb: 60
             }
         }
         
-        // Later: change this to use play_area_top_left etc.
         // Later: make * function for V2 and Float
-        bullet->pos += v2(bullet->vel.x * d_time, bullet->vel.y * d_time);
+        //bullet->pos += v2(bullet->vel.x * d_time, bullet->vel.y * d_time);
+        bullet->pos += bullet->vel * d_time;
         if(bullet->pos.x < -playing_area_dim.x/2 - bullet->radius ||
            bullet->pos.x > playing_area_dim.x/2 + bullet->radius || 
            bullet->pos.y < -playing_area_dim.y/2 - bullet->radius ||
@@ -555,7 +555,7 @@ bomb: 60
     {
         Bullet *bullet = &game_state->player_bullets.data[i];
         // Later: make * function for V2 and Float
-        bullet->pos += v2(bullet->vel.x * d_time, bullet->vel.y * d_time);
+        bullet->pos += bullet->vel * d_time;
         if(bullet->pos.x < -playing_area_dim.x/2 - bullet->radius ||
            bullet->pos.x > playing_area_dim.x/2 + bullet->radius || 
            bullet->pos.y < -playing_area_dim.y/2 - bullet->radius ||
