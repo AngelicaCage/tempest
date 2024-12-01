@@ -87,11 +87,11 @@ fill_field_render_data(Field *field)
         // gpu
         field->ebos = (UInt *)alloc(sizeof(UInt) * (field->height-1));
         
-        glGenVertexArrays(1, &field->vertex_data.vao);
-        glGenBuffers(1, &field->vertex_data.vbo);
+        field->vertex_data.vao = gpu_gen_vao();
+        field->vertex_data.vbo = gpu_gen_vbo();
         for(Int i = 0; i < field->height-1; i++)
         {
-            glGenBuffers(1, &(field->ebos[i]));
+            field->ebos[i] = gpu_gen_ebo();
         }
         
         field->render_data_allocated = true;
@@ -133,28 +133,19 @@ fill_field_render_data(Field *field)
     
     calculate_vertex_normals(field);
     
-    glBindVertexArray(field->vertex_data.vao);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, field->vertex_data.vbo);
-    //glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * field->width*9 * field->height, field->vertices, GL_DYNAMIC_DRAW);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * field->width*9 * field->height, field->vertices, GL_STREAM_DRAW);
+    U64 vertex_count = field->width*9 * field->height;
+    gpu_upload_vertices_stream(field->vertex_data.vbo, field->vertices, sizeof(Float)*vertex_count);
     
     for(Int i = 0; i < field->height-1; i++)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field->ebos[i]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(UInt) * (field->width-1)*6,
-                     &(field->indices[i*(field->width-1)*6]), GL_STATIC_DRAW);
+        gpu_bind_ebo(field->ebos[i]);
+        gpu_upload_indices(field->ebos[i], &(field->indices[i*(field->width-1)*6]),
+                           sizeof(UInt) * (field->width-1)*6);
     }
     
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*9, (Void *)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*9, (Void *)(sizeof(Float)*3));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*9, (Void *)(sizeof(Float)*6));
-    glEnableVertexAttribArray(2);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    gpu_set_vao_attribute(field->vertex_data.vao, field->vertex_data.vbo, 0, 3, sizeof(Float)*9, 0);
+    gpu_set_vao_attribute(field->vertex_data.vao, field->vertex_data.vbo, 1, 3, sizeof(Float)*9, sizeof(Float)*3);
+    gpu_set_vao_attribute(field->vertex_data.vao, field->vertex_data.vbo, 2, 3, sizeof(Float)*9, sizeof(Float)*6);
 }
 
 Field

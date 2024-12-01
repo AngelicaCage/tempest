@@ -184,6 +184,13 @@ gpu_gen_vbo()
     glGenBuffers(1, &result);
     return result;
 }
+UInt
+gpu_gen_ebo()
+{
+    UInt result;
+    glGenBuffers(1, &result);
+    return result;
+}
 
 Void
 gpu_bind_vao(UInt id)
@@ -195,6 +202,12 @@ gpu_bind_vbo(UInt id)
 {
     glBindBuffer(GL_ARRAY_BUFFER, id);
 }
+Void
+gpu_bind_ebo(UInt id)
+{
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
+}
+
 
 Void
 gpu_upload_vertices(UInt vbo_id, Float *vertices, U64 size)
@@ -202,6 +215,20 @@ gpu_upload_vertices(UInt vbo_id, Float *vertices, U64 size)
     gpu_bind_vbo(vbo_id);
     glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
 }
+Void
+gpu_upload_vertices_stream(UInt vbo_id, Float *vertices, U64 size)
+{
+    gpu_bind_vbo(vbo_id);
+    glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
+}
+
+Void
+gpu_upload_indices(UInt ebo_id, UInt *indices, U64 size)
+{
+    gpu_bind_ebo(ebo_id);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, indices, GL_STATIC_DRAW);
+}
+
 
 Void
 gpu_set_vao_attribute(UInt vao_id, UInt vbo_id, UInt index, UInt attribute_size, UInt vertex_size, U64 offset)
