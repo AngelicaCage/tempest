@@ -8,7 +8,6 @@
 
 #include "base.h"
 #include "log.h"
-#include "diagnostics.h"
 #include "game_loader.h"
 #include "gpu.h"
 

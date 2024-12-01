@@ -33,8 +33,11 @@ ShaderProgram
     Bool is_3d;
 };
 
-typedef UInt VBuffer;
-typedef UInt VAttributes;
-
+struct
+Mesh
+{
+    UInt vbo;
+    UInt vao;
+};
 
 #endif //GPU_H
