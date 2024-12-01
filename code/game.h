@@ -21,22 +21,25 @@ struct Color
         };
         struct
         {
-            Float data[4];
+            Float components[4];
         };
     };
-    Void interpolate_to(Color target, Float speed)
-    {
-        r = interpolate(r, target.r, speed);
-        g = interpolate(g, target.g, speed);
-        b = interpolate(b, target.b, speed);
-        a = interpolate(a, target.a, speed);
-    }
-    
 };
-Color color(Float r, Float g, Float b, Float a)
+inline Color
+color(Float r, Float g, Float b, Float a)
 {
     return {r, g, b, a};
 };
+inline Color
+interpolate(Color from, Color to, Float speed)
+{
+    return {
+        interpolate(from.r, to.r, speed),
+        interpolate(from.g, to.g, speed),
+        interpolate(from.b, to.b, speed),
+        interpolate(from.a, to.a, speed),
+    };
+}
 
 struct FieldPoint
 {

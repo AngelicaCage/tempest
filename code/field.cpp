@@ -1,7 +1,6 @@
 V2
 coords_field_to_world(Field *field, V2 pos)
 {
-    // LATER: optimize if possible
     V2 top_left = v2(field->center_world.x - field->dim_world.x/2.0f, field->center_world.y - field->dim_world.y/2.0f);
     pos.x = pos.x / (Float)field->width * field->dim_world.x + top_left.x;
     pos.y = pos.y / (Float)field->height * field->dim_world.y + top_left.y;
@@ -315,7 +314,7 @@ update_field_data_main_menu(GameState *game_state, Field *field)
         // Later: standardize interpolate functions
         Color normal_text_color = color(0.92, 0.69, 0.33, 1.0f);
         Color selected_text_color = color(0.92, 0.85, 0.73, 1.0f);
-        selected_text_color.interpolate_to(color(1, 1, 1, 1), sin(time*5));
+        selected_text_color = interpolate(selected_text_color, normal_text_color, sin(time*5));
         
         Int selector = game_state->main_menu_selector;
         
@@ -383,7 +382,7 @@ update_field_data_in_game(GameState *game_state, Field *field)
         
         Color normal_text_color = color(0.92, 0.69, 0.33, 1.0f);
         Color selected_text_color = color(0.92, 0.85, 0.73, 1.0f);
-        selected_text_color.interpolate_to(color(1, 1, 1, 1), sin(time*5));
+        selected_text_color = interpolate(selected_text_color, normal_text_color, sin(time*5));
         
         Int selector = game_state->pause_menu_selector;
         
@@ -638,12 +637,12 @@ update_field_data(GameState *game_state, Field *field)
             if(point->height < target_point->height)
             {
                 point->height = interpolate(point->height, target_point->height, up_interp_speed);
-                point->color.interpolate_to(target_point->color, up_interp_speed);
+                point->color = interpolate(point->color, target_point->color, up_interp_speed);
             }
             else
             {
                 point->height = interpolate(point->height, target_point->height, down_interp_speed);
-                point->color.interpolate_to(target_point->color, down_interp_speed);
+                point->color = interpolate(point->color, target_point->color, down_interp_speed);
             }
             
         }

@@ -914,7 +914,6 @@ update_and_render(GameMemory *game_memory)
     if(camera->orbiting)
     {
         Float camera_orbit_speed = 2.0f;
-        //if(KEYDOWN(GLFW_KEY_RIGHT))
 #if 0
         if(keys->right.is_down)
             camera->orbit_angles.x -= camera_orbit_speed * d_time;
@@ -927,7 +926,6 @@ update_and_render(GameMemory *game_memory)
 #endif
         
 #if 0
-        // LATER: adjust by window resolution
         if(glfwGetMouseButton(game_memory->window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
         {
             Float camera_mouse_pan_orbit_speed = 2.0f;
