@@ -15,21 +15,18 @@ Rect
         };
         struct
         {
-            F32 x1, y1, x2, y2;
-        };
-        struct
-        {
             V2 pos, dim;
         };
         struct
         {
-            V2 top_left, bottom_right;
-        };
-        struct
-        {
-            F32 data[4];
+            F32 components[4];
         };
     };
+    
+    inline F32 area()
+    {
+        return w*h;
+    }
 };
 
 struct
@@ -45,23 +42,19 @@ RectI
             };
             struct
             {
-                I32 x1, y1, x2, y2;
-            };
-            struct
-            {
                 V2I pos, dim;
             };
             struct
             {
-                V2I top_left, bottom_right;
+                I32 components[4];
             };
-            struct
-            {
-                I32 data[4];
-            };
-            
         };
     };
+    
+    inline I32 area()
+    {
+        return w*h;
+    }
 };
 
 // CONSTRUCTORS //

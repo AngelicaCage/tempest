@@ -16,109 +16,109 @@ struct Keys
 {
     union
     {
-        union
+        struct
         {
-            struct
-            {
-                KeyData left;
-                KeyData right;
-                KeyData up;
-                KeyData down;
-                KeyData page_up;
-                KeyData page_down;
-                
-                KeyData a;
-                KeyData b;
-                KeyData c;
-                KeyData d;
-                KeyData e;
-                KeyData f;
-                KeyData g;
-                KeyData h;
-                KeyData i;
-                KeyData j;
-                KeyData k;
-                KeyData l;
-                KeyData m;
-                KeyData n;
-                KeyData o;
-                KeyData p;
-                KeyData q;
-                KeyData r;
-                KeyData s;
-                KeyData t;
-                KeyData u;
-                KeyData v;
-                KeyData w;
-                KeyData x;
-                KeyData y;
-                KeyData z;
-                
-                KeyData number_0;
-                KeyData number_1;
-                KeyData number_2;
-                KeyData number_3;
-                KeyData number_4;
-                KeyData number_5;
-                KeyData number_6;
-                KeyData number_7;
-                KeyData number_8;
-                KeyData number_9;
-                
-                KeyData grave;
-                KeyData minus;
-                KeyData equal;
-                KeyData left_bracket;
-                KeyData right_bracket;
-                KeyData backslash;
-                KeyData semicolon;
-                KeyData quote;
-                KeyData slash;
-                KeyData comma;
-                KeyData period;
-                
-                KeyData space;
-                KeyData backspace;
-                KeyData del;
-                KeyData tab;
-                KeyData enter;
-                KeyData caps_lock;
-                KeyData escape;
-                
-                // Later: switch the order of these names
-                KeyData shift_left;
-                KeyData shift_right;
-                KeyData control_left;
-                KeyData control_right;
-                KeyData alt_left;
-                KeyData alt_right;
-                KeyData function;
-                
-                KeyData f1;
-                KeyData f2;
-                KeyData f3;
-                KeyData f4;
-                KeyData f5;
-                KeyData f6;
-                KeyData f7;
-                KeyData f8;
-                KeyData f9;
-                KeyData f10;
-                KeyData f11;
-                KeyData f12;
-            };
-            struct
-            {
-                KeyData nav[6];
-                KeyData letters[26];
-                KeyData numbers[10];
-                KeyData symbols[11];
-                KeyData special[7];
-                KeyData modifiers[7];
-                KeyData functions[12];
-            };
+            KeyData left;
+            KeyData right;
+            KeyData up;
+            KeyData down;
+            KeyData page_up;
+            KeyData page_down;
+            
+            KeyData a;
+            KeyData b;
+            KeyData c;
+            KeyData d;
+            KeyData e;
+            KeyData f;
+            KeyData g;
+            KeyData h;
+            KeyData i;
+            KeyData j;
+            KeyData k;
+            KeyData l;
+            KeyData m;
+            KeyData n;
+            KeyData o;
+            KeyData p;
+            KeyData q;
+            KeyData r;
+            KeyData s;
+            KeyData t;
+            KeyData u;
+            KeyData v;
+            KeyData w;
+            KeyData x;
+            KeyData y;
+            KeyData z;
+            
+            KeyData number_0;
+            KeyData number_1;
+            KeyData number_2;
+            KeyData number_3;
+            KeyData number_4;
+            KeyData number_5;
+            KeyData number_6;
+            KeyData number_7;
+            KeyData number_8;
+            KeyData number_9;
+            
+            KeyData grave;
+            KeyData minus;
+            KeyData equal;
+            KeyData left_bracket;
+            KeyData right_bracket;
+            KeyData backslash;
+            KeyData semicolon;
+            KeyData quote;
+            KeyData slash;
+            KeyData comma;
+            KeyData period;
+            
+            KeyData space;
+            KeyData backspace;
+            KeyData del;
+            KeyData tab;
+            KeyData enter;
+            KeyData caps_lock;
+            KeyData escape;
+            
+            // Later: switch the order of these names
+            KeyData shift_left;
+            KeyData shift_right;
+            KeyData control_left;
+            KeyData control_right;
+            KeyData alt_left;
+            KeyData alt_right;
+            KeyData function;
+            
+            KeyData f1;
+            KeyData f2;
+            KeyData f3;
+            KeyData f4;
+            KeyData f5;
+            KeyData f6;
+            KeyData f7;
+            KeyData f8;
+            KeyData f9;
+            KeyData f10;
+            KeyData f11;
+            KeyData f12;
         };
-        KeyData data[6+26+10+11+7+7+12];
+        struct
+        {
+            KeyData nav[6];
+            KeyData letters[26];
+            KeyData numbers[10];
+            KeyData symbols[11];
+            KeyData special[7];
+            KeyData modifiers[7];
+            KeyData functions[12];
+        };
+        struct
+        {
+            KeyData data[6+26+10+11+7+7+12];
+        };
     };
     
 };

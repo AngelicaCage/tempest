@@ -6,7 +6,7 @@
 #define GLFW_DLL
 #include "glfw/glfw3.h"
 
-#include "ciel/base.h"
+#include "base.h"
 #include "log.h"
 #include "diagnostics.h"
 #include "game_loader.h"

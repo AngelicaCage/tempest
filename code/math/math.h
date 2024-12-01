@@ -51,7 +51,6 @@ inline Int clamp_circle(Int val, Int min, Int max)
     return val;
 }
 
-
 inline V2 clamp(V2 val, V2 min, V2 max)
 {
     if(val.x < min.x) val.x = min.x;

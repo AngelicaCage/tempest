@@ -60,8 +60,6 @@ gpu_create_shader(const Char *path, ShaderType type)
 Void
 gpu_delete_shader(UInt program_id, Shader *shader)
 {
-    check(shader);
-    
     glDetachShader(program_id, shader->id);
     glDeleteShader(shader->id);
     shader->loaded = false;
@@ -70,17 +68,11 @@ gpu_delete_shader(UInt program_id, Shader *shader)
 ShaderProgram
 gpu_create_shader_program(const Char *vs_path, const Char *fs_path, Bool is_3d)
 {
-    check(fs_path);
-    check(vs_path);
-    
     ShaderProgram result = {0};
     result.is_3d = is_3d;
     
     result.vertex_shader = gpu_create_shader(vs_path, ShaderType::vertex);
     result.fragment_shader = gpu_create_shader(fs_path, ShaderType::fragment);
-    
-    check(result.vertex_shader.loaded);
-    check(result.fragment_shader.loaded);
     
     result.id = glCreateProgram();
     glAttachShader(result.id, result.vertex_shader.id);

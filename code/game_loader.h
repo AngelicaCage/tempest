@@ -5,7 +5,7 @@
 
 #include "glfw/glfw3.h"
 
-#include "ciel/base.h"
+#include "base.h"
 #include "log.h"
 
 struct
@@ -45,6 +45,7 @@ struct GameCode
     
     Void (*update_and_render)(GameMemory *);
 };
+
 
 
 #endif //WINDOWS_GAME_LOADER_H

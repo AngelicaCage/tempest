@@ -8,9 +8,9 @@
 //#define STB_IMAGE_IMPLEMENTATION
 //#include "stb/stb_image.h"
 
-#include "ciel/base.h"
-#include "ciel/list.h"
-#include "ciel/math.h"
+#include "base.h"
+#include "list.h"
+#include "math/math.h"
 #include "log.h"
 #include "diagnostics.h"
 #include "game_loader.h"
