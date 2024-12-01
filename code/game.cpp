@@ -703,24 +703,18 @@ update_and_render(GameMemory *game_memory)
         
         
         // Axes
-        glGenVertexArrays(1, &game_state->axis_mesh.vertex_data.vao);
-        glGenBuffers(1, &game_state->axis_mesh.vertex_data.vbo);
-        
-        glBindVertexArray(game_state->axis_mesh.vertex_data.vao);
+        game_state->axis_mesh.vertex_data.vao = gpu_gen_vao();
+        game_state->axis_mesh.vertex_data.vbo = gpu_gen_vbo();
         
         Float axis_vertices[] = {
             0, 0, 0,
             100, 0, 0,
         };
-        glBindBuffer(GL_ARRAY_BUFFER, game_state->axis_mesh.vertex_data.vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(axis_vertices), axis_vertices, GL_STATIC_DRAW);
+        gpu_upload_vertices(game_state->axis_mesh.vertex_data.vbo,
+                            axis_vertices, sizeof(axis_vertices));
         
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*3, (Void *)0);
-        glEnableVertexAttribArray(0);
-        
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-        
+        gpu_set_vao_attribute(game_state->axis_mesh.vertex_data.vao, game_state->axis_mesh.vertex_data.vbo,
+                              0, 3, sizeof(Float)*3, 0);
         
         // Field
         //*field = create_field(400, 300);
