@@ -243,7 +243,6 @@ create_enemy(V2 pos, EnemyType type)
     return result;
 }
 
-// TODO: implement these
 struct EnemyExplosion
 {
     V2 pos;

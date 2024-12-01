@@ -14,6 +14,7 @@
 #include "log.h"
 #include "diagnostics.h"
 #include "game_loader.h"
+#include "shaders.h"
 
 #include "input.h"
 #include "gpu.h"
@@ -21,10 +22,6 @@
 
 #include "bitmaps.cpp"
 #include "drawing.cpp"
-
-// Later: move to shaders.h (or some better-named file)
-UInt vertex_shader_fallback_id = 0;
-UInt fragment_shader_fallback_id = 0;
 
 U64 (*get_file_last_write_time)(const Char *);
 FileContents (*read_file_contents)(const Char *);
@@ -43,17 +40,6 @@ Void (*sleep)(F64);
 #endif
 
 #define KEYDOWN(key) (glfwGetKey(game_memory->window, (key)) == GLFW_PRESS)
-
-// Later: integrate these with Input
-Float d_scroll;
-Bool just_scrolled;
-
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-    just_scrolled = true;
-    d_scroll = (Float)yoffset;
-    //ASSERT(false);
-}
 
 Void
 write_to_save_file(GameState *game_state)
@@ -816,6 +802,7 @@ update_and_render(GameMemory *game_memory)
         if(save_file_contents.allocated)
             free(save_file_contents.data);
     }
+    
     player->shot_cooldown_max = 0.15f;
     
     game_state->target_fps = 144;
@@ -879,6 +866,8 @@ update_and_render(GameMemory *game_memory)
     
     
     update_key_input(input, game_memory->window, d_time);
+    input->d_scroll = d_scroll;
+    d_scroll = 0;
     
     
     F64 new_mouse_pos[2];
@@ -955,10 +944,9 @@ update_and_render(GameMemory *game_memory)
             camera->orbit_angles.x += input->d_mouse_pos.x * camera_mouse_pan_orbit_speed * d_time;
         }
         
-        if(just_scrolled)
+        if(input->d_scroll != 0)
         {
-            just_scrolled = false;
-            camera->orbit_distance -= d_scroll * 0.5 * (camera->orbit_distance);
+            camera->orbit_distance -= input->d_scroll * 0.5 * (camera->orbit_distance);
         }
 #endif
         

@@ -131,6 +131,8 @@ struct Input
     V2 mouse_pos;
     V2 d_mouse_pos;
     
+    Float d_scroll;
+    
     Keys keys;
 };
 
@@ -233,14 +235,6 @@ fill_key_data(Input *input)
     keys->f12.key_code = GLFW_KEY_F12;
 }
 
-#if 0
-Int key_code;
-Bool just_pressed;
-Bool is_down;
-Float press_time;
-Float time_till_next_repeat;
-#endif
-
 Void
 update_key_input(Input *input, GLFWwindow *window, Float d_time)
 {
@@ -279,6 +273,13 @@ update_key_input(Input *input, GLFWwindow *window, Float d_time)
             }
         }
     }
+}
+
+
+Float d_scroll;
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    d_scroll = (Float)yoffset;
 }
 
 
