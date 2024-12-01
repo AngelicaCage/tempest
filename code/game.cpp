@@ -76,7 +76,6 @@ exit_to_main_menu(GameState *game_state)
     if(game_state->time_in_game > game_state->save.highest_time)
         game_state->save.highest_time = game_state->time_in_game;
     
-    // TODO: write current game data to save struct
     write_to_save_file(game_state);
 }
 
@@ -110,7 +109,6 @@ player_subtract_life(GameState *game_state)
     if(!game_state->in_tutorial)
         game_state->player.lives--;
     
-    // TODO: clear all bullets and enemies on screen
     game_state->life_lost_explosion_enabled = true;
     game_state->life_lost_explosion_radius = 0;
     game_state->life_lost_explosion_center = game_state->player.pos;
@@ -131,11 +129,7 @@ update_main_menu(GameState *game_state)
         game_state->main_menu_selector++;
     if(keys->up.just_pressed || keys->w.just_pressed)
         game_state->main_menu_selector--;
-    // Later: write clamp function
-    if(game_state->main_menu_selector < 0)
-        game_state->main_menu_selector = 1;
-    if(game_state->main_menu_selector > 1)
-        game_state->main_menu_selector = 0;
+    game_state->main_menu_selector = clamp_circle(game_state->main_menu_selector, 0, 1);
     
     if(keys->enter.just_pressed)
     {
@@ -891,10 +885,7 @@ update_and_render(GameMemory *game_memory)
             if(keys->up.just_pressed || keys->w.just_pressed)
                 game_state->pause_menu_selector--;
             
-            if(game_state->pause_menu_selector > 1)
-                game_state->pause_menu_selector = 0;
-            else if(game_state->pause_menu_selector < 0)
-                game_state->pause_menu_selector = 1;
+            game_state->pause_menu_selector = clamp_circle(game_state->pause_menu_selector, 0, 1);
             
             if(keys->enter.just_pressed)
             {

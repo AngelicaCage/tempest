@@ -32,14 +32,27 @@ random_int(Int min, Int max)
     return (F32)rand()/(F32)RAND_MAX * (max-min) + min;
 }
 
-Float clamp(Float val, Float min, Float max)
+inline Float clamp(Float val, Float min, Float max)
 {
     if(val < min) return min;
     if(val > max) return max;
     return val;
 }
+inline Int clamp(Int val, Int min, Int max)
+{
+    if(val < min) return min;
+    if(val > max) return max;
+    return val;
+}
+inline Int clamp_circle(Int val, Int min, Int max)
+{
+    if(val < min) return max;
+    if(val > max) return min;
+    return val;
+}
 
-V2 clamp(V2 val, V2 min, V2 max)
+
+inline V2 clamp(V2 val, V2 min, V2 max)
 {
     if(val.x < min.x) val.x = min.x;
     if(val.y < min.y) val.y = min.y;
@@ -49,85 +62,6 @@ V2 clamp(V2 val, V2 min, V2 max)
     return val;
 }
 
-inline V3
-operator+(V3 a, V3 b)
-{
-    return {a.x + b.x, a.y + b.y, a.z + b.z};
-}
-inline V3 &
-operator+=(V3 &a, V3 b)
-{
-    a=a+b;
-    return a;
-}
-inline V3
-operator-(V3 a, V3 b)
-{
-    return {a.x - b.x, a.y - b.y, a.z - b.z};
-}
-inline V3 &
-operator-=(V3 &a, V3 b)
-{
-    a=a-b;
-    return a;
-}
-
-inline V2
-operator+(V2 a, V2 b)
-{
-    return {a.x + b.x, a.y + b.y};
-}
-inline V2 &
-operator+=(V2 &a, V2 b)
-{
-    a=a+b;
-    return a;
-}
-inline V2
-operator-(V2 a, V2 b)
-{
-    return {a.x - b.x, a.y - b.y};
-}
-inline V2
-operator*(V2 a, Float scalar)
-{
-    return {a.x * scalar, a.y *scalar};
-}
-inline V2
-operator/(V2 a, Float scalar)
-{
-    return {a.x / scalar, a.y / scalar};
-}
-
-inline V2 &
-operator-=(V2 &a, V2 b)
-{
-    a=a-b;
-    return a;
-}
-
-inline V2I
-operator+(V2I a, V2I b)
-{
-    return {a.x + b.x, a.y + b.y};
-}
-inline V2I &
-operator+=(V2I &a, V2I b)
-{
-    a=a+b;
-    return a;
-}
-inline V2I
-operator-(V2I a, V2I b)
-{
-    return {a.x - b.x, a.y - b.y};
-}
-inline V2I &
-operator-=(V2I &a, V2I b)
-{
-    a=a-b;
-    return a;
-}
 
 
 
