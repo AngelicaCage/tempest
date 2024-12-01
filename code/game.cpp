@@ -837,12 +837,13 @@ update_and_render(GameMemory *game_memory)
     
     if(!game_state->fullscreen)
     {
-        glfwGetWindowSize(game_memory->window,
-                          &game_state->windowed_resolution.x,
-                          &game_state->windowed_resolution.y);
         glfwGetWindowPos(game_memory->window,
-                         &game_state->windowed_pos.x,
-                         &game_state->windowed_pos.y);
+                         &game_state->windowed_rect.x,
+                         &game_state->windowed_rect.y);
+        
+        glfwGetWindowSize(game_memory->window,
+                          &game_state->windowed_rect.w,
+                          &game_state->windowed_rect.h);
     }
     
     if(keys->f11.just_pressed)
@@ -857,10 +858,10 @@ update_and_render(GameMemory *game_memory)
             glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
             glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
             glfwSetWindowMonitor(game_memory->window, NULL,
-                                 game_state->windowed_pos.x,
-                                 game_state->windowed_pos.y,
-                                 game_state->windowed_resolution.x,
-                                 game_state->windowed_resolution.y,
+                                 game_state->windowed_rect.x,
+                                 game_state->windowed_rect.y,
+                                 game_state->windowed_rect.w,
+                                 game_state->windowed_rect.h,
                                  mode->refreshRate);
         }
         else

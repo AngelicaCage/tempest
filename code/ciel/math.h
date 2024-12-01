@@ -14,6 +14,7 @@ Float interpolate(Float a, Float b, Float speed)
 }
 
 #include "math/vectors.h"
+#include "math/rects.h"
 
 
 

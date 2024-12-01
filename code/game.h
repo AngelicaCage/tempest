@@ -290,9 +290,7 @@ struct GameState
     Float d_time;
     
     Bool fullscreen;
-    // Later: convert to rect
-    V2I windowed_resolution;
-    V2I windowed_pos;
+    RectI windowed_rect;
     
     Input input;
     
