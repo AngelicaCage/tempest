@@ -72,25 +72,9 @@ struct Field
     Bool render_data_allocated;
     Float *vertices;
     UInt *indices;
-    UInt vbo;
-    UInt vao;
+    
+    VertexData vertex_data;
     UInt *ebos;
-};
-
-struct FieldBitmap
-{
-    union
-    {
-        struct
-        {
-            V2I dim;
-        };
-        struct
-        {
-            UInt width, height;
-        };
-    };
-    Bool **data;
 };
 
 struct SmallFieldBitmap
@@ -314,8 +298,7 @@ struct GameState
     UInt font_vao;
     UInt font_ebo;
     
-    UInt axis_vbo;
-    UInt axis_vao;
+    Mesh axis_mesh;
     
     SmallFieldBitmap text_bitmaps[36];
     

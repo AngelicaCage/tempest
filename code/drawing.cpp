@@ -11,7 +11,7 @@ draw_axes(GameState *game_state)
     glm::mat4 model = glm::mat4(1.0f);
     Int model_loc = glGetUniformLocation(game_state->line_sp.id, "model");
     glUseProgram(game_state->line_sp.id);
-    glBindVertexArray(game_state->axis_vao);
+    glBindVertexArray(game_state->axis_mesh.vertex_data.vao);
     
     { // x axis
         glUniform4fv(color_loc, 1, line_color);
@@ -84,7 +84,7 @@ draw_field(GameState *game_state)
     glUniform1f(sun_light_strength_loc, 1.0f);
     glUniform3f(sun_light_dir_loc, -1.0f, -1.0f, 1.0f);
     
-    glBindVertexArray(field->vao);
+    glBindVertexArray(field->vertex_data.vao);
     for(Int i = 0; i < field->height-1; i++)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field->ebos[i]);
@@ -101,7 +101,7 @@ draw_field(GameState *game_state)
     model_loc = glGetUniformLocation(game_state->field_sp.id, "model");
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
     
-    glBindVertexArray(field->vao);
+    glBindVertexArray(field->vertex_data.vao);
     for(Int i = 0; i < field->height-1; i++)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, field->ebos[i]);

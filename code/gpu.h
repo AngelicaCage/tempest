@@ -34,10 +34,19 @@ ShaderProgram
 };
 
 struct
-Mesh
+VertexData
 {
     UInt vbo;
     UInt vao;
+};
+
+struct
+Mesh
+{
+    Bool uses_ebo;
+    
+    VertexData vertex_data;
+    UInt ebo;
 };
 
 #endif //GPU_H

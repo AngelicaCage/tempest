@@ -87,8 +87,8 @@ fill_field_render_data(Field *field)
         // gpu
         field->ebos = (UInt *)alloc(sizeof(UInt) * (field->height-1));
         
-        glGenVertexArrays(1, &field->vao);
-        glGenBuffers(1, &field->vbo);
+        glGenVertexArrays(1, &field->vertex_data.vao);
+        glGenBuffers(1, &field->vertex_data.vbo);
         for(Int i = 0; i < field->height-1; i++)
         {
             glGenBuffers(1, &(field->ebos[i]));
@@ -133,9 +133,9 @@ fill_field_render_data(Field *field)
     
     calculate_vertex_normals(field);
     
-    glBindVertexArray(field->vao);
+    glBindVertexArray(field->vertex_data.vao);
     
-    glBindBuffer(GL_ARRAY_BUFFER, field->vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, field->vertex_data.vbo);
     //glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * field->width*9 * field->height, field->vertices, GL_DYNAMIC_DRAW);
     glBufferData(GL_ARRAY_BUFFER, sizeof(Float) * field->width*9 * field->height, field->vertices, GL_STREAM_DRAW);
     

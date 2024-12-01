@@ -703,16 +703,16 @@ update_and_render(GameMemory *game_memory)
         
         
         // Axes
-        glGenVertexArrays(1, &game_state->axis_vao);
-        glGenBuffers(1, &game_state->axis_vbo);
+        glGenVertexArrays(1, &game_state->axis_mesh.vertex_data.vao);
+        glGenBuffers(1, &game_state->axis_mesh.vertex_data.vbo);
         
-        glBindVertexArray(game_state->axis_vao);
+        glBindVertexArray(game_state->axis_mesh.vertex_data.vao);
         
         Float axis_vertices[] = {
             0, 0, 0,
             100, 0, 0,
         };
-        glBindBuffer(GL_ARRAY_BUFFER, game_state->axis_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, game_state->axis_mesh.vertex_data.vbo);
         glBufferData(GL_ARRAY_BUFFER, sizeof(axis_vertices), axis_vertices, GL_STATIC_DRAW);
         
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Float)*3, (Void *)0);
@@ -924,7 +924,7 @@ update_and_render(GameMemory *game_memory)
             camera->orbit_angles.y -= camera_orbit_speed * d_time;
 #endif
         
-#if 0
+#if 1
         if(glfwGetMouseButton(game_memory->window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
         {
             Float camera_mouse_pan_orbit_speed = 2.0f;
@@ -991,7 +991,7 @@ update_and_render(GameMemory *game_memory)
     //glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     
-    //draw_axes(game_state);
+    draw_axes(game_state);
     
     draw_field(game_state);
     
