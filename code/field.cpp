@@ -38,13 +38,12 @@ calculate_vertex_normals(Field *field)
         Int vertexB = indices[index + 1];
         Int vertexC = indices[index + 2];
         
-        V3 edgeAB = v3_from_floats(&(vertices[vertexB*9])) - v3_from_floats(&(vertices[vertexA*9]));
-        V3 edgeAC = v3_from_floats(&(vertices[vertexC*9])) - v3_from_floats(&(vertices[vertexA*9]));
+        V3 edgeAB = v3(&(vertices[vertexB*9])) - v3(&(vertices[vertexA*9]));
+        V3 edgeAC = v3(&(vertices[vertexC*9])) - v3(&(vertices[vertexA*9]));
         
         // The cross product is perpendicular to both input vectors (normal to the plane).
         // Flip the argument order if you need the opposite winding.    
-        glm::vec3 _areaWeightedNormal = glm::cross(edgeAB.to_glm(), edgeAC.to_glm());
-        V3 areaWeightedNormal = v3_from_glm(_areaWeightedNormal);
+        V3 areaWeightedNormal = v3(glm::cross(edgeAB.to_glm(), edgeAC.to_glm()));
         
         // Don't normalize this vector just yet. Its magnitude is proportional to the
         // area of the triangle (times 2), so this helps ensure tiny/skinny triangles
@@ -67,7 +66,7 @@ calculate_vertex_normals(Field *field)
     // Finally, normalize all the sums to get a unit-length, area-weighted average.
     for(int vertex = 0; vertex < (field->width) * (field->height); vertex++)
     {
-        V3 current_normal = v3_from_floats(&vertices[vertex*9 + 6]);
+        V3 current_normal = v3(&vertices[vertex*9 + 6]);
         V3 new_normal = current_normal.normalized();
 #if 1
         vertices[vertex*9 + 6] = new_normal.x;

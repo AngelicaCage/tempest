@@ -20,6 +20,7 @@ copy game_loader.exe ..\release\tempest
 move ..\release\tempest\game.dll ..\release\tempest\tempest.dll
 move ..\release\tempest\game_loader.exe ..\release\tempest\tempest.exe
 copy glfw-lib-static-ucrt\glfw3.dll ..\release\tempest
+copy ..\attributions.txt ..\release\tempest
 xcopy ..\data ..\release\tempest\data /E /I
 
 del ..\release\tempest.zip

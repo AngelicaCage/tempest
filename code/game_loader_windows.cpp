@@ -305,7 +305,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     
-    GLFWwindow* window = glfwCreateWindow(1920, 1080, "Game", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "Tempest", NULL, NULL);
     if (window == NULL)
     {
         print_error("failed to create GLFW window");

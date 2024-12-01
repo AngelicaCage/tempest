@@ -1,0 +1,6 @@
+Made by: AngelicaCage
+
+
+Font: https://www.dafont.com/5x5.font
+GLFW: https://www.glfw.org/
+GLAD: https://github.com/Dav1dde/glad

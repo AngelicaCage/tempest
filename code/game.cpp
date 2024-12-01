@@ -10,11 +10,11 @@
 
 #include "ciel/base.h"
 #include "ciel/list.h"
+#include "ciel/math.h"
 #include "log.h"
 #include "diagnostics.h"
 #include "game_loader.h"
 
-#include "math.h"
 #include "input.h"
 #include "gpu.h"
 #include "game.h"
@@ -976,9 +976,9 @@ update_and_render(GameMemory *game_memory)
     {
         Camera *real_camera = &game_state->camera;
         Float interp_speed = 50.0f;
-        real_camera->pos.interpolate_to(camera->pos, interp_speed * d_time);
-        real_camera->target.interpolate_to(camera->target, interp_speed * d_time);
-        real_camera->up.interpolate_to(camera->up, interp_speed * d_time);
+        real_camera->pos = interpolate(real_camera->pos, camera->pos, interp_speed * d_time);
+        real_camera->target = interpolate(real_camera->target, camera->target, interp_speed * d_time);
+        real_camera->up = interpolate(real_camera->up, camera->up, interp_speed * d_time);
         real_camera->orbit_angles.interpolate_to(camera->orbit_angles, interp_speed * d_time);
         real_camera->orbit_distance = interpolate(real_camera->orbit_distance,
                                                   camera->orbit_distance,
