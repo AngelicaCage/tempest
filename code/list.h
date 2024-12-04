@@ -107,9 +107,9 @@ struct List {
         return 0;
     }
     
-    void del()
+    void free()
     {
-        dealloc(data);
+        free(data);
         length = 0;
         length_allocated = 0;
         allocated = false;
