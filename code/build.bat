@@ -1,7 +1,7 @@
 @echo off
 cls
 
-build_debug
-rem build_release
+rem build_debug
+build_release
 
 popd
