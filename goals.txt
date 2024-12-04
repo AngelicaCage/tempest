@@ -1,3 +1,0 @@
-shader reorganization
-Log drawing (proper, not on the field)
-Collision
