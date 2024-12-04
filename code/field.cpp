@@ -138,7 +138,6 @@ fill_field_render_data(Field *field)
     
     for(Int i = 0; i < field->height-1; i++)
     {
-        gpu_bind_ebo(field->ebos[i]);
         gpu_upload_indices(field->ebos[i], &(field->indices[i*(field->width-1)*6]),
                            sizeof(UInt) * (field->width-1)*6);
     }
@@ -174,9 +173,9 @@ create_field(Int width, Int height)
 
 Void
 field_draw_small_bitmap(Field *field, SmallFieldBitmap bitmap, V2I offset,
-                        Float added_height, Color color, Bool set_base_height = false, Float base_height = 1) // offset from center
+                        Float added_height, Color color,
+                        Bool set_base_height = false, Float base_height = 1) // offset from center
 {
-    //V2I draw_pos = v2i(field->width/2 + offset.x, field->height/2 + offset.y);
     V2I draw_pos = offset;
     
     for(Int y = 0; y < 5; y++)
@@ -276,7 +275,6 @@ field_draw_text(GameState *game_state, Field *field, const Char *str, V2 pos,
 Void
 update_field_data_main_menu(GameState *game_state, Field *field)
 {
-    // TODO: have waves
     F64 time = get_time();
     
     for(Int y = 0; y < field->height; y++)
@@ -302,7 +300,6 @@ update_field_data_main_menu(GameState *game_state, Field *field)
         
         field_draw_text(game_state, field, "Tempest", v2(menu_text_left, menu_text_y), 0.12f, color(0.92, 0.33, 0.53, 1.0f));
         
-        // Later: standardize interpolate functions
         Color normal_text_color = color(0.92, 0.69, 0.33, 1.0f);
         Color selected_text_color = color(0.92, 0.85, 0.73, 1.0f);
         selected_text_color = interpolate(selected_text_color, normal_text_color, sin(time*5));

@@ -11,36 +11,6 @@ struct Camera
     V2 orbit_angles; // rotate x, then y
 };
 
-struct Color
-{
-    union
-    {
-        struct
-        {
-            Float r, g, b, a;
-        };
-        struct
-        {
-            Float components[4];
-        };
-    };
-};
-inline Color
-color(Float r, Float g, Float b, Float a)
-{
-    return {r, g, b, a};
-};
-inline Color
-interpolate(Color from, Color to, Float speed)
-{
-    return {
-        interpolate(from.r, to.r, speed),
-        interpolate(from.g, to.g, speed),
-        interpolate(from.b, to.b, speed),
-        interpolate(from.a, to.a, speed),
-    };
-}
-
 struct FieldPoint
 {
     Float height;

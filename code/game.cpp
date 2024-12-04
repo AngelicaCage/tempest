@@ -14,6 +14,7 @@
 #include "log.h"
 #include "game_loader.h"
 #include "shaders.h"
+#include "color.h"
 
 #include "input.h"
 #include "gpu.h"
@@ -982,10 +983,9 @@ update_and_render(GameMemory *game_memory)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
     
-    //glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     
-    draw_axes(game_state);
+    //draw_axes(game_state);
     
     draw_field(game_state);
     
@@ -1008,12 +1008,4 @@ update_and_render(GameMemory *game_memory)
     F64 this_frame_end_time = get_time();
     F64 this_frame_time = this_frame_end_time - this_frame_start_time;
     F64 time_to_sleep = (1.0 / game_state->target_fps) - this_frame_time;
-    
-    if(time_to_sleep < 0)
-        time_to_sleep = 0;
-    
-#if 0
-    if(time_to_sleep > 0)
-        sleep(time_to_sleep);
-#endif
 }
