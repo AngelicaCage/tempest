@@ -36,12 +36,12 @@ Log
         length = 0;
     }
     
-    LogEntry operator[](UInt index)
+    LogEntry entry_at(UInt index)
     {
         ASSERT(index < length);
-        ASSERT(index > 0);
+        ASSERT(index >= 0);
         
-        if(index < 0 || index < length)
+        if(index < 0 || index >= length)
         {
             LogEntry result;
             result.type = LogEntryType::nonexistant;
@@ -55,6 +55,30 @@ Log
         }
         
         return entries[index];
+        
+    }
+    
+    LogEntry operator[](UInt index)
+    {
+        // TODO: make this point to entry_at
+        ASSERT(index < length);
+        ASSERT(index >= 0);
+        
+        if(index < 0 || index >= length)
+        {
+            LogEntry result;
+            result.type = LogEntryType::nonexistant;
+            return result;
+        }
+        
+        if(length == LOG_LENGTH_ALLOCATED)
+        {
+            UInt adjusted_index = (start + index) % LOG_LENGTH_ALLOCATED;
+            return entries[adjusted_index];
+        }
+        
+        return entries[index];
+        
     }
     
     Void _log(const Char *format, va_list args, LogEntryType type)

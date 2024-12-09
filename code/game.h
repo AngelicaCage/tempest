@@ -43,8 +43,7 @@ struct Field
     Float *vertices;
     UInt *indices;
     
-    VertexData vertex_data;
-    UInt *ebos;
+    SplitRenderMesh mesh;
 };
 
 struct SmallFieldBitmap

@@ -31,6 +31,8 @@ Void (*sleep)(F64);
 
 #include "gpu.cpp"
 #include "shaders.cpp"
+#include "ui_drawing.cpp"
+
 #include "field.cpp"
 
 #ifndef TEMPEST_RELEASE
@@ -45,7 +47,7 @@ Void
 write_to_save_file(GameState *game_state)
 {
     U64 size = sizeof(Bool)*2 + sizeof(F64) + sizeof(Int);
-    U8 *save_file_buffer = (U8 *)alloc(size);
+    U8 *save_file_buffer = (U8 *)mem_alloc(size);
     
     // Later: make a generic way to do this
     // SEE OTHER Later when we read
@@ -346,7 +348,7 @@ bomb: 60
             
             Int type_offset = (Int)((spawning_preference+1)/2*4);
             
-            Float *enemy_types = (Float *)alloc(sizeof(Float) * new_enemies_count);
+            Float *enemy_types = (Float *)mem_alloc(sizeof(Float) * new_enemies_count);
             
             for(Int i = 0; i < new_enemies_count; i++)
             {
@@ -704,18 +706,18 @@ update_and_render(GameMemory *game_memory)
         
         
         // Axes
-        game_state->axis_mesh.vertex_data.vao = gpu_gen_vao();
-        game_state->axis_mesh.vertex_data.vbo = gpu_gen_vbo();
+        game_state->axis_mesh.vao = gpu_gen_vao();
+        game_state->axis_mesh.vbo = gpu_gen_vbo();
         
         Float axis_vertices[] = {
             0, 0, 0,
             100, 0, 0,
         };
-        gpu_upload_vertices(game_state->axis_mesh.vertex_data.vbo,
+        gpu_upload_vertices(game_state->axis_mesh.vbo,
                             axis_vertices, sizeof(axis_vertices));
         
-        gpu_set_vao_attribute(game_state->axis_mesh.vertex_data.vao, game_state->axis_mesh.vertex_data.vbo,
-                              0, 3, sizeof(Float)*3, 0);
+        gpu_vao_attach_vbo_attribute(game_state->axis_mesh.vao, game_state->axis_mesh.vbo,
+                                     0, 3, sizeof(Float)*3, 0);
         
         // Field
         //*field = create_field(400, 300);

@@ -50,7 +50,7 @@ gpu_compile_shader_from_path(Shader *shader)
     
     if(compilation_succeeded != GL_TRUE)
     {
-        Char *info_log = (Char *)alloc(512);
+        Char *info_log = (Char *)mem_alloc(512);
         glGetShaderInfoLog(shader->id, 512, NULL, info_log);
         log_warning("shader compilation error: %s", info_log);
         free(info_log);
@@ -91,6 +91,32 @@ gpu_delete_shader(UInt program_id, Shader *shader)
     shader->loaded = false;
 }
 
+
+
+Void
+gpu_shader_program_set_uniform_name_location_pairs(ShaderProgram *program)
+{
+    program->uniforms = create_list<SPUniformData>();
+    
+    Int uniform_count;
+    glGetProgramiv(program->id, GL_ACTIVE_UNIFORMS, &uniform_count);
+    
+    for(UInt i = 0; i < uniform_count; i++)
+    {
+        UInt name_buffer_size = 64;
+        Char name_buffer[64];
+        
+        Int uniform_size;
+        GLenum uniform_type;
+        
+        glGetActiveUniform(program->id, (GLuint)i, name_buffer_size, NULL,
+                           &uniform_size, &uniform_type, name_buffer);
+        Int uniform_location = glGetUniformLocation(program->id, name_buffer);
+        
+        program->uniforms.add({create_string(name_buffer), uniform_location, uniform_type, uniform_size});
+    }
+}
+
 ShaderProgram
 gpu_create_shader_program(const Char *vs_path, const Char *fs_path, Bool is_3d)
 {
@@ -108,7 +134,7 @@ gpu_create_shader_program(const Char *vs_path, const Char *fs_path, Bool is_3d)
     Int linking_succeeded;
     glGetProgramiv(result.id, GL_LINK_STATUS, &linking_succeeded);
     if(!linking_succeeded) {
-        Char *info_log = (Char *)alloc(512);
+        Char *info_log = (Char *)mem_alloc(512);
         glGetProgramInfoLog(result.id, 512, NULL, info_log);
         log_warning("shader program linking error: %s", info_log);
         free(info_log);
@@ -119,6 +145,8 @@ gpu_create_shader_program(const Char *vs_path, const Char *fs_path, Bool is_3d)
     }
     
     result.linked = true;
+    
+    gpu_shader_program_set_uniform_name_location_pairs(&result);
     
     if(!result.vertex_shader.using_fallback)
         gpu_delete_shader(result.id, &result.vertex_shader);
@@ -132,7 +160,14 @@ Void
 gpu_delete_shader_program(ShaderProgram *program)
 {
     glDeleteProgram(program->id);
+    free(program->uniforms.data);
     program->linked = false;
+}
+
+Void
+gpu_use_shader_program(ShaderProgram *program)
+{
+    glUseProgram(program->id);
 }
 
 Void
@@ -163,13 +198,39 @@ gpu_update_camera_in_shaders(GameState *game_state)
     }
 }
 
-#if 0
 Void
-gpu_upload_vertices_static(Float v[])
+// TODO: rename to 1i
+gpu_set_uniform_i(ShaderProgram *program, const Char *name, Int value)
 {
+    glUniform1i(program->get_uniform_location(name), value);
 }
-#endif
 
+Void
+gpu_set_uniform_1f(ShaderProgram *program, const Char *name, Float value)
+{
+    glUniform1f(program->get_uniform_location(name), value);
+}
+Void
+gpu_set_uniform_2f(ShaderProgram *program, const Char *name, Float *value)
+{
+    glUniform2fv(program->get_uniform_location(name), 1, value);
+}
+Void
+gpu_set_uniform_4f(ShaderProgram *program, const Char *name, Float *value)
+{
+    glUniform4fv(program->get_uniform_location(name), 1, value);
+}
+
+Void
+gpu_set_uniform_mat4x4(ShaderProgram *program, const Char *name, Float *value)
+{
+    // TODO: cache uniform locations
+    //glUniformMatrix4fv(glGetUniformLocation(program->id, name), 1, GL_FALSE, value);
+    glUniformMatrix4fv(program->get_uniform_location(name), 1, GL_FALSE, value);
+}
+
+
+// GENERATING //
 UInt
 gpu_gen_vao()
 {
@@ -191,7 +252,14 @@ gpu_gen_ebo()
     glGenBuffers(1, &result);
     return result;
 }
+UInt gpu_gen_texture()
+{
+    UInt result;
+    glGenTextures(1, &result);
+    return result;
+}
 
+// BINDING //
 Void
 gpu_bind_vao(UInt id)
 {
@@ -207,19 +275,36 @@ gpu_bind_ebo(UInt id)
 {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
 }
+Void
+gpu_bind_texture(UInt id)
+{
+    glBindTexture(GL_TEXTURE_2D, id);
+}
+
+Void
+gpu_clear_bindings()
+{
+    gpu_bind_vao(0);
+    gpu_bind_vbo(0);
+    gpu_bind_ebo(0);
+    gpu_bind_texture(0);
+}
 
 
+// DATA UPLOADING //
 Void
 gpu_upload_vertices(UInt vbo_id, Float *vertices, U64 size)
 {
     gpu_bind_vbo(vbo_id);
     glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
+    gpu_bind_vbo(0);
 }
 Void
 gpu_upload_vertices_stream(UInt vbo_id, Float *vertices, U64 size)
 {
     gpu_bind_vbo(vbo_id);
     glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
+    gpu_bind_vbo(0);
 }
 
 Void
@@ -227,14 +312,92 @@ gpu_upload_indices(UInt ebo_id, UInt *indices, U64 size)
 {
     gpu_bind_ebo(ebo_id);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, indices, GL_STATIC_DRAW);
+    gpu_bind_ebo(0);
+}
+
+Void
+gpu_upload_image(UInt texture_id, U8 *image_data, Int width, Int height)
+{
+    gpu_bind_texture(texture_id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
+    // Later: should we do this for images above a certain size
+    //glGenerateMipmap(GL_TEXTURE_2D);
+    gpu_bind_texture(0);
 }
 
 
+// PARAMETER SETTING //
+// Later: only clear bindings for debug build?
 Void
-gpu_set_vao_attribute(UInt vao_id, UInt vbo_id, UInt index, UInt attribute_size, UInt vertex_size, U64 offset)
+gpu_vao_attach_ebo(UInt vao_id, UInt ebo_id)
+{
+    gpu_bind_vao(vao_id);
+    gpu_bind_ebo(ebo_id);
+    gpu_bind_vao(0);
+    gpu_bind_ebo(0);
+}
+Void
+gpu_vao_attach_vbo(UInt vao_id, UInt vbo_id)
 {
     gpu_bind_vao(vao_id);
     gpu_bind_vbo(vbo_id);
-    glVertexAttribPointer(index, attribute_size, GL_FLOAT, GL_FALSE, vertex_size, (Void *)offset);
+    gpu_bind_vao(0);
+    gpu_bind_vbo(0);
+}
+
+Void
+gpu_vao_attach_vbo_attribute(UInt vao_id, UInt vbo_id, UInt index, UInt attribute_element_count, UInt vertex_size, U64 offset)
+{
+    gpu_bind_vao(vao_id);
+    gpu_bind_vbo(vbo_id);
+    glVertexAttribPointer(index, attribute_element_count, GL_FLOAT, GL_FALSE, vertex_size, (Void *)offset);
     glEnableVertexAttribArray(index);
+    gpu_bind_vao(0);
+    gpu_bind_vbo(0);
+}
+
+Void
+gpu_set_texture_parameter_int(UInt texture_id, GLenum parameter, GLint value)
+{
+    gpu_bind_texture(texture_id);
+    glTexParameteri(GL_TEXTURE_2D, parameter, value);
+    gpu_bind_texture(0);
+}
+Void
+gpu_set_texture_wrapping_repeat(UInt texture_id)
+{
+    gpu_set_texture_parameter_int(texture_id, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    gpu_set_texture_parameter_int(texture_id, GL_TEXTURE_WRAP_T, GL_REPEAT);
+}
+Void
+gpu_set_texture_filter_nearest(UInt texture_id)
+{
+    gpu_set_texture_parameter_int(texture_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gpu_set_texture_parameter_int(texture_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+}
+
+Void
+gpu_set_texture_unit(Int unit_index, UInt texture_id)
+{
+    glActiveTexture(GL_TEXTURE0 + unit_index);
+    gpu_bind_texture(texture_id);
+}
+
+
+// DRAWING //
+
+Void
+gpu_draw_indices(UInt vao_id, GLenum type, UInt vertex_count)
+{
+    glBindVertexArray(vao_id);
+    glDrawElements(type, vertex_count, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+}
+
+Void
+gpu_draw_vertices(UInt vao_id, GLenum type, UInt vertex_count)
+{
+    glBindVertexArray(vao_id);
+    glDrawArrays(type, 0, vertex_count);
+    glBindVertexArray(0);
 }

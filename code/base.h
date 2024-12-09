@@ -121,7 +121,7 @@ print_warning(const Char *Format, ...)
 
 
 Void *
-_alloc(U64 Size, const Char *CalledByFunction, int CalledByLine, const Char *CalledByFile)
+_mem_alloc(U64 Size, const Char *CalledByFunction, int CalledByLine, const Char *CalledByFile)
 {
     Void *Result = (Void *)malloc(Size);
     if(Result != NULL)
@@ -130,14 +130,14 @@ _alloc(U64 Size, const Char *CalledByFunction, int CalledByLine, const Char *Cal
     }
     else
     {
-        print_error("Failed malloc. Called by: %s, %s, line %d", CalledByFile, CalledByFunction, CalledByLine);
+        print_error("Failed mem_alloc. Called by: %s, %s, line %d", CalledByFile, CalledByFunction, CalledByLine);
         ASSERT(false);
         return NULL;
     }
 }
 
 Void *
-_resize_alloc(Void *Data, U64 Size, const Char *CalledByFunction, int CalledByLine, const Char *CalledByFile)
+_mem_resize(Void *Data, U64 Size, const Char *CalledByFunction, int CalledByLine, const Char *CalledByFile)
 {
     Void *Result = (Void *)realloc(Data, Size);
     if(Result != NULL)
@@ -151,8 +151,10 @@ _resize_alloc(Void *Data, U64 Size, const Char *CalledByFunction, int CalledByLi
     }
 }
 
-#define alloc(Size) _alloc(Size, __func__, __LINE__, __FILE__)
-#define resize_alloc(Data, Size) _resize_alloc(Data, Size, __func__, __LINE__, __FILE__)
+// TODO: rename to mem_alloc etc.
+#define mem_alloc(Size) (_mem_alloc(Size, __func__, __LINE__, __FILE__))
+#define mem_resize(Data, Size) (_mem_resize(Data, Size, __func__, __LINE__, __FILE__))
+#define mem_free(Data) (free(Data))
 
 Void
 zero_memory(Void *memory, U64 byte_count)

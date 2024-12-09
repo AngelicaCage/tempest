@@ -78,20 +78,23 @@ calculate_vertex_normals(Field *field)
 Void
 fill_field_render_data(Field *field)
 {
+    SplitRenderMesh *mesh = &(field->mesh);
     if(!field->render_data_allocated)
     {
-        // cpu
-        field->vertices = (Float *)alloc(sizeof(Float) * field->width*9 * field->height);
-        field->indices = (UInt *)alloc(sizeof(UInt) * (field->width-1)*6 * (field->height-1));
+        field->vertices = (Float *)mem_alloc(sizeof(Float) * field->width*9 * field->height);
+        field->indices = (UInt *)mem_alloc(sizeof(UInt) * (field->width-1)*6 * (field->height-1));
         
-        // gpu
-        field->ebos = (UInt *)alloc(sizeof(UInt) * (field->height-1));
+        mesh->ebos = (UInt *)mem_alloc(sizeof(UInt) * (field->height-1));
         
-        field->vertex_data.vao = gpu_gen_vao();
-        field->vertex_data.vbo = gpu_gen_vbo();
+        mesh->vao = gpu_gen_vao();
+        
+        mesh->vbo = gpu_gen_vbo();
+        gpu_vao_attach_vbo(mesh->vao, mesh->vbo);
+        
         for(Int i = 0; i < field->height-1; i++)
         {
-            field->ebos[i] = gpu_gen_ebo();
+            mesh->ebos[i] = gpu_gen_ebo();
+            gpu_vao_attach_ebo(mesh->vao, mesh->ebos[i]);
         }
         
         field->render_data_allocated = true;
@@ -134,17 +137,24 @@ fill_field_render_data(Field *field)
     calculate_vertex_normals(field);
     
     U64 vertex_count = field->width*9 * field->height;
-    gpu_upload_vertices_stream(field->vertex_data.vbo, field->vertices, sizeof(Float)*vertex_count);
+    gpu_upload_vertices_stream(mesh->vbo, field->vertices, sizeof(Float)*vertex_count);
     
     for(Int i = 0; i < field->height-1; i++)
     {
-        gpu_upload_indices(field->ebos[i], &(field->indices[i*(field->width-1)*6]),
+        gpu_upload_indices(mesh->ebos[i], &(field->indices[i*(field->width-1)*6]),
                            sizeof(UInt) * (field->width-1)*6);
     }
     
-    gpu_set_vao_attribute(field->vertex_data.vao, field->vertex_data.vbo, 0, 3, sizeof(Float)*9, 0);
-    gpu_set_vao_attribute(field->vertex_data.vao, field->vertex_data.vbo, 1, 3, sizeof(Float)*9, sizeof(Float)*3);
-    gpu_set_vao_attribute(field->vertex_data.vao, field->vertex_data.vbo, 2, 3, sizeof(Float)*9, sizeof(Float)*6);
+    //gpu_vao_attach_vbo_attribute(UInt vao_id, UInt vbo_id, UInt index, UInt attribute_size, UInt vertex_size, U64 offset)
+    gpu_vao_attach_vbo_attribute(mesh->vao, mesh->vbo, 0, 3, sizeof(Float)*9, 0);
+    gpu_vao_attach_vbo_attribute(mesh->vao, mesh->vbo, 1, 3, sizeof(Float)*9, sizeof(Float)*3);
+    gpu_vao_attach_vbo_attribute(mesh->vao, mesh->vbo, 2, 3, sizeof(Float)*9, sizeof(Float)*6);
+    
+#if 0
+    gpu_set_vao_attribute(mesh->vao, mesh->vbo, 0, 3, sizeof(Float)*9, 0);
+    gpu_set_vao_attribute(mesh->vao, mesh->vbo, 1, 3, sizeof(Float)*9, sizeof(Float)*3);
+    gpu_set_vao_attribute(mesh->vao, mesh->vbo, 2, 3, sizeof(Float)*9, sizeof(Float)*6);
+#endif
 }
 
 Field
@@ -154,12 +164,12 @@ create_field(Int width, Int height)
     result.width = width;
     result.height = height;
     
-    result.points = (FieldPoint **)alloc(sizeof(FieldPoint *) * height);
-    result.target_points = (FieldPoint **)alloc(sizeof(FieldPoint *) * height);
+    result.points = (FieldPoint **)mem_alloc(sizeof(FieldPoint *) * height);
+    result.target_points = (FieldPoint **)mem_alloc(sizeof(FieldPoint *) * height);
     for(Int y = 0; y < result.height; y++)
     {
-        result.points[y] = (FieldPoint *)alloc(sizeof(FieldPoint) * width);
-        result.target_points[y] = (FieldPoint *)alloc(sizeof(FieldPoint) * width);
+        result.points[y] = (FieldPoint *)mem_alloc(sizeof(FieldPoint) * width);
+        result.target_points[y] = (FieldPoint *)mem_alloc(sizeof(FieldPoint) * width);
         
         for(Int x = 0; x < result.width; x++)
         {

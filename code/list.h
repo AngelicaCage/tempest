@@ -1,5 +1,7 @@
 /* date = October 5th 2023 3:42 pm */
 
+//#include <stdlib.h>
+
 #ifndef CIEL_BASE_H
 #include "base.h"
 #endif
@@ -11,15 +13,10 @@ template <typename t>
 struct List {
     public:
     
-    Bool allocated;
+    Bool allocated = false;
     U64 length;
     U64 length_allocated;
     t* data;
-    
-    List()
-    {
-        allocated = false;
-    }
     
     void allocate(U64 size)
     {
@@ -31,7 +28,7 @@ struct List {
         allocated = true;
         length = 0;
         length_allocated = size;
-        data = (t *)alloc(sizeof(t) * length_allocated);
+        data = (t *)mem_alloc(sizeof(t) * length_allocated);
     }
     
     void allocate()
@@ -57,7 +54,7 @@ struct List {
     void double_size()
     {
         length_allocated *= 2;
-        data = (t *)resize_alloc(data, sizeof(t) * length_allocated);
+        data = (t *)mem_resize(data, sizeof(t) * length_allocated);
     }
     
     t *add(t new_element)
@@ -106,15 +103,6 @@ struct List {
         
         return 0;
     }
-    
-    void free()
-    {
-        free(data);
-        length = 0;
-        length_allocated = 0;
-        allocated = false;
-    }
-    
 };
 
 template <typename t>

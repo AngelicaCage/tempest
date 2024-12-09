@@ -24,6 +24,16 @@ Shader
 };
 
 struct
+SPUniformData
+{
+    String name;
+    //const Char *name;
+    Int location;
+    GLenum type;
+    Int size;
+};
+
+struct
 ShaderProgram
 {
     Bool linked;
@@ -31,22 +41,52 @@ ShaderProgram
     Shader fragment_shader;
     UInt id;
     Bool is_3d;
-};
-
-struct
-VertexData
-{
-    UInt vbo;
-    UInt vao;
+    
+    List<SPUniformData> uniforms;
+    
+    Int get_uniform_location(const Char *name)
+    {
+        Int name_length = strlen(name);
+        Int result = 0;
+        for(Int i = 0; i < uniforms.length; i++)
+        {
+            Bool is_equal = true;
+            for(Int a = 0; a < name_length && a < uniforms[i].name.length; a++)
+            {
+                if(name[a] != uniforms[i].name[a])
+                {
+                    is_equal = false;
+                    break;
+                }
+            }
+            if(is_equal)
+            {
+                result = uniforms[i].location;
+                break;
+            }
+        }
+        
+        return result;
+    }
 };
 
 struct
 Mesh
 {
-    Bool uses_ebo;
+    Bool has_ebo;
     
-    VertexData vertex_data;
+    UInt vao;
+    UInt vbo;
     UInt ebo;
 };
+
+struct
+SplitRenderMesh
+{
+    UInt vao;
+    UInt vbo;
+    UInt *ebos;
+};
+
 
 #endif //GPU_H

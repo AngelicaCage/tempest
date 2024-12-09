@@ -1,0 +1,204 @@
+#if 0
+Void
+setup_rect_mesh(Mesh *mesh)
+{
+    float vertices[] = {
+        1, 1, 0, // top right
+        1, -1, 0, // bottom right
+        -1, -1, 0, // bottom left
+        -1, 1, 0, // top left
+    };
+    unsigned int indices[] = {
+        0, 1, 3,
+        1, 2, 3
+    };
+    
+    UInt vao = gpu_gen_vao();
+    UInt vbo = gpu_gen_vbo();
+    UInt ebo = gpu_gen_ebo();
+    
+    gpu_upload_vertices(vbo, vertices, sizeof(vertices));
+    gpu_upload_indices(ebo, indices, sizeof(indices));
+    
+    gpu_vao_attach_ebo(vao, ebo);
+    gpu_vao_attach_vbo_attribute(vao, vbo, 0, 3, sizeof(Float)*3, 0);
+    
+    mesh->vao = vao;
+    mesh->vbo = vbo;
+    mesh->ebo = ebo;
+    mesh->has_ebo = true;
+}
+
+V2 dim_ui_to_opengl(V2 window_dim, V2 dim)
+{
+    V2 result = dim;
+    
+    result.x *= 1.0f / window_dim.x;
+    result.y *= 1.0f / window_dim.y;
+    
+    return result;
+}
+V2 pos_ui_to_opengl(V2 window_dim, V2 pos)
+{
+    V2 result = pos;
+    
+    result.y *= -1;
+    
+    result.x -= window_dim.x / 2.0f;
+    result.y += window_dim.y / 2.0f;
+    
+    result.x *= 2.0f / window_dim.x;
+    result.y *= 2.0f / window_dim.y;
+    
+    return result;
+}
+
+Void
+ui_draw_rect(GameState *game_state, Float x, Float y, Float w, Float h, Color fg_color)
+{
+    Mesh *mesh = &game_state->rect_mesh;
+    
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    
+    gpu_use_shader_program(&game_state->shape_sp);
+    
+    V2 scale = dim_ui_to_opengl(game_state->window_dim, v2(w, h));
+    V2 offset = pos_ui_to_opengl(game_state->window_dim, v2(x+w/2, y+h/2));
+    
+    gpu_set_uniform_2f(&game_state->shape_sp, "shape_scale", scale.components);
+    gpu_set_uniform_2f(&game_state->shape_sp, "shape_offset", offset.components);
+    
+    gpu_set_uniform_4f(&game_state->shape_sp, "shape_color", fg_color.components);
+    
+    gpu_draw_indices(mesh->vao, GL_TRIANGLES, 6);
+}
+
+Void
+ui_draw_rect(GameState *game_state, Rect r, Color fg_color)
+{
+    ui_draw_rect(game_state, r.x, r.y, r.w, r.h, fg_color);
+}
+
+
+
+
+
+
+Void
+load_debug_font(GameState *game_state)
+{
+    game_state->debug_font_sp = gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/font_vertex_shader.vs",
+                                                          GAME_DATA_DIRECTORY "/shaders/font_fragment_shader.fs", false);
+    
+    Int width, height, channel_count;
+    stbi_set_flip_vertically_on_load(true);
+    U8 *font_image_data = stbi_load(GAME_DATA_DIRECTORY "/textures/debug_font.png",
+                                    &width, &height, &channel_count, 0);
+    ASSERT(font_image_data);
+    
+    UInt texture_id = gpu_gen_texture();
+    
+    gpu_set_texture_wrapping_repeat(texture_id);
+    gpu_set_texture_filter_nearest(texture_id);
+    
+    gpu_upload_image(texture_id, font_image_data, width, height);
+    stbi_image_free(font_image_data);
+    
+    // TODO: send texture coords as a uniform
+    Float tex_coord_width = 1.0f;
+    float font_vertices[] = {
+        // positions        // texture coords
+        7, 0, 0.0f,      tex_coord_width, -tex_coord_width,   // top right
+        7, 8, 0.0f,       tex_coord_width, 0.0f,   // bottom right
+        0, 8, 0.0f,       0.0f,            0.0f,   // bottom left
+        0, 0, 0.0f,       0.0f,            -tex_coord_width,    // top left 
+    };
+    
+    unsigned int font_indices[] = {
+        0, 1, 3, // first triangle
+        1, 2, 3  // second triangle
+    };
+    UInt vao = gpu_gen_vao();
+    UInt vbo = gpu_gen_vbo();
+    UInt ebo = gpu_gen_ebo();
+    
+    gpu_upload_vertices(vbo, font_vertices, sizeof(font_vertices));
+    gpu_upload_indices(ebo, font_indices, sizeof(font_indices));
+    
+    gpu_vao_attach_ebo(vao, ebo);
+    gpu_vao_attach_vbo_attribute(vao, vbo, 0, 3, sizeof(Float)*5, 0);
+    gpu_vao_attach_vbo_attribute(vao, vbo, 1, 2, sizeof(Float)*5, sizeof(Float)*3);
+    
+    game_state->font_texture = texture_id;
+    game_state->font_vao = vao;
+    game_state->font_vbo = vbo;
+    game_state->font_ebo = ebo;
+}
+
+Void
+ui_draw_debug_text(GameState *game_state, V2 pos, Float scale, const Char *text, Int length, Color fg_color, Color bg_color)
+{
+    ui_draw_rect(game_state, pos.x, pos.y, length*7*scale, 8*scale, bg_color);
+    
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    gpu_use_shader_program(&game_state->debug_font_sp);
+    
+    gpu_set_texture_unit(1, game_state->font_texture);
+    gpu_set_uniform_i(&game_state->debug_font_sp, "texture1", 1);
+    
+    gpu_set_uniform_2f(&game_state->debug_font_sp, "windowSize", game_state->window_dim.components);
+    gpu_set_uniform_1f(&game_state->debug_font_sp, "scale", scale);
+    
+    Float glyph_dim[2] = {7, 8};
+    gpu_set_uniform_2f(&game_state->debug_font_sp, "texScale", glyph_dim);
+    
+    gpu_set_uniform_4f(&game_state->debug_font_sp, "textColor", fg_color.components);
+    
+    for(Int i = 0; i < length; i++)
+    {
+        Char c = text[i];
+        if(c > 215) c = 0;
+        
+        Float glyph_offset[2] = {float(7 * (c%16)), float(8 * (c/16))};
+        gpu_set_uniform_2f(&game_state->debug_font_sp, "texOffset", glyph_offset);
+        
+        V2 offset = pos + v2(i*7*scale, 0);
+        gpu_set_uniform_2f(&game_state->debug_font_sp, "offset", offset.components);
+        
+        gpu_draw_indices(game_state->font_vao, GL_TRIANGLES, 6);
+    }
+}
+
+Void
+ui_draw_debug_text(GameState *game_state, V2 pos, Float scale, const Char *text, Color fg_color = {0, 0, 0, 1})
+{
+    Int length = strlen(text);
+    ui_draw_debug_text(game_state, pos, scale, text, length, fg_color, color(0, 0, 0, 0));
+}
+Void
+ui_draw_debug_text(GameState *game_state, V2 pos, Float scale, String string, Color fg_color = {0, 0, 0, 1})
+{
+    ui_draw_debug_text(game_state, pos, scale, string.data, string.length, fg_color, color(0, 0, 0, 0));
+}
+
+Void
+ui_draw_log(GameState *game_state, Log *log, Float scale)
+{
+    Int entries_drawn = 0;
+    for(Int i = log->length - 1; entries_drawn < 30 && i >= 0; i--)
+    {
+        // TODO: make a macro for debug font width and height
+        V2 pos = v2(0, game_state->window_dim.y - (scale*8 * (entries_drawn+1)));
+        //draw_debug_text(game_state, pos, scale, log->entry_at(i).string.data);
+        ASSERT(log->entry_at(i).type != LogEntryType::nonexistant);
+        
+        String str = log->entry_at(i).string;
+        Rect bg_rect = rect(pos.x, pos.y, str.length*7*scale, 8*scale);
+        
+        //ui_draw_rect(game_state, bg_rect, color(1, 1, 1, 0.3));
+        ui_draw_debug_text(game_state, pos, scale, str.data, str.length, Color::white(), color(0, 0, 0, 0.2f));
+        
+        entries_drawn++;
+    }
+}
+#endif

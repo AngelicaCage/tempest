@@ -9,7 +9,6 @@
 #include "base.h"
 #include "log.h"
 #include "game_loader.h"
-#include "gpu.h"
 
 #ifndef TEMPEST_RELEASE
 #define GAME_DLL_PATH "game.dll"
@@ -191,7 +190,7 @@ read_file_contents(const Char *path)
     }
     
     result.size = file_size.QuadPart;
-    result.data = (Char *)alloc(result.size);
+    result.data = (Char *)mem_alloc(result.size);
     result.allocated = true;
     
     DWORD bytes_read;
@@ -290,7 +289,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     game_memory.game_running = true;
     game_memory.functions_loaded = false;
     game_memory.size = megabytes(10);
-    game_memory.memory = alloc(game_memory.size);
+    game_memory.memory = mem_alloc(game_memory.size);
     zero_memory(game_memory.memory, game_memory.size);
     game_memory.global_log = global_log;
     game_memory.allocated = true;
