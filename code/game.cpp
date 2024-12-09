@@ -5,35 +5,12 @@
 #include "glm/gtc/type_ptr.hpp"
 //#define STB_PERLIN_IMPLEMENTATION
 //#include "stb/stb_perlin.h"
-//#define STB_IMAGE_IMPLEMENTATION
-//#include "stb/stb_image.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb/stb_image.h"
 
 #include "base.h"
-#include "list.h"
-#include "math/math.h"
 #include "log.h"
 #include "game_loader.h"
-#include "shaders.h"
-#include "color.h"
-
-#include "input.h"
-#include "gpu.h"
-#include "game.h"
-
-#include "bitmaps.cpp"
-#include "drawing.cpp"
-
-U64 (*get_file_last_write_time)(const Char *);
-FileContents (*read_file_contents)(const Char *);
-Bool (*write_file_contents)(const Char *, U8 *, U64);
-F64 (*get_time)();
-Void (*sleep)(F64);
-
-#include "gpu.cpp"
-#include "shaders.cpp"
-#include "ui_drawing.cpp"
-
-#include "field.cpp"
 
 #ifndef TEMPEST_RELEASE
 #define GAME_DATA_DIRECTORY "../data"
@@ -41,7 +18,87 @@ Void (*sleep)(F64);
 #define GAME_DATA_DIRECTORY "data"
 #endif
 
+U64 (*get_file_last_write_time)(const Char *);
+FileContents (*read_file_contents)(const Char *);
+Bool (*write_file_contents)(const Char *, U8 *, U64);
+F64 (*get_time)();
+Void (*sleep)(F64);
+
+#include "list.h"
+#include "math/math.h"
+#include "math/vectors.h"
+#include "math/rects.h"
+#include "shaders.h"
+#include "color.h"
+
+#include "input.h"
+#include "gpu.h"
+#include "game.h"
+
+#include "math/vectors.cpp"
+#include "bitmaps.cpp"
+#include "drawing.cpp"
+
+
+#include "gpu.cpp"
+#include "shaders.cpp"
+#include "ui_drawing.cpp"
+
+#include "field.cpp"
+
+
 #define KEYDOWN(key) (glfwGetKey(game_memory->window, (key)) == GLFW_PRESS)
+
+Enemy
+create_enemy(V2 pos, EnemyType type)
+{
+    Enemy result;
+    result.pos = pos;
+    result.radius = 0.3f;
+    switch(type)
+    {
+        case EnemyType::spread:
+        {
+            result.bullet_speed = 1.0f;
+            result.time_between_fires = random_float(0.5f, 2.0f);
+            result.amount_per_spread = random_int(8, 20);
+        }; break;
+        case EnemyType::stream:
+        {
+            result.bullet_speed = 3.0f;
+            result.time_between_fires = random_float(0.5f, 1.0f);
+        }; break;
+        case EnemyType::spin:
+        {
+            result.spin_speed = random_float(0.05f, 0.1f);
+            result.spin_arm_count = random_int(2, 5);
+            result.bullet_speed = 1.0f;
+            result.time_between_fires = random_float(0.3f, 0.6f);
+        }; break;
+        case EnemyType::wall:
+        {
+            result.wall_dir = v2(random_float(-1, 1), random_float(-1, 1));
+            if(result.wall_dir.x == 0 && result.wall_dir.y == 0)
+                result.wall_dir.x = 1;
+            result.wall_dir = result.wall_dir.normalized();
+            result.bullet_speed = 1.0f;
+            result.time_between_fires = random_float(0.1f, 0.2f);
+        }; break;
+        case EnemyType::bomb:
+        {
+            result.bullet_speed = 1.0f;
+            result.time_between_fires = random_float(2.0f, 5.0f);
+        }; break;
+        case EnemyType::suicide:
+        {
+            result.suicide_move_speed = 2.0f;
+        }; break;
+    }
+    
+    result.time_to_fire = result.time_between_fires;
+    result.type = type;
+    return result;
+}
 
 Void
 write_to_save_file(GameState *game_state)
@@ -238,7 +295,7 @@ update_gameplay(GameState *game_state)
                 bullet_dir += v2(1, 0);
                 should_shoot = true;
             }
-            bullet_dir.normalize();
+            bullet_dir = bullet_dir.normalized();
             
             if(should_shoot)
             {
@@ -369,7 +426,7 @@ bomb: 60
                 if(dist_to_player <= player_safety_radius)
                 {
                     V2 travel_dir = enemy_pos - player->pos;
-                    travel_dir.normalize();
+                    travel_dir = travel_dir.normalized();
                     travel_dir = travel_dir * dist_to_player;
                     enemy_pos += travel_dir;
                     if(enemy_pos.x < -playing_area_dim.x/2 || enemy_pos.y < -playing_area_dim.y/2 ||
@@ -430,7 +487,7 @@ bomb: 60
         if(enemy->type == EnemyType::suicide)
         {
             V2 d_pos = player->pos - enemy->pos;
-            d_pos.normalize();
+            d_pos = d_pos.normalized();
             d_pos = d_pos * enemy->suicide_move_speed * d_time;
             enemy->pos += d_pos;
         }
@@ -465,7 +522,7 @@ bomb: 60
                 case EnemyType::stream:
                 {
                     V2 bullet_dir = player->pos - enemy->pos;
-                    bullet_dir.normalize();
+                    bullet_dir = bullet_dir.normalized();
                     game_state->enemy_bullets.add(bullet(enemy->pos + bullet_dir*enemy->radius, bullet_dir * enemy->bullet_speed,
                                                          bullet_size, color(1.0f, 0.8f, 0.0f, 1.0f)));
                     
@@ -495,9 +552,9 @@ bomb: 60
                     V2 bullet_dir = player->pos - enemy->pos;
                     Float wobble_amount = 0.2f;
                     V2 wobble = v2(random_float(-wobble_amount, wobble_amount), random_float(-wobble_amount, wobble_amount));
-                    bullet_dir.normalize();
+                    bullet_dir = bullet_dir.normalized();
                     bullet_dir += wobble;
-                    bullet_dir.normalize();
+                    bullet_dir = bullet_dir.normalized();
                     game_state->enemy_bullets.add(bullet(enemy->pos + bullet_dir*enemy->radius, bullet_dir * enemy->bullet_speed,
                                                          bullet_size * 4.5f, color(1.0f, 0.8f, 0.0f, 1.0f)));
                 }; break;
@@ -705,19 +762,24 @@ update_and_render(GameMemory *game_memory)
         camera->orbit_distance = 10.0f;
         
         
-        // Axes
-        game_state->axis_mesh.vao = gpu_gen_vao();
-        game_state->axis_mesh.vbo = gpu_gen_vbo();
+        // Setup Axes
+        {
+            game_state->axis_mesh.vao = gpu_gen_vao();
+            game_state->axis_mesh.vbo = gpu_gen_vbo();
+            
+            Float axis_vertices[] = {
+                0, 0, 0,
+                100, 0, 0,
+            };
+            gpu_upload_vertices(game_state->axis_mesh.vbo,
+                                axis_vertices, sizeof(axis_vertices));
+            
+            gpu_vao_attach_vbo_attribute(game_state->axis_mesh.vao, game_state->axis_mesh.vbo,
+                                         0, 3, sizeof(Float)*3, 0);
+        }
         
-        Float axis_vertices[] = {
-            0, 0, 0,
-            100, 0, 0,
-        };
-        gpu_upload_vertices(game_state->axis_mesh.vbo,
-                            axis_vertices, sizeof(axis_vertices));
-        
-        gpu_vao_attach_vbo_attribute(game_state->axis_mesh.vao, game_state->axis_mesh.vbo,
-                                     0, 3, sizeof(Float)*3, 0);
+        load_debug_font(game_state);
+        setup_rect_mesh(&game_state->rect_mesh);
         
         // Field
         //*field = create_field(400, 300);
@@ -953,7 +1015,7 @@ update_and_render(GameMemory *game_memory)
         real_camera->pos = interpolate(real_camera->pos, camera->pos, interp_speed * d_time);
         real_camera->target = interpolate(real_camera->target, camera->target, interp_speed * d_time);
         real_camera->up = interpolate(real_camera->up, camera->up, interp_speed * d_time);
-        real_camera->orbit_angles.interpolate_to(camera->orbit_angles, interp_speed * d_time);
+        real_camera->orbit_angles = interpolate(real_camera->orbit_angles, camera->orbit_angles, interp_speed * d_time);
         real_camera->orbit_distance = interpolate(real_camera->orbit_distance,
                                                   camera->orbit_distance,
                                                   interp_speed * d_time);

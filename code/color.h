@@ -30,6 +30,9 @@ struct Color
     inline static Color purple() { return {1, 0, 1, 1}; }
     inline static Color green() { return {0, 1, 0, 1}; }
     inline static Color orange() { return {1, 0.5, 0, 1}; }
+    
+    inline static Color white() { return {1, 1, 1, 1}; }
+    inline static Color black() { return {0, 0, 0, 1}; }
 };
 
 inline Color

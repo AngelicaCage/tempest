@@ -148,56 +148,6 @@ struct Enemy
         };
     };
 };
-Enemy
-create_enemy(V2 pos, EnemyType type)
-{
-    Enemy result;
-    result.pos = pos;
-    result.radius = 0.3f;
-    switch(type)
-    {
-        case EnemyType::spread:
-        {
-            result.bullet_speed = 1.0f;
-            result.time_between_fires = random_float(0.5f, 2.0f);
-            result.amount_per_spread = random_int(8, 20);
-        }; break;
-        case EnemyType::stream:
-        {
-            result.bullet_speed = 3.0f;
-            result.time_between_fires = random_float(0.5f, 1.0f);
-        }; break;
-        case EnemyType::spin:
-        {
-            result.spin_speed = random_float(0.05f, 0.1f);
-            result.spin_arm_count = random_int(2, 5);
-            result.bullet_speed = 1.0f;
-            result.time_between_fires = random_float(0.3f, 0.6f);
-        }; break;
-        case EnemyType::wall:
-        {
-            result.wall_dir = v2(random_float(-1, 1), random_float(-1, 1));
-            if(result.wall_dir.x == 0 && result.wall_dir.y == 0)
-                result.wall_dir.x = 1;
-            result.wall_dir.normalize();
-            result.bullet_speed = 1.0f;
-            result.time_between_fires = random_float(0.1f, 0.2f);
-        }; break;
-        case EnemyType::bomb:
-        {
-            result.bullet_speed = 1.0f;
-            result.time_between_fires = random_float(2.0f, 5.0f);
-        }; break;
-        case EnemyType::suicide:
-        {
-            result.suicide_move_speed = 2.0f;
-        }; break;
-    }
-    
-    result.time_to_fire = result.time_between_fires;
-    result.type = type;
-    return result;
-}
 
 struct EnemyExplosion
 {
@@ -246,6 +196,7 @@ struct GameState
     
     Bool fullscreen;
     RectI windowed_rect;
+    V2 window_dim;
     
     Input input;
     
@@ -253,12 +204,14 @@ struct GameState
     {
         struct
         {
+            ShaderProgram shape_sp;
             ShaderProgram field_sp;
             ShaderProgram line_sp;
+            ShaderProgram debug_font_sp;
         };
         struct
         {
-            ShaderProgram shader_programs[2];
+            ShaderProgram shader_programs[4];
         };
     };
     
@@ -300,6 +253,9 @@ struct GameState
     Bool player_dead;
     
     SaveData save;
+    
+    Mesh rect_mesh;
+    Mesh circle_mesh;
 };
 
 #endif //GAME_H

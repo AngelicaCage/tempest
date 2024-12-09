@@ -13,8 +13,6 @@ Float interpolate(Float a, Float b, Float speed)
     return a + (b - a) * speed;
 }
 
-#include "math/vectors.h"
-#include "math/rects.h"
 
 
 
@@ -50,18 +48,6 @@ inline Int clamp_circle(Int val, Int min, Int max)
     if(val > max) return min;
     return val;
 }
-
-inline V2 clamp(V2 val, V2 min, V2 max)
-{
-    if(val.x < min.x) val.x = min.x;
-    if(val.y < min.y) val.y = min.y;
-    if(val.x > max.x) val.x = max.x;
-    if(val.y > max.y) val.y = max.y;
-    
-    return val;
-}
-
-
 
 
 #endif //CIEL_MATH_H

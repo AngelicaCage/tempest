@@ -1,4 +1,4 @@
-#if 0
+#if 1
 Void
 setup_rect_mesh(Mesh *mesh)
 {
