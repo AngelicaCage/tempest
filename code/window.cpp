@@ -1,7 +1,6 @@
 
 RectI
-// TODO: rename to window_get_rect
-window_get_dimensions(GLFWwindow *window)
+window_get_rect(GLFWwindow *window)
 {
     RectI result;
     glfwGetWindowPos(window, &result.x, &result.y);

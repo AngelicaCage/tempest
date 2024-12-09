@@ -5,7 +5,9 @@
 
 struct Camera
 {
+    V3 target_pos, target_target;
     V3 pos, target, up;
+    
     Bool orbiting;
     Float orbit_distance;
     V2 orbit_angles; // rotate x, then y
@@ -224,7 +226,7 @@ struct GameState
     
     SmallFieldBitmap text_bitmaps[36];
     
-    Camera target_camera;
+    //Camera target_camera;
     Camera camera;
     
     Bool in_game;

@@ -1,4 +1,3 @@
-#if 1
 Void
 setup_rect_mesh(Mesh *mesh)
 {
@@ -87,9 +86,6 @@ ui_draw_rect(GameState *game_state, Rect r, Color fg_color)
 Void
 load_debug_font(GameState *game_state)
 {
-    game_state->debug_font_sp = gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/font_vertex_shader.vs",
-                                                          GAME_DATA_DIRECTORY "/shaders/font_fragment_shader.fs", false);
-    
     Int width, height, channel_count;
     stbi_set_flip_vertically_on_load(true);
     U8 *font_image_data = stbi_load(GAME_DATA_DIRECTORY "/textures/debug_font.png",
@@ -201,4 +197,3 @@ ui_draw_log(GameState *game_state, Log *log, Float scale)
         entries_drawn++;
     }
 }
-#endif
