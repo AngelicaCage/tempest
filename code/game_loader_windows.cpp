@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <xaudio2.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -295,8 +296,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     game_memory.allocated = true;
     
     
-    // Set up window and GLFW context
-    
+    // INITIALIZE WINDOW AND OPENGL
     glfwSetErrorCallback( error_callback );
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -312,14 +312,6 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     }
     glfwMakeContextCurrent(window);
     
-    game_memory.window = window;
-    game_memory.get_file_last_write_time = get_file_last_write_time;
-    game_memory.read_file_contents = read_file_contents;
-    game_memory.write_file_contents = write_file_contents;
-    game_memory.get_time = get_time;
-    game_memory.sleep = sleep;
-    
-    
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         print_error("failed to initialize GLAD");
@@ -328,6 +320,23 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     
     framebuffer_size_callback(window, 1920, 1080);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    
+    // INITIALIZE AUDIO
+    HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    // Later: log this and run without audio
+    ASSERT(!FAILED(hr));
+    IXAudio2 *audio_instance;
+    ASSERT(XAudio2Create(&audio_instance, 0, XAUDIO2_DEFAULT_PROCESSOR) == S_OK);
+    IXAudio2MasteringVoice *audio_mastering_voice;
+    audio_instance->CreateMasteringVoice(&audio_mastering_voice);
+    
+    
+    game_memory.window = window;
+    game_memory.get_file_last_write_time = get_file_last_write_time;
+    game_memory.read_file_contents = read_file_contents;
+    game_memory.write_file_contents = write_file_contents;
+    game_memory.get_time = get_time;
+    game_memory.sleep = sleep;
     
     while(game_memory.game_running)
     {

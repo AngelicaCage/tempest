@@ -30,6 +30,7 @@ Void (*sleep)(F64);
 #include "math/rects.h"
 #include "shaders.h"
 #include "color.h"
+#include "timing.h"
 
 #include "input.h"
 #include "gpu.h"
@@ -44,6 +45,7 @@ Void (*sleep)(F64);
 #include "ui_drawing.cpp"
 #include "camera.cpp"
 
+#include "timing.cpp"
 #include "field.cpp"
 
 #define KEYDOWN(key) (glfwGetKey(game_memory->window, (key)) == GLFW_PRESS)
@@ -321,6 +323,8 @@ update_and_render(GameMemory *game_memory)
     }
     
     // TODO: optimize
+    // make debug time display, with times of chosen parts, total frame time, and max frame time
+    // make total frame time red if it exceeds max frame time
     update_field_data(game_state, &(game_state->field));
     fill_field_render_data(&(game_state->field));
     
