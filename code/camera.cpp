@@ -3,6 +3,7 @@ Void
 update_camera(GameState *game_state)
 {
     Camera *camera = &(game_state->camera);
+    Input *input = &(game_state->input);
     Float d_time = game_state->d_time;
     
     if(camera->orbiting)
@@ -10,8 +11,8 @@ update_camera(GameState *game_state)
         Float camera_orbit_speed = 2.0f;
         
 #if 0
-        // TODO: move this to input
-        if(glfwGetMouseButton(game_memory->window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+        // TODO: make this toggleable in debug menu
+        if(game_state->input.left_mouse_down)
         {
             Float camera_mouse_pan_orbit_speed = 2.0f;
             camera->orbit_angles.y += input->d_mouse_pos.y * camera_mouse_pan_orbit_speed * d_time;

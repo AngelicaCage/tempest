@@ -130,6 +130,8 @@ struct Input
     
     V2 mouse_pos;
     V2 d_mouse_pos;
+    Bool left_mouse_down;
+    Bool right_mouse_down;
     
     Float d_scroll;
     
@@ -236,8 +238,12 @@ fill_key_data(Input *input)
 }
 
 Void
-update_key_input(Input *input, GLFWwindow *window, Float d_time)
+update_input(Input *input, GLFWwindow *window, Float d_time)
 {
+    input->left_mouse_down = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    input->right_mouse_down = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+    
+    
     Keys *keys = &input->keys;
     for(int i = 0; i < sizeof(keys->data) / sizeof(KeyData); i++)
     {

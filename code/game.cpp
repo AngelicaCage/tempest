@@ -253,6 +253,10 @@ update_and_render(GameMemory *game_memory)
     
     Float d_time = game_state->d_time;
     
+    update_input(input, game_memory->window, d_time);
+    input->d_scroll = d_scroll;
+    d_scroll = 0;
+    
     if(!game_state->fullscreen)
     {
         glfwGetWindowPos(game_memory->window,
@@ -269,10 +273,6 @@ update_and_render(GameMemory *game_memory)
     
     if(keys->f11.just_pressed)
         window_toggle_fullscreen(game_memory->window, game_state->windowed_rect, &game_state->fullscreen);
-    
-    update_key_input(input, game_memory->window, d_time);
-    input->d_scroll = d_scroll;
-    d_scroll = 0;
     
     F64 new_mouse_pos[2];
     glfwGetCursorPos(game_memory->window, &new_mouse_pos[0], &new_mouse_pos[1]);
