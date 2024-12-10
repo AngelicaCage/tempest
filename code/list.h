@@ -114,21 +114,56 @@ List<t> create_list()
     return res;
 }
 
-#define InplaceStack(_type, _size) struct {\
-_type data[_size];\
-Int length = 0;\
-Void push(_type Element) {\
-if(length < sizeof(data)/sizeof(_type)) {\
-data[length] = Element;\
-length++;\
-}\
-}\
-Void pop() {\
-length--;\
-}\
-_type& operator[](Int index) {\
-return data[index];\
-}\
-}
+
+template <typename t, Int size>
+struct InplaceStack
+{
+    t data[size];
+    Int length = 0;
+    
+    Void push(t Element) {
+        if(length < sizeof(data)/sizeof(t)) {
+            data[length] = Element;
+            length++;
+        }
+    }
+    Void pop() {
+        length--;
+    }
+    t& operator[](Int index) {
+        return data[index];
+    }
+};
+
+template <typename T, Int length_allocated>
+struct InplaceCircularArray
+{
+    T data[length_allocated];
+    Int length = 0;
+    Int start;
+    
+    Void add(T element) {
+        if(length < length_allocated) {
+            data[length] = element;
+            length++;
+        }
+        else
+        {
+            data[start] = element;
+            start++;
+            if(start >= length_allocated)
+                start = 0;
+        }
+    }
+    T& operator[](Int index) {
+        if(length == length_allocated)
+        {
+            Int adjusted_index = (start + index) & length_allocated;
+            return data[adjusted_index];
+        }
+        return data[index];
+    }
+};
+
 
 #endif //CIEL_LIST_H

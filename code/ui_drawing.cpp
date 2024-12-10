@@ -181,7 +181,7 @@ Void
 ui_draw_log(GameState *game_state, Log *log, Float scale)
 {
     Int entries_drawn = 0;
-    for(Int i = log->length - 1; entries_drawn < 30 && i >= 0; i--)
+    for(Int i = log->entries.length - 1; entries_drawn < 30 && i >= 0; i--)
     {
         // TODO: make a macro for debug font width and height
         V2 pos = v2(0, game_state->window_dim.y - (scale*8 * (entries_drawn+1)));

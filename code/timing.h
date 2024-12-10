@@ -24,8 +24,10 @@ struct FrameProfile
     
     F64 target_max_time;
     
-    InplaceStack(SectionProfile, 10) section_stack;
-    InplaceStack(SectionProfile, 10) finished_sections;
+    //InplaceStack(SectionProfile, 10) section_stack;
+    //InplaceStack(SectionProfile, 10) finished_sections;
+    InplaceStack<SectionProfile, 10> section_stack;
+    InplaceStack<SectionProfile, 10> finished_sections;
 };
 FrameProfile *frame_profile;
 

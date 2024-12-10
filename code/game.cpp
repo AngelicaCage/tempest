@@ -375,6 +375,9 @@ update_and_render(GameMemory *game_memory)
         ui_draw_rect(game_state, 1920/2, 1080/2, 100, 100, Color::white());
     }
     
+    
+    ui_draw_log(game_state, global_log, text_scale);
+    
     update_frame_timing_end(game_state);
     
     {
@@ -396,4 +399,5 @@ update_and_render(GameMemory *game_memory)
         
         ui_draw_timing_pair(game_state, draw_pos, text_scale, "Max Frame Time", frame_profile->target_max_time, Color::white());
     }
+    
 }

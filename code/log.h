@@ -4,6 +4,7 @@
 #define LOG_H
 
 #include "string.h"
+#include "list.h"
 
 enum class LogEntryType
 {
@@ -20,65 +21,41 @@ struct LogEntry
     String string;
 };
 
-#define LOG_LENGTH_ALLOCATED 1000
-
 struct
 Log
 {
+    InplaceCircularArray<LogEntry, 1000> entries;
     // Circular array
+#if 0
     UInt start;
     UInt length;
     LogEntry entries[LOG_LENGTH_ALLOCATED];
+#endif
     
-    Log()
+#if 0
+    LogEntry entry_at(UInt index)
     {
-        start = 0;
-        length = 0;
+        if(index < 0 || index >= entries.length)
+        {
+            LogEntry result;
+            result.type = LogEntryType::nonexistant;
+            return result;
+        }
+        
+        return entries[index];
     }
+#endif
     
     LogEntry entry_at(UInt index)
     {
-        ASSERT(index < length);
-        ASSERT(index >= 0);
-        
-        if(index < 0 || index >= length)
+        if(index < 0 || index >= entries.length)
         {
             LogEntry result;
             result.type = LogEntryType::nonexistant;
             return result;
         }
         
-        if(length == LOG_LENGTH_ALLOCATED)
-        {
-            UInt adjusted_index = (start + index) % LOG_LENGTH_ALLOCATED;
-            return entries[adjusted_index];
-        }
-        
         return entries[index];
-        
-    }
-    
-    LogEntry operator[](UInt index)
-    {
-        // TODO: make this point to entry_at
-        ASSERT(index < length);
-        ASSERT(index >= 0);
-        
-        if(index < 0 || index >= length)
-        {
-            LogEntry result;
-            result.type = LogEntryType::nonexistant;
-            return result;
-        }
-        
-        if(length == LOG_LENGTH_ALLOCATED)
-        {
-            UInt adjusted_index = (start + index) % LOG_LENGTH_ALLOCATED;
-            return entries[adjusted_index];
-        }
-        
-        return entries[index];
-        
     }
     
     Void _log(const Char *format, va_list args, LogEntryType type)
@@ -87,18 +64,7 @@ Log
         new_entry.type = type;
         new_entry.string = create_string(format, args);
         
-        if(length < LOG_LENGTH_ALLOCATED)
-        {
-            entries[length] = new_entry;
-            length++;
-        }
-        else
-        {
-            entries[start] = new_entry;
-            start++;
-            if(start >= LOG_LENGTH_ALLOCATED)
-                start = 0;
-        }
+        entries.add(new_entry);
     }
     
     Void log(const Char *format, ...)
