@@ -117,8 +117,6 @@ update_and_render(GameMemory *game_memory)
         
         game_state->target_fps = 144;
         game_state->d_time = 1;
-        game_state->frame_times = create_list<F64>();
-        game_state->last_frame_start_time = get_time();
         
         fill_key_data(input);
         
@@ -234,9 +232,6 @@ update_and_render(GameMemory *game_memory)
         camera->orbiting = true;
         camera->orbit_angles = v2(pi / 2.0f, pi/3.0f);
         camera->orbit_distance = 10.0f;
-        
-        // TODO: come up with something better
-        frame_profile = &(game_state->frame_profile);
     }
     
     player->shot_cooldown_max = 0.15f;
@@ -317,13 +312,13 @@ update_and_render(GameMemory *game_memory)
     // TODO: optimize
     // make debug time display, with times of chosen parts, total frame time, and max frame time
     // make total frame time red if it exceeds max frame time
-    start_timing_section("update_field_data");
+    start_timing_section(&game_state->frame_profiles.last(), "update_field_data");
     update_field_data(game_state, &(game_state->field));
-    end_timing_section();
+    end_timing_section(&game_state->frame_profiles.last());
     
-    start_timing_section("fill_field_render_data");
+    start_timing_section(&game_state->frame_profiles.last(), "fill_field_render_data");
     fill_field_render_data(&(game_state->field));
-    end_timing_section();
+    end_timing_section(&game_state->frame_profiles.last());
     
     
     update_camera(game_state);
@@ -386,18 +381,20 @@ update_and_render(GameMemory *game_memory)
         Float vertical_spacing = 20;
         Int buffer_length = 0;
         
-        for(Int i = 0; i < frame_profile->finished_sections.length; i++)
+        FrameProfile *profile = &(game_state->frame_profiles.last());
+        
+        for(Int i = 0; i < profile->finished_sections.length; i++)
         {
-            SectionProfile *section = &(frame_profile->finished_sections[i]);
+            SectionProfile *section = &(profile->finished_sections[i]);
             ui_draw_timing_pair(game_state, draw_pos, text_scale, section->name, section->elapsed_time, Color::white());
             draw_pos.y += vertical_spacing;
         }
         
-        Color ft_draw_color = (frame_profile->elapsed_time < frame_profile->target_max_time) ? Color::white() : Color::red();
-        ui_draw_timing_pair(game_state, draw_pos, text_scale, "Frame Time", frame_profile->elapsed_time, ft_draw_color);
+        Color ft_draw_color = (profile->elapsed_time < profile->target_max_time) ? Color::white() : Color::red();
+        ui_draw_timing_pair(game_state, draw_pos, text_scale, "Frame Time", profile->elapsed_time, ft_draw_color);
         draw_pos.y += vertical_spacing;
         
-        ui_draw_timing_pair(game_state, draw_pos, text_scale, "Max Frame Time", frame_profile->target_max_time, Color::white());
+        ui_draw_timing_pair(game_state, draw_pos, text_scale, "Max Frame Time", profile->target_max_time, Color::white());
     }
     
 }

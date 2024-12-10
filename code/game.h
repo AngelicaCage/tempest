@@ -190,10 +190,9 @@ struct GameState
     Bool should_quit;
     
     // all timing is in seconds
-    List<F64> frame_times; // max 144
+    InplaceCircularArray<FrameProfile, 64> frame_profiles;
     Float fps;
     Float target_fps;
-    F64 last_frame_start_time;
     Float d_time;
     
     Bool fullscreen;
@@ -258,8 +257,6 @@ struct GameState
     
     Mesh rect_mesh;
     Mesh circle_mesh;
-    
-    FrameProfile frame_profile;
 };
 
 #endif //GAME_H

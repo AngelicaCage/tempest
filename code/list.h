@@ -115,22 +115,22 @@ List<t> create_list()
 }
 
 
-template <typename t, Int size>
+template <typename T, Int length_allocated>
 struct InplaceStack
 {
-    t data[size];
+    T data[length_allocated];
     Int length = 0;
     
-    Void push(t Element) {
-        if(length < sizeof(data)/sizeof(t)) {
-            data[length] = Element;
+    Void push(T element) {
+        if(length < length_allocated - 1) {
+            data[length] = element;
             length++;
         }
     }
     Void pop() {
         length--;
     }
-    t& operator[](Int index) {
+    T& operator[](Int index) {
         return data[index];
     }
 };
@@ -142,8 +142,9 @@ struct InplaceCircularArray
     Int length = 0;
     Int start;
     
-    Void add(T element) {
-        if(length < length_allocated) {
+    Void add(T element)
+    {
+        if(length < length_allocated - 1) {
             data[length] = element;
             length++;
         }
@@ -155,13 +156,25 @@ struct InplaceCircularArray
                 start = 0;
         }
     }
-    T& operator[](Int index) {
+    T& element_at(Int index)
+    {
         if(length == length_allocated)
         {
             Int adjusted_index = (start + index) & length_allocated;
             return data[adjusted_index];
         }
+        if(index < 0)
+            index = 0;
         return data[index];
+    }
+    T& operator[](Int index)
+    {
+        return element_at(index);
+    }
+    T& last()
+    {
+        // TODO: is this right?
+        return element_at(length-1);
     }
 };
 

@@ -2,39 +2,49 @@
 Void
 update_frame_timing_beginning(GameState *game_state)
 {
-    frame_profile = &(game_state->frame_profile);
-    game_state->d_time = frame_profile->elapsed_time;
+    FrameProfile *old_profile = &(game_state->frame_profiles.last());
+    
+    game_state->d_time = old_profile->elapsed_time;
     if(game_state->d_time == 0)
         game_state->d_time = 0.06f;
     
-    frame_profile->start_time = get_time();
-    frame_profile->target_max_time = 1.0f / game_state->target_fps;
-    frame_profile->section_stack.length = 0;
-    frame_profile->finished_sections.length = 0;
+    game_state->frame_profiles.add({0});
+    FrameProfile *profile = &(game_state->frame_profiles.last());
+#if 1
+    profile->section_stack.length = 0;
+    profile->finished_sections.length = 0;
+#endif
+    
+    profile->start_time = get_time();
+    profile->target_max_time = 1.0f / game_state->target_fps;
+    profile->section_stack.length = 0;
+    profile->finished_sections.length = 0;
 }
 
 Void update_frame_timing_end(GameState *game_state)
 {
-    frame_profile->end_time = get_time();
-    frame_profile->elapsed_time = frame_profile->end_time - frame_profile->start_time;
+    FrameProfile *profile = &(game_state->frame_profiles.last());
+    
+    profile->end_time = get_time();
+    profile->elapsed_time = profile->end_time - profile->start_time;
 }
 
-Void start_timing_section(const Char *name)
+Void start_timing_section(FrameProfile *profile, const Char *name)
 {
-    frame_profile->section_stack.push({name, get_time(), 0, 0});
+    profile->section_stack.push({name, get_time(), 0, 0});
 }
 
-Void end_timing_section()
+Void end_timing_section(FrameProfile *profile)
 {
-    ASSERT(frame_profile->section_stack.length > 0);
-    if(frame_profile->section_stack.length > 0)
+    ASSERT(profile->section_stack.length > 0);
+    if(profile->section_stack.length > 0)
     {
-        SectionProfile *section = &(frame_profile->section_stack[frame_profile->section_stack.length-1]);
+        SectionProfile *section = &(profile->section_stack[profile->section_stack.length-1]);
         
         section->end_time = get_time();
         section->elapsed_time = section->end_time - section->start_time;
         
-        frame_profile->finished_sections.push(*section);
-        frame_profile->section_stack.length--;
+        profile->finished_sections.push(*section);
+        profile->section_stack.length--;
     }
 }
