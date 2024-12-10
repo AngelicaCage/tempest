@@ -378,21 +378,38 @@ update_and_render(GameMemory *game_memory)
     {
         Char profile_text_buffer[100];
         V2 draw_pos = v2(0, 40);
-        Float vertical_spacing = 20;
+        Float vertical_spacing = 16;
         Int buffer_length = 0;
         
         FrameProfile *profile = &(game_state->frame_profiles.last());
         
         for(Int i = 0; i < profile->finished_sections.length; i++)
         {
+            Float average = 0;
+            for(Int a = 0; a < game_state->frame_profiles.length; a++)
+            {
+                average += game_state->frame_profiles[a].finished_sections[i].elapsed_time;
+            }
+            average /= game_state->frame_profiles.length;
+            
             SectionProfile *section = &(profile->finished_sections[i]);
-            ui_draw_timing_pair(game_state, draw_pos, text_scale, section->name, section->elapsed_time, Color::white());
+            
+            ui_draw_timing_pair(game_state, draw_pos, text_scale, section->name, average, Color::white());
             draw_pos.y += vertical_spacing;
         }
         
-        Color ft_draw_color = (profile->elapsed_time < profile->target_max_time) ? Color::white() : Color::red();
-        ui_draw_timing_pair(game_state, draw_pos, text_scale, "Frame Time", profile->elapsed_time, ft_draw_color);
-        draw_pos.y += vertical_spacing;
+        {
+            Float average = 0;
+            for(Int a = 0; a < game_state->frame_profiles.length; a++)
+            {
+                average += game_state->frame_profiles[a].elapsed_time;
+            }
+            average /= game_state->frame_profiles.length;
+            
+            Color ft_draw_color = (profile->elapsed_time < profile->target_max_time) ? Color::white() : color(1, 0.5, 0.5, 1);
+            ui_draw_timing_pair(game_state, draw_pos, text_scale, "Frame Time", average, ft_draw_color);
+            draw_pos.y += vertical_spacing;
+        }
         
         ui_draw_timing_pair(game_state, draw_pos, text_scale, "Max Frame Time", profile->target_max_time, Color::white());
     }

@@ -10,10 +10,6 @@ update_frame_timing_beginning(GameState *game_state)
     
     game_state->frame_profiles.add({0});
     FrameProfile *profile = &(game_state->frame_profiles.last());
-#if 1
-    profile->section_stack.length = 0;
-    profile->finished_sections.length = 0;
-#endif
     
     profile->start_time = get_time();
     profile->target_max_time = 1.0f / game_state->target_fps;

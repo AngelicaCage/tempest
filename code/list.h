@@ -144,7 +144,7 @@ struct InplaceCircularArray
     
     Void add(T element)
     {
-        if(length < length_allocated - 1) {
+        if(length < length_allocated) {
             data[length] = element;
             length++;
         }
@@ -160,7 +160,7 @@ struct InplaceCircularArray
     {
         if(length == length_allocated)
         {
-            Int adjusted_index = (start + index) & length_allocated;
+            Int adjusted_index = (start + index) % length_allocated;
             return data[adjusted_index];
         }
         if(index < 0)

@@ -192,7 +192,7 @@ ui_draw_log(GameState *game_state, Log *log, Float scale)
         Rect bg_rect = rect(pos.x, pos.y, str.length*7*scale, 8*scale);
         
         //ui_draw_rect(game_state, bg_rect, color(1, 1, 1, 0.3));
-        ui_draw_debug_text(game_state, pos, scale, str.data, str.length, Color::white(), color(0, 0, 0, 0.2f));
+        ui_draw_debug_text(game_state, pos, scale, str.data, str.length, Color::white(), color(0, 0, 0, 0.4f));
         
         entries_drawn++;
     }
@@ -202,9 +202,17 @@ Void
 ui_draw_timing_pair(GameState *game_state, V2 pos, Float text_scale,
                     const Char *name, F64 time, Color time_draw_color)
 {
-    Char profile_text_buffer[100];
-    Int buffer_length = sprintf(profile_text_buffer, "%s:  %lf", name, time);
+    Char profile_text_buffer[200];
+    Int extra_spaces = 25 - strlen(name);
+    Int buffer_length = 0;
+    buffer_length += sprintf(profile_text_buffer+buffer_length, "%s: ", name);
+    for(Int i = 0; i < extra_spaces; i++)
+    {
+        profile_text_buffer[buffer_length] = ' ';
+        buffer_length++;
+    }
+    buffer_length += sprintf(profile_text_buffer+buffer_length, "%.1lf ms", time*1000);
     
     ui_draw_debug_text(game_state, pos, text_scale, profile_text_buffer, buffer_length,
-                       time_draw_color, color(0, 0, 0, 0.2f));
+                       time_draw_color, color(0, 0, 0, 0.4f));
 }
