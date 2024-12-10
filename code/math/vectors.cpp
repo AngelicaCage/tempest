@@ -134,11 +134,11 @@ v3(glm::vec3 v)
 // FUNCTIONS //
 F32 v2_dist(V2 a, V2 b)
 {
-    return sqrtf(pow(b.x-a.x, 2) + pow(b.y-a.y, 2));
+    return sqrtf(square(b.x-a.x) + square(b.y-a.y));
 }
 F32 v2i_dist(V2I a, V2I b)
 {
-    return sqrtf((F32)pow(b.x-a.x, 2) + (F32)pow(b.y-a.y, 2));
+    return sqrtf(square(b.x-a.x) + square(b.y-a.y));
 }
 
 

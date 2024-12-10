@@ -218,16 +218,31 @@ field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Col
     V2I top_left = v2i(center_field - v2(radius_field, radius_field));
     V2I bottom_right = v2i(center_field + v2(radius_field + 0.5f, radius_field + 0.5f));
     
+    if(top_left.y < 0)
+        top_left.y = 0;
+    if(top_left.x < 0)
+        top_left.x = 0;
+    if(bottom_right.y >= field->height)
+        bottom_right.y = field->height - 1;
+    if(bottom_right.x >= field->width)
+        bottom_right.x = field->width - 1;
+    
+    
     for(Int y = top_left.y; y < bottom_right.y; y++)
     {
+        
         for(Int x = top_left.x; x < bottom_right.x; x++)
         {
-            V2I coords = v2i(x, y);
-            if(coords.x < 0 || coords.x >= field->width ||
-               coords.y < 0 || coords.y >= field->height)
-                continue;
+            //Float dist = v2_dist(center_field, v2(x, y));
+            Float dist = sqrt(square(x-center_field.x) + square(y-center_field.y));
             
-            Float dist = v2_dist(center_field, v2(x, y));
+#if 0
+            FieldPoint *point = &(field->target_points[y][x]);
+            if(set_base_height)
+                point->height = base_height;
+            point->height += added_height;
+            point->color = color;
+#else
             if(dist <= radius_field)
             {
                 FieldPoint *point = &(field->target_points[y][x]);
@@ -236,6 +251,7 @@ field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Col
                 point->height += added_height;
                 point->color = color;
             }
+#endif
         }
     }
 }

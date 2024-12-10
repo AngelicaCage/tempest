@@ -6,6 +6,7 @@
 
 Float pi = 3.141582f;
 
+inline
 Float interpolate(Float a, Float b, Float speed)
 {
     if(speed > 1) speed = 1;
@@ -14,6 +15,11 @@ Float interpolate(Float a, Float b, Float speed)
 }
 
 
+inline Float
+square(Float a)
+{
+    return a*a;
+}
 
 
 
