@@ -197,3 +197,14 @@ ui_draw_log(GameState *game_state, Log *log, Float scale)
         entries_drawn++;
     }
 }
+
+Void
+ui_draw_timing_pair(GameState *game_state, V2 pos, Float text_scale,
+                    const Char *name, F64 time, Color time_draw_color)
+{
+    Char profile_text_buffer[100];
+    Int buffer_length = sprintf(profile_text_buffer, "%s:  %lf", name, time);
+    
+    ui_draw_debug_text(game_state, pos, text_scale, profile_text_buffer, buffer_length,
+                       time_draw_color, color(0, 0, 0, 0.2f));
+}

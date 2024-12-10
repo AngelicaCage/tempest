@@ -234,6 +234,11 @@ update_and_render(GameMemory *game_memory)
         camera->orbiting = true;
         camera->orbit_angles = v2(pi / 2.0f, pi/3.0f);
         camera->orbit_distance = 10.0f;
+        
+        // TODO: come up with something better
+        frame_profile = &(game_state->frame_profile);
+        frame_profile->section_stack = create_list<SectionProfile>();
+        frame_profile->finished_sections = create_list<SectionProfile>();
     }
     
     player->shot_cooldown_max = 0.15f;
@@ -254,6 +259,12 @@ update_and_render(GameMemory *game_memory)
     game_state->fps = (Float)frame_times->length / (Float)time_diff;
     
     Float d_time = game_state->d_time;
+    
+    frame_profile = &(game_state->frame_profile);
+    frame_profile->frame_start = this_frame_start_time;
+    frame_profile->max_frame_time = 1.0f / game_state->target_fps;
+    frame_profile->section_stack.length = 0;
+    frame_profile->finished_sections.length = 0;
     
     update_input(input, game_memory->window, d_time);
     input->d_scroll = d_scroll;
@@ -325,8 +336,14 @@ update_and_render(GameMemory *game_memory)
     // TODO: optimize
     // make debug time display, with times of chosen parts, total frame time, and max frame time
     // make total frame time red if it exceeds max frame time
+    start_timing_section("update_field_data");
     update_field_data(game_state, &(game_state->field));
+    end_timing_section();
+    
+    start_timing_section("fill_field_render_data");
     fill_field_render_data(&(game_state->field));
+    end_timing_section();
+    
     
     update_camera(game_state);
     
@@ -362,9 +379,8 @@ update_and_render(GameMemory *game_memory)
     
     draw_field(game_state);
     
+    Float text_scale = 2.0f;
     {
-        Float text_scale = 2.0f;
-        
         glDisable(GL_DEPTH_TEST);
         // Later: something's up with the depth buffer
         String fps_string = create_string("%d fps", (Int)game_state->fps);
@@ -382,4 +398,27 @@ update_and_render(GameMemory *game_memory)
     F64 this_frame_end_time = get_time();
     F64 this_frame_time = this_frame_end_time - this_frame_start_time;
     F64 time_to_sleep = (1.0 / game_state->target_fps) - this_frame_time;
+    
+    frame_profile->frame_end = this_frame_end_time;
+    frame_profile->frame_time = frame_profile->frame_end - frame_profile->frame_start;
+    
+    {
+        Char profile_text_buffer[100];
+        V2 draw_pos = v2(0, 40);
+        Float vertical_spacing = 20;
+        Int buffer_length = 0;
+        
+        for(Int i = 0; i < frame_profile->finished_sections.length; i++)
+        {
+            SectionProfile *section = &(frame_profile->finished_sections.data[i]);
+            ui_draw_timing_pair(game_state, draw_pos, text_scale, section->name, section->elapsed_time, Color::white());
+            draw_pos.y += vertical_spacing;
+        }
+        
+        Color ft_draw_color = (frame_profile->frame_time < frame_profile->max_frame_time) ? Color::white() : Color::red();
+        ui_draw_timing_pair(game_state, draw_pos, text_scale, "Frame Time", frame_profile->frame_time, ft_draw_color);
+        draw_pos.y += vertical_spacing;
+        
+        ui_draw_timing_pair(game_state, draw_pos, text_scale, "Max Frame Time", frame_profile->max_frame_time, Color::white());
+    }
 }

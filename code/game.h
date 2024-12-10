@@ -258,6 +258,8 @@ struct GameState
     
     Mesh rect_mesh;
     Mesh circle_mesh;
+    
+    FrameProfile frame_profile;
 };
 
 #endif //GAME_H
