@@ -390,10 +390,10 @@ update_and_render(GameMemory *game_memory)
             draw_pos.y += vertical_spacing;
         }
         
-        Color ft_draw_color = (frame_profile->frame_time < frame_profile->max_frame_time) ? Color::white() : Color::red();
-        ui_draw_timing_pair(game_state, draw_pos, text_scale, "Frame Time", frame_profile->frame_time, ft_draw_color);
+        Color ft_draw_color = (frame_profile->elapsed_time < frame_profile->target_max_time) ? Color::white() : Color::red();
+        ui_draw_timing_pair(game_state, draw_pos, text_scale, "Frame Time", frame_profile->elapsed_time, ft_draw_color);
         draw_pos.y += vertical_spacing;
         
-        ui_draw_timing_pair(game_state, draw_pos, text_scale, "Max Frame Time", frame_profile->max_frame_time, Color::white());
+        ui_draw_timing_pair(game_state, draw_pos, text_scale, "Max Frame Time", frame_profile->target_max_time, Color::white());
     }
 }

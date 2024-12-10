@@ -18,27 +18,14 @@ struct SectionProfile
 
 struct FrameProfile
 {
-    F64 frame_start;
-    F64 frame_end;
-    F64 frame_time;
+    F64 start_time;
+    F64 end_time;
+    F64 elapsed_time;
     
-    F64 max_frame_time;
+    F64 target_max_time;
     
-    struct {
-        SectionProfile data[10];
-        Int length = 0;
-    } bbbbb;
-    
-    //InplaceStack(SectionProfile, 10) _section_stack;
     InplaceStack(SectionProfile, 10) section_stack;
     InplaceStack(SectionProfile, 10) finished_sections;
-    //List<SectionProfile> section_stack;
-    //List<SectionProfile> finished_sections;
-    
-    struct
-    {
-        Int a;
-    } aabb;
 };
 FrameProfile *frame_profile;
 
