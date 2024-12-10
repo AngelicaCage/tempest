@@ -190,7 +190,7 @@ struct GameState
     Bool should_quit;
     
     // all timing is in seconds
-    InplaceCircularArray<FrameProfile, 64> frame_profiles;
+    InplaceCircularArray<FrameProfile, 128> frame_profiles;
     Float fps;
     Float target_fps;
     Float d_time;

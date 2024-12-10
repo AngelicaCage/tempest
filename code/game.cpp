@@ -411,6 +411,37 @@ update_and_render(GameMemory *game_memory)
             draw_pos.y += vertical_spacing;
         }
         
+        
+        {
+            Float profile_width = 3;
+            Float horizontal_spacing = 1;
+            Float max_height = 60;
+            Float extra_height = 60;
+            Float total_width = 0;
+            
+            Float top = draw_pos.y + 30;
+            Float bottom = top + max_height + extra_height;
+            
+            Float max_frame_time = 0;
+            for(Int i = 0; i < game_state->frame_profiles.length; i++)
+            {
+                if(game_state->frame_profiles[i].elapsed_time > max_frame_time)
+                    max_frame_time = game_state->frame_profiles[i].elapsed_time;
+            }
+            
+            ui_draw_rect(game_state, game_state->frame_profiles.start*(profile_width+horizontal_spacing) - 1, top, 1, max_height + extra_height, Color::black());
+            
+            for(Int i = 0; i < game_state->frame_profiles.length; i++)
+            {
+                FrameProfile *profile = &(game_state->frame_profiles.data[i]);
+                Float fraction = profile->elapsed_time / profile->target_max_time;
+                
+                Float profile_height = fraction * max_height;
+                Float profile_top = bottom - profile_height;
+                ui_draw_rect(game_state, i*(profile_width+horizontal_spacing), profile_top, profile_width, profile_height, Color::white());
+            }
+        }
+        
         ui_draw_timing_pair(game_state, draw_pos, text_scale, "Max Frame Time", profile->target_max_time, Color::white());
     }
     
