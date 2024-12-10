@@ -37,44 +37,44 @@ calculate_vertex_normals(Field *field)
         Int vertexB = indices[index + 1];
         Int vertexC = indices[index + 2];
         
-        V3 edgeAB = v3(&(vertices[vertexB*9])) - v3(&(vertices[vertexA*9]));
-        V3 edgeAC = v3(&(vertices[vertexC*9])) - v3(&(vertices[vertexA*9]));
+        Float *vertex_a_addr = &vertices[vertexA*9];
+        Float *vertex_b_addr = &vertices[vertexB*9];
+        Float *vertex_c_addr = &vertices[vertexC*9];
         
-        // The cross product is perpendicular to both input vectors (normal to the plane).
-        // Flip the argument order if you need the opposite winding.    
-        V3 areaWeightedNormal = v3(glm::cross(edgeAB.to_glm(), edgeAC.to_glm()));
+        V3 edgeAB = v3(
+                       vertex_b_addr[0] - vertex_a_addr[0],
+                       vertex_b_addr[1] - vertex_a_addr[1],
+                       vertex_b_addr[2] - vertex_a_addr[2]
+                       );
+        V3 edgeAC = v3(
+                       vertex_c_addr[0] - vertex_a_addr[0],
+                       vertex_c_addr[1] - vertex_a_addr[1],
+                       vertex_c_addr[2] - vertex_a_addr[2]
+                       );
+        
+        // Flip the argument order if you need the opposite winding.
+        // RIGHT HAND RULE!!!!
+        V3 areaWeightedNormal = V3::cross(edgeAB, edgeAC);
         
         // Don't normalize this vector just yet. Its magnitude is proportional to the
         // area of the triangle (times 2), so this helps ensure tiny/skinny triangles
         // don't have an outsized impact on the final normal per vertex.
         
         // Accumulate this cross product into each vertex normal slot.
-#if 1
-        vertices[vertexA*9 + 6] += areaWeightedNormal.x;
-        vertices[vertexA*9 + 7] += areaWeightedNormal.y;
-        vertices[vertexA*9 + 8] += areaWeightedNormal.z;
+        vertex_a_addr[6] += areaWeightedNormal.x;
+        vertex_a_addr[7] += areaWeightedNormal.y;
+        vertex_a_addr[8] += areaWeightedNormal.z;
         
-        vertices[vertexB*9 + 6] += areaWeightedNormal.x;
-        vertices[vertexB*9 + 7] += areaWeightedNormal.y;
-        vertices[vertexB*9 + 8] += areaWeightedNormal.z;
+        vertex_b_addr[6] += areaWeightedNormal.x;
+        vertex_b_addr[7] += areaWeightedNormal.y;
+        vertex_b_addr[8] += areaWeightedNormal.z;
         
-        vertices[vertexC*9 + 6] += areaWeightedNormal.x;
-        vertices[vertexC*9 + 7] += areaWeightedNormal.y;
-        vertices[vertexC*9 + 8] += areaWeightedNormal.z;
-#endif
+        vertex_c_addr[6] += areaWeightedNormal.x;
+        vertex_c_addr[7] += areaWeightedNormal.y;
+        vertex_c_addr[8] += areaWeightedNormal.z;
     }
     
-    // Finally, normalize all the sums to get a unit-length, area-weighted average.
-    for(int vertex = 0; vertex < (field->width) * (field->height); vertex++)
-    {
-        V3 current_normal = v3(&vertices[vertex*9 + 6]);
-        V3 new_normal = current_normal.normalized();
-#if 1
-        vertices[vertex*9 + 6] = new_normal.x;
-        vertices[vertex*9 + 7] = new_normal.y;
-        vertices[vertex*9 + 8] = new_normal.z;
-#endif
-    }
+    // Shader normalized normals, so no need to do that on the cpu
 }
 
 Void
