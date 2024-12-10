@@ -115,7 +115,6 @@ update_and_render(GameMemory *game_memory)
         game_state->paused = false;
         game_state->should_quit = false;
         
-        game_state->target_fps = 144;
         game_state->d_time = 1;
         
         fill_key_data(input);
@@ -239,6 +238,8 @@ update_and_render(GameMemory *game_memory)
     game_state->target_fps = 144;
     
     update_frame_timing_beginning(game_state);
+    
+    game_state->d_time = game_memory->d_time;
     Float d_time = game_state->d_time;
     
     

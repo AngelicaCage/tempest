@@ -337,6 +337,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     game_memory.write_file_contents = write_file_contents;
     game_memory.get_time = get_time;
     game_memory.sleep = sleep;
+    game_memory.d_time = 0.06f;
     
     while(game_memory.game_running)
     {
@@ -360,6 +361,8 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
             game_memory.functions_loaded = false;
         }
 #endif
+        Float frame_start_time = get_time();
+        
         if(glfwWindowShouldClose(window))
             break;
         
@@ -368,6 +371,8 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         glfwSwapInterval(1);
         glfwSwapBuffers(window);
         glfwPollEvents();
+        
+        game_memory.d_time = get_time() - frame_start_time;
     }
     
     glfwTerminate();

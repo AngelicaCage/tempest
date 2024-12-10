@@ -4,9 +4,11 @@ update_frame_timing_beginning(GameState *game_state)
 {
     FrameProfile *old_profile = &(game_state->frame_profiles.last());
     
+#if 0
     game_state->d_time = old_profile->elapsed_time;
     if(game_state->d_time < 1.0f / game_state->target_fps)
         game_state->d_time = 1.0f / game_state->target_fps;
+#endif
     
     game_state->frame_profiles.add({0});
     FrameProfile *profile = &(game_state->frame_profiles.last());

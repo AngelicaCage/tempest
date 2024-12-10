@@ -37,6 +37,8 @@ struct GameMemory
     Bool (*write_file_contents)(const Char *, U8 *, U64);
     F64 (*get_time)();
     Void (*sleep)(F64);
+    
+    Float d_time;
 };
 
 struct GameCode
