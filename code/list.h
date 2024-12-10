@@ -114,9 +114,6 @@ List<t> create_list()
     return res;
 }
 
-
-
-
 #define InplaceStack(_type, _size) struct {\
 _type data[_size];\
 Int length = 0;\
