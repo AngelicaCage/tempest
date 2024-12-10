@@ -49,6 +49,7 @@ calculate_vertex_normals(Field *field)
         // don't have an outsized impact on the final normal per vertex.
         
         // Accumulate this cross product into each vertex normal slot.
+#if 1
         vertices[vertexA*9 + 6] += areaWeightedNormal.x;
         vertices[vertexA*9 + 7] += areaWeightedNormal.y;
         vertices[vertexA*9 + 8] += areaWeightedNormal.z;
@@ -60,6 +61,7 @@ calculate_vertex_normals(Field *field)
         vertices[vertexC*9 + 6] += areaWeightedNormal.x;
         vertices[vertexC*9 + 7] += areaWeightedNormal.y;
         vertices[vertexC*9 + 8] += areaWeightedNormal.z;
+#endif
     }
     
     // Finally, normalize all the sums to get a unit-length, area-weighted average.
@@ -115,6 +117,9 @@ fill_field_render_data(Field *field)
             field->vertices[y*field->width*stride + x*stride + 4] = field->points[y][x].color.g;
             field->vertices[y*field->width*stride + x*stride + 5] = field->points[y][x].color.b;
             
+            field->vertices[y*field->width*stride + x*stride + 6] = 0;
+            field->vertices[y*field->width*stride + x*stride + 7] = 0;
+            field->vertices[y*field->width*stride + x*stride + 8] = 0;
         }
     }
     
@@ -236,13 +241,6 @@ field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Col
             //Float dist = v2_dist(center_field, v2(x, y));
             Float dist = sqrt(square(x-center_field.x) + square(y-center_field.y));
             
-#if 0
-            FieldPoint *point = &(field->target_points[y][x]);
-            if(set_base_height)
-                point->height = base_height;
-            point->height += added_height;
-            point->color = color;
-#else
             if(dist <= radius_field)
             {
                 FieldPoint *point = &(field->target_points[y][x]);
@@ -251,7 +249,6 @@ field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Col
                 point->height += added_height;
                 point->color = color;
             }
-#endif
         }
     }
 }

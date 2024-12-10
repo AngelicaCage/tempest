@@ -2,24 +2,24 @@
 
 // V2 //
 
-F32 V2::mag()
+inline F32 V2::mag()
 {
     return sqrtf(x*x + y*y);
 }
-V2 V2::normalized()
+inline V2 V2::normalized()
 {
     F32 m = mag();
     return {x/m, y/m};
 }
 
-V2 interpolate(V2 from, V2 to, F32 speed)
+inline V2 interpolate(V2 from, V2 to, F32 speed)
 {
     return {
         interpolate(from.x, to.x, speed),
         interpolate(from.y, to.y, speed),
     };
 }
-V2 clamp(V2 val, V2 min, V2 max)
+inline V2 clamp(V2 val, V2 min, V2 max)
 {
     if(val.x < min.x) val.x = min.x;
     if(val.y < min.y) val.y = min.y;
@@ -34,16 +34,16 @@ V2 clamp(V2 val, V2 min, V2 max)
 // V3 //
 
 #ifdef GLM_VERSION_MAJOR
-glm::vec3 V3::to_glm()
+inline glm::vec3 V3::to_glm()
 {
     return glm::vec3(x, y, z);
 }
 #endif
-F32 V3::mag()
+inline F32 V3::mag()
 {
     return sqrtf(x*x + y*y + z*z);
 }
-V3 V3::normalized()
+inline V3 V3::normalized()
 {
     V3 result;
     F32 m = mag();
@@ -54,19 +54,19 @@ V3 V3::normalized()
 }
 
 //
-F32 V3::dot(V3 v, V3 w)
+inline F32 V3::dot(V3 v, V3 w)
 {
     return v.x*w.x + v.y*w.y + v.z*w.z;
 }
 
 // Returns a V3 perpendicular to the plane formed by v and w.
 // Direction is determined by the right-hand rule.
-V3 V3::cross(V3 v, V3 w)
+inline V3 V3::cross(V3 v, V3 w)
 {
     return {v.y*w.z-w.y*v.z, v.z*w.x-w.z*v.x, v.x*w.y-w.x*v.y};
 }
 
-V3 interpolate(V3 from, V3 to, F32 speed)
+inline V3 interpolate(V3 from, V3 to, F32 speed)
 {
     return {
         interpolate(from.x, to.x, speed),
