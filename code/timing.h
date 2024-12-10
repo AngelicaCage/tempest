@@ -24,8 +24,21 @@ struct FrameProfile
     
     F64 max_frame_time;
     
-    List<SectionProfile> section_stack;
-    List<SectionProfile> finished_sections;
+    struct {
+        SectionProfile data[10];
+        Int length = 0;
+    } bbbbb;
+    
+    //InplaceStack(SectionProfile, 10) _section_stack;
+    InplaceStack(SectionProfile, 10) section_stack;
+    InplaceStack(SectionProfile, 10) finished_sections;
+    //List<SectionProfile> section_stack;
+    //List<SectionProfile> finished_sections;
+    
+    struct
+    {
+        Int a;
+    } aabb;
 };
 FrameProfile *frame_profile;
 

@@ -114,4 +114,24 @@ List<t> create_list()
     return res;
 }
 
+
+
+
+#define InplaceStack(_type, _size) struct {\
+_type data[_size];\
+Int length = 0;\
+Void push(_type Element) {\
+if(length < sizeof(data)/sizeof(_type)) {\
+data[length] = Element;\
+length++;\
+}\
+}\
+Void pop() {\
+length--;\
+}\
+_type& operator[](Int index) {\
+return data[index];\
+}\
+}
+
 #endif //CIEL_LIST_H

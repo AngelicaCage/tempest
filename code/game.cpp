@@ -237,8 +237,6 @@ update_and_render(GameMemory *game_memory)
         
         // TODO: come up with something better
         frame_profile = &(game_state->frame_profile);
-        frame_profile->section_stack = create_list<SectionProfile>();
-        frame_profile->finished_sections = create_list<SectionProfile>();
     }
     
     player->shot_cooldown_max = 0.15f;
@@ -410,7 +408,7 @@ update_and_render(GameMemory *game_memory)
         
         for(Int i = 0; i < frame_profile->finished_sections.length; i++)
         {
-            SectionProfile *section = &(frame_profile->finished_sections.data[i]);
+            SectionProfile *section = &(frame_profile->finished_sections[i]);
             ui_draw_timing_pair(game_state, draw_pos, text_scale, section->name, section->elapsed_time, Color::white());
             draw_pos.y += vertical_spacing;
         }
