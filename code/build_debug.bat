@@ -5,6 +5,7 @@ cls
 
 rem Debug
 @set COMMON_COMPILER_FLAGS=/std:c++20 /Zi /DEBUG:FULL /WX /nologo /utf-8
+rem @set COMMON_COMPILER_FLAGS=/std:c++20 /Zi /WX /nologo /utf-8 -O2 -openmp:experimental -Qvec-report:2
 
 rem Release
 rem @set COMMON_COMPILER_FLAGS=/std:c++20 /Zi /WX /nologo /utf-8

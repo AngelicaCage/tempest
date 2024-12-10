@@ -2,7 +2,7 @@
 cls
 
 @set INCLUDES=/I..\code\glfw\include /I..\code\glad\include
-@set COMMON_COMPILER_FLAGS=/std:c++20 /Zi /WX /nologo /utf-8 /DTEMPEST_RELEASE
+@set COMMON_COMPILER_FLAGS=/std:c++20 /Zi /WX /nologo /utf-8 /DTEMPEST_RELEASE -O2
 
 pushd ..\build\
 

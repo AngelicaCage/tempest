@@ -32,49 +32,44 @@ calculate_vertex_normals(Field *field)
     Float *vertices = field->vertices;
     UInt *indices = field->indices;
     // For each face, compute the face normal, and accumulate it into each vertex.
-    for(Int index = 0; index < (field->width-1)*6 * (field->height-1); index += 3) {
-        Int vertexA = indices[index];
-        Int vertexB = indices[index + 1];
-        Int vertexC = indices[index + 2];
+    Float field_size = (field->width-1)*6 * (field->height-1);
+    for(Int index = 0; index < field_size; index += 3) {
+        //continue;
+        Float *a = &vertices[indices[index]*9];
+        Float *b = &vertices[indices[index+1]*9];
+        Float *c = &vertices[indices[index+2]*9];
         
-        Float *vertex_a_addr = &vertices[vertexA*9];
-        Float *vertex_b_addr = &vertices[vertexB*9];
-        Float *vertex_c_addr = &vertices[vertexC*9];
+        Float ab[3] = {
+            b[0] - a[0],
+            b[1] - a[1],
+            b[2] - a[2]
+        };
+        Float ac[3] = {
+            c[0] - a[0],
+            c[1] - a[1],
+            c[2] - a[2]
+        };
         
-        V3 edgeAB = v3(
-                       vertex_b_addr[0] - vertex_a_addr[0],
-                       vertex_b_addr[1] - vertex_a_addr[1],
-                       vertex_b_addr[2] - vertex_a_addr[2]
-                       );
-        V3 edgeAC = v3(
-                       vertex_c_addr[0] - vertex_a_addr[0],
-                       vertex_c_addr[1] - vertex_a_addr[1],
-                       vertex_c_addr[2] - vertex_a_addr[2]
-                       );
+        Float normal[3] = {
+            ab[1]*ac[2] - ac[1]*ab[2],
+            ab[2]*ac[0] - ac[2]*ab[0],
+            ab[0]*ac[1] - ac[0]*ab[1]
+        };
         
-        // Flip the argument order if you need the opposite winding.
-        // RIGHT HAND RULE!!!!
-        V3 areaWeightedNormal = V3::cross(edgeAB, edgeAC);
+        a[6] += normal[0];
+        a[7] += normal[1];
+        a[8] += normal[2];
         
-        // Don't normalize this vector just yet. Its magnitude is proportional to the
-        // area of the triangle (times 2), so this helps ensure tiny/skinny triangles
-        // don't have an outsized impact on the final normal per vertex.
+        b[6] += normal[0];
+        b[7] += normal[1];
+        b[8] += normal[2];
         
-        // Accumulate this cross product into each vertex normal slot.
-        vertex_a_addr[6] += areaWeightedNormal.x;
-        vertex_a_addr[7] += areaWeightedNormal.y;
-        vertex_a_addr[8] += areaWeightedNormal.z;
-        
-        vertex_b_addr[6] += areaWeightedNormal.x;
-        vertex_b_addr[7] += areaWeightedNormal.y;
-        vertex_b_addr[8] += areaWeightedNormal.z;
-        
-        vertex_c_addr[6] += areaWeightedNormal.x;
-        vertex_c_addr[7] += areaWeightedNormal.y;
-        vertex_c_addr[8] += areaWeightedNormal.z;
+        c[6] += normal[0];
+        c[7] += normal[1];
+        c[8] += normal[2];
     }
     
-    // Shader normalized normals, so no need to do that on the cpu
+    // Shader normalizes normals, so no need to do that on the cpu
 }
 
 Void
