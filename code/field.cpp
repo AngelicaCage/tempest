@@ -644,7 +644,7 @@ update_field_data(GameState *game_state, Field *field)
         {
             FieldPoint *target_point = &(field->target_points[y][x]);
             FieldPoint *point = &(field->points[y][x]);
-            Float up_interp_speed = 40.0f * game_state->d_time;
+            Float up_interp_speed = 100.0f * game_state->d_time;
             //Float down_interp_speed = 10.0f * game_state->d_time;
             Float down_interp_speed = up_interp_speed;
             

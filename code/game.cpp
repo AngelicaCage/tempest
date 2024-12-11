@@ -229,9 +229,9 @@ update_and_render(GameMemory *game_memory)
         camera->orbiting = true;
         camera->orbit_angles = v2(pi / 2.0f, pi/3.0f);
         camera->orbit_distance = 10.0f;
+        
+        game_state->show_debug_interface = true;
     }
-    
-    
     game_state->target_fps = 144;
     game_state->fps = (sizeof(game_state->frame_profiles)/sizeof(FrameProfile)) /
     (game_state->frame_profiles.last().start_time - game_state->frame_profiles[0].start_time);
@@ -272,6 +272,9 @@ update_and_render(GameMemory *game_memory)
     
     if(keys->f11.just_pressed)
         window_toggle_fullscreen(game_memory->window, game_state->windowed_rect, &game_state->fullscreen);
+    
+    if(keys->f1.just_pressed)
+        game_state->show_debug_interface = !game_state->show_debug_interface;
     
     F64 new_mouse_pos[2];
     glfwGetCursorPos(game_memory->window, &new_mouse_pos[0], &new_mouse_pos[1]);
@@ -363,177 +366,12 @@ update_and_render(GameMemory *game_memory)
     draw_field(game_state);
     
     Float text_scale = 2.0f;
-    {
-        glDisable(GL_DEPTH_TEST);
-        // Later: something's up with the depth buffer
-        
-        String fps_string = create_string("%d fps", (Int)game_state->fps);
-        
-        Rect bg_rect = rect(0, 0, fps_string.length*7*text_scale, 8*text_scale);
-        //ui_draw_rect(game_state, bg_rect, color(1, 1, 1, 0.3));
-        
-        ui_draw_debug_text(game_state, v2(0, 0), text_scale, fps_string.data, fps_string.length, Color::white(), color(0, 0, 0, 0.2f));
-        free_string(&fps_string);
-        
-        //ui_draw_rect(game_state, 1920/2, 1080/2, 100, 100, Color::white());
-        Float scale = 50;
-        ui_draw_rect(game_state, 1920/2 + player->pos.x*scale, 1080/2 + player->pos.y*scale, 100, 100, Color::white());
-    }
     
-    //log("%f", d_time);
-    
+    glDisable(GL_DEPTH_TEST);
     ui_draw_log(game_state, global_log, text_scale);
     
     update_frame_timing_end(game_state);
     
-    Char profile_text_buffer[100];
-    V2 draw_pos = v2(0, 40);
-    Float vertical_spacing = 16;
-    Int buffer_length = 0;
-    
-    FrameProfile *profile = &(game_state->frame_profiles.last());
-    
-    for(Int i = 0; i < profile->finished_sections.length; i++)
-    {
-        Float average = 0;
-        for(Int a = 0; a < game_state->frame_profiles.length; a++)
-        {
-            average += game_state->frame_profiles[a].finished_sections[i].elapsed_time;
-        }
-        average /= game_state->frame_profiles.length;
-        
-        SectionProfile *section = &(profile->finished_sections[i]);
-        
-        ui_draw_timing_pair(game_state, draw_pos, text_scale, section->name, average, Color::white());
-        draw_pos.y += vertical_spacing;
-    }
-    
-    {
-        Float average = 0;
-        for(Int a = 0; a < game_state->frame_profiles.length; a++)
-        {
-            average += game_state->frame_profiles[a].elapsed_time;
-        }
-        average /= game_state->frame_profiles.length;
-        
-        Color ft_draw_color = (profile->elapsed_time < profile->target_max_time) ? Color::white() : color(1, 0.5, 0.5, 1);
-        ui_draw_timing_pair(game_state, draw_pos, text_scale, "Frame Time", average, ft_draw_color);
-        draw_pos.y += vertical_spacing;
-        
-        ui_draw_timing_pair(game_state, draw_pos, text_scale, "Max Frame Time", profile->target_max_time, Color::white());
-        draw_pos.y += vertical_spacing;
-        
-        average = 0;
-        for(Int a = 0; a < game_state->frame_profiles.length; a++)
-        {
-            average += game_state->frame_profiles[a].d_time;
-        }
-        average /= game_state->frame_profiles.length;
-        
-        ui_draw_timing_pair(game_state, draw_pos, text_scale, "Delta Time", average, Color::white());
-        draw_pos.y += vertical_spacing;
-    }
-    
-    
-    {
-        Float profile_width = 3;
-        Float horizontal_spacing = 1;
-        Float max_height = 60;
-        Float extra_height = 60;
-        
-        Float top = draw_pos.y + 30;
-        Float bottom = top + max_height + extra_height;
-        
-        Int max_len = sizeof(game_state->frame_profiles.data) / sizeof(FrameProfile);
-        ui_draw_rect(game_state, 0, top, max_len*(profile_width+horizontal_spacing), max_height+extra_height, color(0, 0, 0, 0.4f));
-        
-        Float max_frame_time = 0;
-        for(Int i = 0; i < game_state->frame_profiles.length; i++)
-        {
-            if(game_state->frame_profiles[i].elapsed_time > max_frame_time)
-                max_frame_time = game_state->frame_profiles[i].elapsed_time;
-        }
-        
-        for(Int i = 0; i < game_state->frame_profiles.length; i++)
-        {
-            FrameProfile *profile = &(game_state->frame_profiles.data[i]);
-            Float fraction = profile->elapsed_time / profile->target_max_time;
-            //Float fraction = profile->d_time / 0.01f;
-            
-            Float profile_height = fraction * max_height;
-            Float profile_top = bottom - profile_height;
-            Float shade = 0.8f;
-            ui_draw_rect(game_state, i*(profile_width+horizontal_spacing), profile_top, profile_width, profile_height, color(shade, shade, shade, 1.0f));
-            
-            //continue;
-            Color section_colors[4] = {
-                Color::green(),
-                Color::orange(),
-                Color::blue(),
-                Color::yellow(),
-            };
-            Float last_section_end = 0;
-            for(Int a = 0; a < profile->finished_sections.length; a++)
-            {
-                fraction = profile->finished_sections[a].elapsed_time / profile->elapsed_time;
-                Float section_height = profile_height * fraction;
-                ui_draw_rect(game_state, i*(profile_width+horizontal_spacing), bottom - last_section_end - section_height,
-                             profile_width, section_height, section_colors[a]);
-                last_section_end += section_height;
-            }
-            ui_draw_rect(game_state, game_state->frame_profiles.start*(profile_width+horizontal_spacing) - 1, top, 2, max_height + extra_height, Color::red());
-            ui_draw_rect(game_state, 0, bottom - max_height, game_state->frame_profiles.length*(profile_width+horizontal_spacing), 2, Color::blue());
-        }
-        draw_pos.y += max_height + extra_height;
-    }
-    
-    {
-        Float profile_width = 3;
-        Float horizontal_spacing = 1;
-        Float max_height = 60;
-        Float extra_height = 60;
-        
-        Float top = draw_pos.y + 30 + 100;
-        Float bottom = top + max_height + extra_height;
-        
-        Int max_len = sizeof(game_state->frame_profiles.data) / sizeof(FrameProfile);
-        ui_draw_rect(game_state, 0, top, max_len*(profile_width+horizontal_spacing), max_height+extra_height, color(0, 0, 0, 0.4f));
-        
-        Float max_frame_time = 0;
-        for(Int i = 0; i < game_state->frame_profiles.length; i++)
-        {
-            if(game_state->frame_profiles[i].elapsed_time > max_frame_time)
-                max_frame_time = game_state->frame_profiles[i].elapsed_time;
-        }
-        
-        for(Int i = 0; i < game_state->frame_profiles.length; i++)
-        {
-            FrameProfile *profile = &(game_state->frame_profiles.data[i]);
-            //Float fraction = profile->elapsed_time / profile->target_max_time;
-            Float fraction = profile->d_time / 0.01f;
-            
-            Float profile_height = fraction * max_height;
-            Float profile_top = bottom - profile_height;
-            Float shade = 0.8f;
-            ui_draw_rect(game_state, i*(profile_width+horizontal_spacing), profile_top, profile_width, profile_height, color(shade, shade, shade, 1.0f));
-            
-            continue;
-            Color section_colors[4] = {
-                Color::green(),
-                Color::orange(),
-                Color::blue(),
-                Color::yellow(),
-            };
-            Float last_section_end = 0;
-            for(Int a = 0; a < profile->finished_sections.length; a++)
-            {
-                fraction = profile->finished_sections[a].elapsed_time / profile->elapsed_time;
-                Float section_height = profile_height * fraction;
-                ui_draw_rect(game_state, i*(profile_width+horizontal_spacing), bottom - last_section_end - section_height,
-                             profile_width, section_height, section_colors[a]);
-                last_section_end += section_height;
-            }
-        }
-    }
-    
+    if(game_state->show_debug_interface)
+        ui_draw_debug_interface(game_state, text_scale);
 }

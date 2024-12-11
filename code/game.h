@@ -195,6 +195,8 @@ struct GameState
     Float target_fps;
     Float d_time;
     
+    Bool show_debug_interface;
+    
     Bool fullscreen;
     RectI windowed_rect;
     V2 window_dim;
