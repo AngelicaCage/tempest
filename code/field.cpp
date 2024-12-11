@@ -214,8 +214,8 @@ field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Col
                   Bool set_base_height = false, Float base_height = 1)
 {
     V2 center_field = coords_world_to_field(field, center);
-    Float radius_field = scale_world_to_field(field, radius);
     Float taper_length_field = 1.0f;
+    Float radius_field = scale_world_to_field(field, radius) - taper_length_field/2;
     V2I top_left = v2i(center_field - v2(radius_field, radius_field) - v2(taper_length_field, taper_length_field));
     V2I bottom_right = v2i(center_field + v2(radius_field + 0.5f, radius_field + 0.5f) + v2(taper_length_field, taper_length_field));
     

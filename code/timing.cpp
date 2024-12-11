@@ -1,8 +1,9 @@
 
 Void
-update_frame_timing_beginning(GameState *game_state)
+update_frame_timing_beginning(GameState *game_state, Float d_time)
 {
     FrameProfile *old_profile = &(game_state->frame_profiles.last());
+    old_profile->d_time = d_time;
     
 #if 0
     game_state->d_time = old_profile->elapsed_time;

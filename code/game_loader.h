@@ -38,7 +38,7 @@ struct GameMemory
     F64 (*get_time)();
     Void (*sleep)(F64);
     
-    Float d_time;
+    F64 d_time;
 };
 
 struct GameCode

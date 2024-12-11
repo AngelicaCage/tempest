@@ -52,7 +52,6 @@ get_time()
         log_windows_error(GetLastError());
         ASSERT(false);
     }
-    //return (F64)(ticks.QuadPart) / (F64)(freq.QuadPart * 1000);
     return ((F64)(ticks.QuadPart)) / ((F64)(freq.QuadPart));
 }
 
@@ -321,6 +320,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     framebuffer_size_callback(window, 1920, 1080);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     
+#if 0
     // INITIALIZE AUDIO
     HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     // Later: log this and run without audio
@@ -329,6 +329,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     ASSERT(XAudio2Create(&audio_instance, 0, XAUDIO2_DEFAULT_PROCESSOR) == S_OK);
     IXAudio2MasteringVoice *audio_mastering_voice;
     audio_instance->CreateMasteringVoice(&audio_mastering_voice);
+#endif
     
     
     game_memory.window = window;
@@ -361,7 +362,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
             game_memory.functions_loaded = false;
         }
 #endif
-        Float frame_start_time = get_time();
+        F64 frame_start_time = get_time();
         
         if(glfwWindowShouldClose(window))
             break;
@@ -372,7 +373,10 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         glfwSwapBuffers(window);
         glfwPollEvents();
         
-        game_memory.d_time = get_time() - frame_start_time;
+        F64 frame_end_time = get_time();
+        game_memory.d_time = frame_end_time - frame_start_time;
+        if(game_memory.d_time < 0)
+            game_memory.d_time = 0.001f;
     }
     
     glfwTerminate();

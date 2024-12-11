@@ -21,6 +21,7 @@ struct FrameProfile
     F64 start_time;
     F64 end_time;
     F64 elapsed_time;
+    F64 d_time;
     
     F64 target_max_time;
     
