@@ -210,13 +210,14 @@ field_draw_small_bitmap(Field *field, SmallFieldBitmap bitmap, V2I offset,
 }
 
 Void // coords in world space
-field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Color color,
+field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Color circle_color,
                   Bool set_base_height = false, Float base_height = 1)
 {
     V2 center_field = coords_world_to_field(field, center);
     Float radius_field = scale_world_to_field(field, radius);
-    V2I top_left = v2i(center_field - v2(radius_field, radius_field));
-    V2I bottom_right = v2i(center_field + v2(radius_field + 0.5f, radius_field + 0.5f));
+    Float taper_length_field = 1.0f;
+    V2I top_left = v2i(center_field - v2(radius_field, radius_field) - v2(taper_length_field, taper_length_field));
+    V2I bottom_right = v2i(center_field + v2(radius_field + 0.5f, radius_field + 0.5f) + v2(taper_length_field, taper_length_field));
     
     if(top_left.y < 0)
         top_left.y = 0;
@@ -230,7 +231,6 @@ field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Col
     
     for(Int y = top_left.y; y < bottom_right.y; y++)
     {
-        
         for(Int x = top_left.x; x < bottom_right.x; x++)
         {
             //Float dist = v2_dist(center_field, v2(x, y));
@@ -239,10 +239,19 @@ field_draw_circle(Field *field, V2 center, Float radius, Float added_height, Col
             if(dist <= radius_field)
             {
                 FieldPoint *point = &(field->target_points[y][x]);
+                // TODO: do this better?
                 if(set_base_height)
                     point->height = base_height;
                 point->height += added_height;
-                point->color = color;
+                point->color = circle_color;
+            }
+            else if(dist <= radius_field + taper_length_field)
+            {
+                FieldPoint *point = &(field->target_points[y][x]);
+                Float fraction = 1.0f - ((dist - radius_field) / taper_length_field);
+                point->height += added_height * fraction;
+                //point->color = color;
+                point->color = interpolate(point->color, circle_color, fraction);
             }
         }
     }
@@ -635,8 +644,10 @@ update_field_data(GameState *game_state, Field *field)
         {
             FieldPoint *target_point = &(field->target_points[y][x]);
             FieldPoint *point = &(field->points[y][x]);
-            Float up_interp_speed = 60.0f * game_state->d_time;
-            Float down_interp_speed = 60.0f * game_state->d_time;
+            Float up_interp_speed = 40.0f * game_state->d_time;
+            //Float down_interp_speed = 10.0f * game_state->d_time;
+            Float down_interp_speed = up_interp_speed;
+            
             
             //point->height = target_point->height;
             //point->color = target_point->color;

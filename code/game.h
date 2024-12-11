@@ -225,7 +225,6 @@ struct GameState
     
     SmallFieldBitmap text_bitmaps[36];
     
-    //Camera target_camera;
     Camera camera;
     
     Bool in_game;

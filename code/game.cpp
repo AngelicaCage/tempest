@@ -151,8 +151,6 @@ update_and_render(GameMemory *game_memory)
                                          0, 3, sizeof(Float)*3, 0);
         }
         
-        // Field
-        //*field = create_field(400, 300);
         *field = create_field(220, 150);
         field->render_data_allocated = false;
         field->center_world = v2(0, 0);
@@ -236,6 +234,8 @@ update_and_render(GameMemory *game_memory)
     player->shot_cooldown_max = 0.15f;
     
     game_state->target_fps = 144;
+    game_state->fps = (sizeof(game_state->frame_profiles)/sizeof(FrameProfile)) /
+    (game_state->frame_profiles.last().start_time - game_state->frame_profiles[0].start_time);
     
     update_frame_timing_beginning(game_state);
     
@@ -360,6 +360,7 @@ update_and_render(GameMemory *game_memory)
     {
         glDisable(GL_DEPTH_TEST);
         // Later: something's up with the depth buffer
+        
         String fps_string = create_string("%d fps", (Int)game_state->fps);
         
         Rect bg_rect = rect(0, 0, fps_string.length*7*text_scale, 8*text_scale);
