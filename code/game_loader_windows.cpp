@@ -294,10 +294,10 @@ initialize_xaudio2()
     const Int bits_per_sample = 16;
     const Int samples_per_second = 44100;
     const F64 cycles_per_second = 220.0;
-    const F64 volume = 0.5f;
+    const F64 volume = 0.2f;
     const Int audio_buffer_cycle_count = 10;
     
-    const Int samples_per_cycle = samples_per_second / cycles_per_second;
+    const Int samples_per_cycle = (Int)((F64)samples_per_second / cycles_per_second);
     const Int audio_buffer_sample_count = samples_per_cycle * audio_buffer_cycle_count;
     const U32 audio_buffer_byte_count = audio_buffer_sample_count * bits_per_sample / 8;
     
@@ -313,17 +313,19 @@ initialize_xaudio2()
     IXAudio2SourceVoice *audio_source_voice;
     ASSERT(!FAILED(audio_instance->CreateSourceVoice(&audio_source_voice, &wave_format)));
     
-    U8 buffer[audio_buffer_byte_count];
+    U8 *buffer = (byte *)mem_alloc(sizeof(byte) *audio_buffer_byte_count);
     
-    double phase{};
+    double phase = 0;
     U32 buffer_index = 0;
     while (buffer_index < audio_buffer_byte_count)
     {
-        phase += (2 * 3.141592f) / samples_per_cycle;
+        phase += (2.0f * 3.141592f) / samples_per_cycle;
         I16 sample = (I16)(sin(phase) * INT16_MAX * volume);
         buffer[buffer_index++] = (U8)sample; // Values are little-endian.
         buffer[buffer_index++] = (U8)(sample >> 8);
     }
+    
+    U16 *buffer_view = (U16 *)buffer;
     
     XAUDIO2_BUFFER xaudio2_buffer{};
     xaudio2_buffer.Flags = XAUDIO2_END_OF_STREAM;
@@ -335,8 +337,8 @@ initialize_xaudio2()
     xaudio2_buffer.LoopLength = 0;
     xaudio2_buffer.LoopCount = XAUDIO2_LOOP_INFINITE;
     
-    audio_source_voice->SubmitSourceBuffer(&xaudio2_buffer);
-    audio_source_voice->Start();
+    ASSERT(!FAILED(audio_source_voice->SubmitSourceBuffer(&xaudio2_buffer)));
+    ASSERT(!FAILED(audio_source_voice->Start()));
 }
 
 
