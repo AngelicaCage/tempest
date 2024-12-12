@@ -82,6 +82,7 @@ write_to_save_file(GameState *game_state)
 extern "C" __declspec(dllexport) void __cdecl
 update_and_render(GameMemory *game_memory)
 {
+    // TODO: move glfw to platform layer, abstract functionality
     if(!game_memory->functions_loaded)
     {
         get_file_last_write_time = game_memory->get_file_last_write_time;

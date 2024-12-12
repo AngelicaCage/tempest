@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <xaudio2.h>
+//#include <dsound.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -261,6 +262,83 @@ Void framebuffer_size_callback(GLFWwindow* window, Int width, Int height)
     glViewport(0, 0, width, height * width_over_height);
 }
 
+#if 0
+Void
+initialize_directsound()
+{
+    // load the library
+    HMODULE directsound_library = LoadLibraryA("dsound.dll");
+    
+    if(directsound_library)
+    {
+    }
+    
+    // get directsound object
+}
+#endif
+
+Void
+initialize_xaudio2()
+{
+    // INITIALIZE AUDIO
+    HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    // Later: log this and run without audio
+    ASSERT(!FAILED(hr));
+    
+    IXAudio2 *audio_instance;
+    ASSERT(XAudio2Create(&audio_instance, 0, XAUDIO2_DEFAULT_PROCESSOR) == S_OK);
+    
+    IXAudio2MasteringVoice *audio_mastering_voice;
+    audio_instance->CreateMasteringVoice(&audio_mastering_voice);
+    
+    const Int bits_per_sample = 16;
+    const Int samples_per_second = 44100;
+    const F64 cycles_per_second = 220.0;
+    const F64 volume = 0.5f;
+    const Int audio_buffer_cycle_count = 10;
+    
+    const Int samples_per_cycle = samples_per_second / cycles_per_second;
+    const Int audio_buffer_sample_count = samples_per_cycle * audio_buffer_cycle_count;
+    const U32 audio_buffer_byte_count = audio_buffer_sample_count * bits_per_sample / 8;
+    
+    WAVEFORMATEX wave_format;
+    wave_format.wFormatTag = WAVE_FORMAT_PCM;
+    wave_format.nChannels = 1; // 1 channel
+    wave_format.nSamplesPerSec = samples_per_second;
+    wave_format.nBlockAlign = wave_format.nChannels * bits_per_sample / 8;
+    wave_format.nAvgBytesPerSec = wave_format.nSamplesPerSec * wave_format.nBlockAlign;
+    wave_format.wBitsPerSample = bits_per_sample;
+    wave_format.cbSize = 0;
+    
+    IXAudio2SourceVoice *audio_source_voice;
+    ASSERT(!FAILED(audio_instance->CreateSourceVoice(&audio_source_voice, &wave_format)));
+    
+    U8 buffer[audio_buffer_byte_count];
+    
+    double phase{};
+    U32 buffer_index = 0;
+    while (buffer_index < audio_buffer_byte_count)
+    {
+        phase += (2 * 3.141592f) / samples_per_cycle;
+        I16 sample = (I16)(sin(phase) * INT16_MAX * volume);
+        buffer[buffer_index++] = (U8)sample; // Values are little-endian.
+        buffer[buffer_index++] = (U8)(sample >> 8);
+    }
+    
+    XAUDIO2_BUFFER xaudio2_buffer{};
+    xaudio2_buffer.Flags = XAUDIO2_END_OF_STREAM;
+    xaudio2_buffer.AudioBytes = audio_buffer_byte_count;
+    xaudio2_buffer.pAudioData = buffer;
+    xaudio2_buffer.PlayBegin = 0;
+    xaudio2_buffer.PlayLength = 0;
+    xaudio2_buffer.LoopBegin = 0;
+    xaudio2_buffer.LoopLength = 0;
+    xaudio2_buffer.LoopCount = XAUDIO2_LOOP_INFINITE;
+    
+    audio_source_voice->SubmitSourceBuffer(&xaudio2_buffer);
+    audio_source_voice->Start();
+}
+
 
 Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
@@ -320,15 +398,8 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     framebuffer_size_callback(window, 1920, 1080);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     
-#if 0
-    // INITIALIZE AUDIO
-    HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-    // Later: log this and run without audio
-    ASSERT(!FAILED(hr));
-    IXAudio2 *audio_instance;
-    ASSERT(XAudio2Create(&audio_instance, 0, XAUDIO2_DEFAULT_PROCESSOR) == S_OK);
-    IXAudio2MasteringVoice *audio_mastering_voice;
-    audio_instance->CreateMasteringVoice(&audio_mastering_voice);
+#if 1
+    initialize_xaudio2();
 #endif
     
     
