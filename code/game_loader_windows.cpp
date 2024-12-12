@@ -277,68 +277,62 @@ initialize_directsound()
 }
 #endif
 
-Void
-initialize_xaudio2()
+struct XAudio2Data
 {
-    // INITIALIZE AUDIO
+    IXAudio2 *instance;
+    IXAudio2MasteringVoice *mastering_voice;
+    IXAudio2SourceVoice *source_voice;
+};
+
+XAudio2Data
+initialize_xaudio2(AudioBuffer *buffer)
+{
     HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     // Later: log this and run without audio
     ASSERT(!FAILED(hr));
     
-    IXAudio2 *audio_instance;
-    ASSERT(XAudio2Create(&audio_instance, 0, XAUDIO2_DEFAULT_PROCESSOR) == S_OK);
+    IXAudio2 *xaudio2_instance;
+    ASSERT(XAudio2Create(&xaudio2_instance, 0, XAUDIO2_DEFAULT_PROCESSOR) == S_OK);
     
-    IXAudio2MasteringVoice *audio_mastering_voice;
-    audio_instance->CreateMasteringVoice(&audio_mastering_voice);
-    
-    const Int bits_per_sample = 16;
-    const Int samples_per_second = 44100;
-    const F64 cycles_per_second = 220.0;
-    const F64 volume = 0.2f;
-    const Int audio_buffer_cycle_count = 10;
-    
-    const Int samples_per_cycle = (Int)((F64)samples_per_second / cycles_per_second);
-    const Int audio_buffer_sample_count = samples_per_cycle * audio_buffer_cycle_count;
-    const U32 audio_buffer_byte_count = audio_buffer_sample_count * bits_per_sample / 8;
+    IXAudio2MasteringVoice *xaudio2_mastering_voice;
+    xaudio2_instance->CreateMasteringVoice(&xaudio2_mastering_voice);
     
     WAVEFORMATEX wave_format;
     wave_format.wFormatTag = WAVE_FORMAT_PCM;
     wave_format.nChannels = 1; // 1 channel
-    wave_format.nSamplesPerSec = samples_per_second;
-    wave_format.nBlockAlign = wave_format.nChannels * bits_per_sample / 8;
+    wave_format.nSamplesPerSec = AUDIO_SAMPLES_PER_SECOND;
+    wave_format.nBlockAlign = wave_format.nChannels * AUDIO_BYTES_PER_SAMPLE;
     wave_format.nAvgBytesPerSec = wave_format.nSamplesPerSec * wave_format.nBlockAlign;
-    wave_format.wBitsPerSample = bits_per_sample;
+    wave_format.wBitsPerSample = AUDIO_BYTES_PER_SAMPLE*8;
     wave_format.cbSize = 0;
     
-    IXAudio2SourceVoice *audio_source_voice;
-    ASSERT(!FAILED(audio_instance->CreateSourceVoice(&audio_source_voice, &wave_format)));
-    
-    U8 *buffer = (byte *)mem_alloc(sizeof(byte) *audio_buffer_byte_count);
+    IXAudio2SourceVoice *xaudio2_source_voice;
+    ASSERT(SUCCEEDED(xaudio2_instance->CreateSourceVoice(&xaudio2_source_voice, &wave_format)));
     
     double phase = 0;
     U32 buffer_index = 0;
-    while (buffer_index < audio_buffer_byte_count)
+    while (buffer_index < AUDIO_BUFFER_SIZE)
     {
-        phase += (2.0f * 3.141592f) / samples_per_cycle;
-        I16 sample = (I16)(sin(phase) * INT16_MAX * volume);
-        buffer[buffer_index++] = (U8)sample; // Values are little-endian.
-        buffer[buffer_index++] = (U8)(sample >> 8);
+        phase += (2.0f * 3.141592f) / (AUDIO_SAMPLES_PER_SECOND / 220);
+        I16 sample = (I16)(sin(phase) * INT16_MAX * 0.01f);
+        buffer->data[buffer_index++] = (U8)sample; // Values are little-endian.
+        buffer->data[buffer_index++] = (U8)(sample >> 8);
     }
-    
-    U16 *buffer_view = (U16 *)buffer;
     
     XAUDIO2_BUFFER xaudio2_buffer{};
     xaudio2_buffer.Flags = XAUDIO2_END_OF_STREAM;
-    xaudio2_buffer.AudioBytes = audio_buffer_byte_count;
-    xaudio2_buffer.pAudioData = buffer;
+    xaudio2_buffer.AudioBytes = sizeof(buffer->data);
+    xaudio2_buffer.pAudioData = buffer->data;
     xaudio2_buffer.PlayBegin = 0;
     xaudio2_buffer.PlayLength = 0;
     xaudio2_buffer.LoopBegin = 0;
     xaudio2_buffer.LoopLength = 0;
     xaudio2_buffer.LoopCount = XAUDIO2_LOOP_INFINITE;
     
-    ASSERT(!FAILED(audio_source_voice->SubmitSourceBuffer(&xaudio2_buffer)));
-    ASSERT(!FAILED(audio_source_voice->Start()));
+    ASSERT(SUCCEEDED(xaudio2_source_voice->SubmitSourceBuffer(&xaudio2_buffer)));
+    ASSERT(SUCCEEDED(xaudio2_source_voice->Start()));
+    
+    return {xaudio2_instance, xaudio2_mastering_voice, xaudio2_source_voice};
 }
 
 
@@ -400,10 +394,6 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     framebuffer_size_callback(window, 1920, 1080);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     
-#if 1
-    initialize_xaudio2();
-#endif
-    
     
     game_memory.window = window;
     game_memory.get_file_last_write_time = get_file_last_write_time;
@@ -412,6 +402,8 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     game_memory.get_time = get_time;
     game_memory.sleep = sleep;
     game_memory.d_time = 0.06f;
+    
+    XAudio2Data xaudio2_data = initialize_xaudio2(&game_memory.audio_buffer);
     
     while(game_memory.game_running)
     {
@@ -445,6 +437,14 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         glfwSwapInterval(1);
         glfwSwapBuffers(window);
         glfwPollEvents();
+        
+        // Update xaudio2
+        {
+            XAUDIO2_VOICE_STATE xaudio2_voice_state = {0};
+            xaudio2_data.source_voice->GetState(&xaudio2_voice_state, 0);
+            game_memory.audio_buffer.play_cursor = xaudio2_voice_state.SamplesPlayed %
+            (sizeof(game_memory.audio_buffer.data) / 2);
+        }
         
         F64 frame_end_time = get_time();
         game_memory.d_time = frame_end_time - frame_start_time;

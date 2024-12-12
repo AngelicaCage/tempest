@@ -218,7 +218,7 @@ ui_draw_timing_pair(GameState *game_state, V2 pos, Float text_scale,
 }
 
 Void
-ui_draw_debug_interface(GameState *game_state, Float text_scale)
+ui_draw_debug_interface(GameState *game_state, GameMemory *game_memory, Float text_scale)
 {
     Char profile_text_buffer[100];
     V2 draw_pos = v2(0, 0);
@@ -355,6 +355,49 @@ ui_draw_debug_interface(GameState *game_state, Float text_scale)
         }
         ui_draw_rect(game_state, game_state->frame_profiles.start*(profile_width+horizontal_spacing) - 1, top, 2, max_height + extra_height, Color::red());
         ui_draw_rect(game_state, 0, bottom - max_height, game_state->frame_profiles.length*(profile_width+horizontal_spacing), 2, Color::blue());
+        draw_pos.y += max_height + extra_height;
+        draw_pos.y += 40;
     }
     
+    
+    // Draw audio buffer
+    {
+        Float sample_width = 1;
+        Float horizontal_spacing = 0;
+        Float height = 120;
+        Float width = 500;
+        
+        Float top = draw_pos.y;
+        Float bottom = top + height;
+        
+        Float center = top + height/2;
+        
+        AudioBuffer *buffer = &game_memory->audio_buffer;
+        Int sample_count = sizeof(buffer->data)/2;
+        I16 *samples = (I16 *)buffer->data;
+        
+        ui_draw_rect(game_state, 0, top, sample_count*(sample_width+horizontal_spacing), height, color(0, 0, 0, 0.4f));
+        
+        ui_draw_debug_text(game_state, v2(5, top+10), text_scale, "Audio Buffer", Color::white());
+        
+        //Int max = 1000;
+        for(Int i = 0; i < width; i++)
+        {
+            //Float fraction = profile->elapsed_time / profile->target_max_time;
+            // NOTE: convert two U8s to U16
+            Int sample_index = ((Float)i / (Float)width) * sample_count;
+            Float fraction = ((Float)samples[sample_index]) / (Float)32767;
+            
+            if(fraction < 0)
+            {
+                Int a = 2;
+            }
+            
+            Float sample_height = fraction * height;
+            Float sample_top = bottom - sample_height;
+            Float shade = 0.8f;
+            //ui_draw_rect(game_state, i*(sample_width+horizontal_spacing), sample_top, sample_width, sample_height, color(shade, shade, shade, 1.0f));
+            ui_draw_rect(game_state, i*(sample_width+horizontal_spacing), center + fraction*(height/2), 2, 2, color(shade, shade, shade, 1.0f));
+        }
+    }
 }

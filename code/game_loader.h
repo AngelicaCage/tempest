@@ -19,6 +19,18 @@ FileContents
     U64 size;
 };
 
+#define AUDIO_SAMPLES_PER_SECOND (44100)
+#define AUDIO_BYTES_PER_SAMPLE (2)
+#define AUDIO_BUFFER_SECONDS (0.5f)
+#define AUDIO_BUFFER_SIZE ((Float)AUDIO_SAMPLES_PER_SECOND / AUDIO_BUFFER_SECONDS)
+
+struct AudioBuffer
+{
+    Int play_cursor;
+    Int write_cursor;
+    U8 data[(Int)AUDIO_BUFFER_SIZE];
+};
+
 struct GameMemory
 {
     Bool game_running;
@@ -27,6 +39,8 @@ struct GameMemory
     Void *memory;
     U64 size;
     Bool allocated;
+    
+    AudioBuffer audio_buffer;
     
     Log *global_log;
     GLFWwindow *window;

@@ -46,6 +46,7 @@ Void (*sleep)(F64);
 #include "camera.cpp"
 
 #include "timing.cpp"
+#include "audio.cpp"
 #include "field.cpp"
 
 #define KEYDOWN(key) (glfwGetKey(game_memory->window, (key)) == GLFW_PRESS)
@@ -76,7 +77,6 @@ write_to_save_file(GameState *game_state)
 }
 
 #include "gameplay.cpp"
-
 
 
 extern "C" __declspec(dllexport) void __cdecl
@@ -374,5 +374,5 @@ update_and_render(GameMemory *game_memory)
     update_frame_timing_end(game_state);
     
     if(game_state->show_debug_interface)
-        ui_draw_debug_interface(game_state, text_scale);
+        ui_draw_debug_interface(game_state, game_memory, text_scale);
 }
