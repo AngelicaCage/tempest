@@ -315,14 +315,13 @@ initialize_xaudio2(AudioBuffer *buffer)
     {
         phase += (2.0f * 3.141592f) / (AUDIO_SAMPLES_PER_SECOND / 220);
         I16 sample = (I16)(sin(phase) * INT16_MAX * 0.01f);
-        buffer->data[buffer_index++] = (U8)sample; // Values are little-endian.
-        buffer->data[buffer_index++] = (U8)(sample >> 8);
+        buffer->data[buffer_index++] = sample;
     }
     
     XAUDIO2_BUFFER xaudio2_buffer{};
     xaudio2_buffer.Flags = XAUDIO2_END_OF_STREAM;
     xaudio2_buffer.AudioBytes = sizeof(buffer->data);
-    xaudio2_buffer.pAudioData = buffer->data;
+    xaudio2_buffer.pAudioData = (U8 *)buffer->data;
     xaudio2_buffer.PlayBegin = 0;
     xaudio2_buffer.PlayLength = 0;
     xaudio2_buffer.LoopBegin = 0;

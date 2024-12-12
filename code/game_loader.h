@@ -28,7 +28,7 @@ struct AudioBuffer
 {
     Int play_cursor;
     Int write_cursor;
-    U8 data[(Int)AUDIO_BUFFER_SIZE];
+    U16 data[(Int)AUDIO_BUFFER_SIZE];
 };
 
 struct GameMemory
