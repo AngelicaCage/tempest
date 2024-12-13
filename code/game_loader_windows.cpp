@@ -315,7 +315,8 @@ initialize_xaudio2(AudioBuffer *buffer)
     {
         phase += (2.0f * 3.141592f) / (AUDIO_SAMPLES_PER_SECOND / 220);
         I16 sample = (I16)(sin(phase) * INT16_MAX * 0.1f);
-        buffer->data[buffer_index++] = sample;
+        //buffer->data[buffer_index++] = sample;
+        buffer->data[buffer_index++] = 0;
     }
     
     XAUDIO2_BUFFER xaudio2_buffer{};
