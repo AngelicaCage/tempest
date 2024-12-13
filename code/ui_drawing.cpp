@@ -373,8 +373,7 @@ ui_draw_debug_interface(GameState *game_state, GameMemory *game_memory, Float te
         Float center = top + height/2;
         
         AudioBuffer *buffer = &game_memory->audio_buffer;
-        Int sample_count = sizeof(buffer->data)/2;
-        I16 *samples = (I16 *)buffer->data;
+        Int sample_count = sizeof(buffer->data) / sizeof(I16);
         
         ui_draw_rect(game_state, 0, top, width, height, color(0, 0, 0, 0.4f));
         
@@ -384,17 +383,16 @@ ui_draw_debug_interface(GameState *game_state, GameMemory *game_memory, Float te
         //Int max = 1000;
         for(Int i = 0; i < width; i++)
         {
-            //Float fraction = profile->elapsed_time / profile->target_max_time;
             // NOTE: convert two U8s to U16
             Int sample_index = ((Float)i / (Float)width) * sample_count;
             Int end = buffer->write_cursor;
             if(end - buffer->play_cursor < 0)
                 end = sample_count;
-            sample_index /= 20;
+            //sample_index /= 20;
             if(sample_index > sample_count)
                 break;
             //Int sample_index = buffer->play_cursor + ((Float)i / (Float)width) * (end - buffer->play_cursor);
-            Float fraction = ((Float)samples[sample_index]) / (Float)32767;
+            Float fraction = ((Float)buffer->data[sample_index]) / (Float)32767;
             
             if(fraction < 0)
             {

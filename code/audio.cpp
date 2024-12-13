@@ -42,8 +42,9 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
         note_index++;
     }
     if(note_index == 0) note_index = 1;
+    note_index -= 1;
     if(note_index < song_wave_data->notes.length)
-        hz = song_wave_data->notes[note_index - 1].hz;
+        hz = song_wave_data->notes[note_index].hz;
     
     
     F64 volume = 0.2;
