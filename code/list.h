@@ -106,14 +106,13 @@ struct List {
 };
 
 template <typename t>
-List<t> create_list()
+List<t> allocate_list()
 {
     List<t> res;
     res.allocated = false;
     res.allocate();
     return res;
 }
-
 
 template <typename T, Int length_allocated>
 struct InplaceStack

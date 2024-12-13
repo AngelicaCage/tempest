@@ -31,8 +31,21 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
     
     // Write audio starting at write cursor
     
-    F64 prev_hz = game_state->prev_hz;
     F64 hz = game_state->hz;
+    hz = 0;
+    SynthSongWaveData *song_wave_data = &game_state->test_song_wave_data;
+    F64 time_accumualted = 0;
+    Int note_index = 0;
+    while(time_accumualted < game_state->time_in_song)
+    {
+        time_accumualted += song_wave_data->notes[note_index].time;
+        note_index++;
+    }
+    if(note_index == 0) note_index = 1;
+    if(note_index < song_wave_data->notes.length)
+        hz = song_wave_data->notes[note_index - 1].hz;
+    
+    
     F64 volume = 0.2;
     F64 hz_scalar = 2.0*3.141592653589793/F64(AUDIO_SAMPLES_PER_SECOND);
     
@@ -44,8 +57,9 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
         buffer->data[buffer->write_cursor] = sin(x) * F64(I32_MAX)*volume;
         
         buffer->write_cursor = (buffer->write_cursor+1) % sample_count;
-        
         x += x_scalar;
     }
+    
     game_state->prev_sin_x = x;
+    game_state->time_in_song += F64(game_state->d_time);
 }

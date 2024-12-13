@@ -259,9 +259,12 @@ struct GameState
     Mesh rect_mesh;
     Mesh circle_mesh;
     
-    F64 prev_hz;
     F64 hz;
     F64 prev_sin_x;
+    
+    SynthSong test_song;
+    SynthSongWaveData test_song_wave_data;
+    F64 time_in_song;
 };
 
 #endif //GAME_H

@@ -34,6 +34,7 @@ Void (*sleep)(F64);
 
 #include "input.h"
 #include "gpu.h"
+#include "synth_song.h"
 #include "game.h"
 
 #include "math/vectors.cpp"
@@ -46,6 +47,7 @@ Void (*sleep)(F64);
 #include "camera.cpp"
 
 #include "timing.cpp"
+#include "synth_song.cpp"
 #include "audio.cpp"
 #include "field.cpp"
 
@@ -166,13 +168,13 @@ update_and_render(GameMemory *game_memory)
         player->lives = 3;
         player->powerup = PowerupType::none;
         game_state->kills = 0;
-        game_state->player_bullets = create_list<Bullet>();
+        game_state->player_bullets = allocate_list<Bullet>();
         game_state->life_lost_explosion_enabled = false;
         game_state->life_lost_explosion_radius = 0;
         
-        game_state->enemy_bullets = create_list<Bullet>();
-        game_state->enemies = create_list<Enemy>();
-        game_state->enemy_explosions = create_list<EnemyExplosion>();
+        game_state->enemy_bullets = allocate_list<Bullet>();
+        game_state->enemies = allocate_list<Enemy>();
+        game_state->enemy_explosions = allocate_list<EnemyExplosion>();
         
         generate_text_bitmaps(game_state);
         update_field_data(game_state, &(game_state->field));
@@ -232,8 +234,10 @@ update_and_render(GameMemory *game_memory)
         camera->orbit_distance = 10.0f;
         
         game_state->show_debug_interface = true;
-        game_state->hz = 220.0f;
-        game_state->prev_sin_x = 0;
+        game_state->hz = 261.0f;
+        game_state->test_song = create_test_song();
+        game_state->test_song_wave_data = convert_song_to_wave_data(&game_state->test_song);
+        game_state->time_in_song = 0;
     }
     game_state->target_fps = 144;
     game_state->fps = (sizeof(game_state->frame_profiles)/sizeof(FrameProfile)) /
@@ -349,7 +353,6 @@ update_and_render(GameMemory *game_memory)
         return;
     }
     
-    game_state->prev_hz = game_state->hz;
     Float d_hz = 0.5f;
     if(keys->up.is_down) game_state->hz += d_hz;
     if(keys->down.is_down) game_state->hz -= d_hz;

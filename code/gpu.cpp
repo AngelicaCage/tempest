@@ -96,7 +96,7 @@ gpu_delete_shader(UInt program_id, Shader *shader)
 Void
 gpu_shader_program_set_uniform_name_location_pairs(ShaderProgram *program)
 {
-    program->uniforms = create_list<SPUniformData>();
+    program->uniforms = allocate_list<SPUniformData>();
     
     Int uniform_count;
     glGetProgramiv(program->id, GL_ACTIVE_UNIFORMS, &uniform_count);
