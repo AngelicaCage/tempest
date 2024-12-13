@@ -139,6 +139,10 @@ note_get_time(NoteLength length, F64 seconds_per_quarter_note)
     {
         return 2*seconds_per_quarter_note;
     }
+    else if(length == NoteLength::three_quarters)
+    {
+        return 3*seconds_per_quarter_note;
+    }
     else if(length == NoteLength::whole)
     {
         return 4*seconds_per_quarter_note;
@@ -225,9 +229,9 @@ song_ode_to_joy()
     SynthSong song = {0};
     
     song.seconds_per_quarter_note = 0.5;
-    song.hands.push({0});
-    //song.hand_count = 1;
     
+    // Hand 1
+    song.hands.push({0});
     UInt octave = 4;
     song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
     song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
@@ -242,7 +246,7 @@ song_ode_to_joy()
     song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::quarter));
     song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
     song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::three_eighths));
-    song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::eighth));
     song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::half));
     
     song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
@@ -258,7 +262,7 @@ song_ode_to_joy()
     song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::quarter));
     song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
     song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::three_eighths));
-    song.push_note(0, create_note('d', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(0, create_note('d', octave, NoteSemitone::none, NoteLength::eighth));
     song.push_note(0, create_note('d', octave, NoteSemitone::none, NoteLength::half));
     
     song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::quarter));
@@ -296,12 +300,58 @@ song_ode_to_joy()
     song.push_note(0, create_note('d', octave, NoteSemitone::none, NoteLength::eighth));
     song.push_note(0, create_note('d', octave, NoteSemitone::none, NoteLength::half));
     
+    // Hand 2
+    song.hands.push({0});
+    octave = octave - 1;
+    song.push_note(1, create_note('d', octave, NoteSemitone::none, NoteLength::whole));
+    song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::three_quarters));
+    song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(1, create_note('d', octave, NoteSemitone::none, NoteLength::half));
+    song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(1, create_note('d', octave+1, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::half));
+    song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::half));
+    
+    song.push_note(1, create_note('d', octave, NoteSemitone::none, NoteLength::whole));
+    song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::three_quarters));
+    song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(1, create_note('d', octave, NoteSemitone::none, NoteLength::half));
+    song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(1, create_note('d', octave+1, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::half));
+    song.push_note(1, create_note('d', octave, NoteSemitone::none, NoteLength::half));
+    
+    song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::half));
+    song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::half));
+    song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::half));
+    song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::half));
+    song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::half));
+    song.push_note(1, create_note('a', octave, NoteSemitone::sharp, NoteLength::half));
+    song.push_note(1, create_note('b', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(1, create_note('g', octave, NoteSemitone::sharp, NoteLength::quarter));
+    song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::half));
+    
+    song.push_note(1, create_note('d', octave+1, NoteSemitone::none, NoteLength::half));
+    song.push_note(1, create_note('c', octave+1, NoteSemitone::natural, NoteLength::half));
+    song.push_note(1, create_note('b', octave, NoteSemitone::none, NoteLength::half));
+    song.push_note(1, create_note('g', octave, NoteSemitone::none, NoteLength::half));
+    song.push_note(1, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(1, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(1, create_note('d', octave+1, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::half));
+    song.push_note(1, create_note('d', octave, NoteSemitone::none, NoteLength::half));
+    
+    //song.push_note(1, create_note('', octave, NoteSemitone::none, NoteLength::quarter));
+    
+    
+    
     for(Int a = 0; a < song.hands.length && a < MAX_HANDS_PER_SONG; a++)
     {
         for(Int i = 0; i < song.hands[a].notes.length; i++)
         {
             Note *note = &song.hands[a].notes[i];
-            if(note->letter == 'c' || note->letter == 'f')
+            if((note->letter == 'c' || note->letter == 'f') && note->semitone != NoteSemitone::natural)
                 note->semitone = NoteSemitone::sharp;
             
             //log("%c%c", note->letter, note->semitone == NoteSemitone::sharp ? '#' : ' ');

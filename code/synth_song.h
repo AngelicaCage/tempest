@@ -9,6 +9,7 @@
 enum class NoteSemitone
 {
     none,
+    natural,
     flat,
     sharp
 };
@@ -19,6 +20,7 @@ enum class NoteLength
     quarter,
     three_eighths,
     half,
+    three_quarters,
     whole,
 };
 

@@ -40,9 +40,16 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
         Int note_index = 0;
         while(time_accumualted < game_state->time_in_song)
         {
+            if(note_index >= hand->notes.length)
+            {
+                note_index = -1;
+                break;
+            }
             time_accumualted += hand->notes[note_index].time;
             note_index++;
         }
+        if(note_index < 0)
+            continue;
         if(note_index == 0) note_index = 1;
         note_index -= 1;
         if(note_index < song_wave_data->hands[a].notes.length)
