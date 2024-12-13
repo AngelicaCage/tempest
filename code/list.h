@@ -120,16 +120,16 @@ struct InplaceStack
     T data[length_allocated];
     Int length = 0;
     
-    Void push(T element) {
+    inline Void push(T element) {
         if(length < length_allocated - 1) {
             data[length] = element;
             length++;
         }
     }
-    Void pop() {
+    inline Void pop() {
         length--;
     }
-    T& operator[](Int index) {
+    inline T& operator[](Int index) {
         return data[index];
     }
 };

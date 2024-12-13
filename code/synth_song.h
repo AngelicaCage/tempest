@@ -6,6 +6,7 @@
 #define MAX_NOTE_COUNT 100
 #define MAX_HANDS_PER_SONG 10
 #define NOTE_GROUP_MAX_NOTE_COUNT 5
+#define MAX_NOTES_PLAYING_PER_HAND 5
 
 enum class NoteSemitone
 {
@@ -27,21 +28,19 @@ enum class NoteLength
 
 struct Note
 {
+    Bool is_rest;
+    Bool forms_chord_with_next;
+    
+    NoteLength length;
+    
     UInt octave;
     Char letter;
     NoteSemitone semitone;
 };
 
-struct NoteGroup
-{
-    Bool is_rest;
-    InplaceStack<Note, NOTE_GROUP_MAX_NOTE_COUNT> notes;
-    NoteLength length;
-};
-
 struct Hand
 {
-    InplaceStack<NoteGroup, MAX_NOTE_COUNT> note_groups;
+    InplaceStack<Note, MAX_NOTE_COUNT> notes;
 };
 
 struct SynthSong
@@ -49,27 +48,20 @@ struct SynthSong
     F64 seconds_per_quarter_note;
     InplaceStack<Hand, MAX_HANDS_PER_SONG> hands;
     
-    Void push_note_group(Int hand, NoteLength length, Note note1);
-    Void push_note(Int hand, NoteLength length, Note note);
-    Void push_rest(Int hand, NoteLength length);
+    Void push_note(Int hand, Note note);
 };
 
 struct NoteWaveData
 {
     F64 frequency;
-    
-    F64 play_x;
-};
-struct NoteWaveDataGroup
-{
-    InplaceStack<NoteWaveData, NOTE_GROUP_MAX_NOTE_COUNT> notes;
     F64 time;
+    Bool forms_chord_with_next;
 };
 
 struct HandWaveData
 {
-    InplaceStack<NoteWaveDataGroup, MAX_NOTE_COUNT> note_groups;
-    Int play_note_group_index;
+    InplaceStack<NoteWaveData, MAX_NOTE_COUNT> notes;
+    F64 play_xs[MAX_NOTES_PLAYING_PER_HAND];
 };
 
 struct SynthSongWaveData

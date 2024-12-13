@@ -1,45 +1,28 @@
 
-
 Void
-SynthSong::push_note_group(Int hand, NoteLength length, Note note1)
+SynthSong::push_note(Int hand, Note note)
 {
-    NoteGroup group = {0};
-    group.is_rest = false;
-    group.notes.push(note1);
-    
-    hands[hand].note_groups.push(group);
-}
-Void
-SynthSong::push_rest(Int hand, NoteLength length)
-{
-    NoteGroup group = {0};
-    group.is_rest = false;
-    
-    hands[hand].note_groups.push(group);
-}
-Void
-SynthSong::push_note(Int hand, NoteLength length, Note note)
-{
-    push_note_group(hand, length, note);
+    hands[hand].notes.push(note);
 }
 
 
-NoteGroup create_rest(NoteLength length)
+Note create_rest(NoteLength length)
 {
-    NoteGroup result = {0};
+    Note result = {0};
     
     result.is_rest = true;
     result.length = length;
     
     return result;
 }
-Note create_note(Char letter, UInt octave, NoteSemitone semitone)
+Note create_note(Char letter, UInt octave, NoteSemitone semitone, NoteLength length)
 {
     Note result = {0};
     
     result.letter = letter;
     result.octave = octave;
     result.semitone = semitone;
+    result.length = length;
     
     return result;
 }
@@ -172,31 +155,25 @@ convert_song_to_wave_data(SynthSong *song)
     SynthSongWaveData song_wave_data = {0};
     
     F64 time_so_far = 0;
-    for(Int a = 0; a < song->hands.length && a < MAX_HANDS_PER_SONG; a++)
+    for(Int i = 0; i < song->hands.length && i < MAX_HANDS_PER_SONG; i++)
     {
-        Hand *hand = &song->hands[a];
-        
+        Hand *hand = &song->hands[i];
         HandWaveData new_hand_wave_data = {0};
         
-        for(Int i = 0; i < hand->note_groups.length; i++)
+        for(Int j = 0; j < hand->notes.length; j++)
         {
-            NoteGroup *group = &hand->note_groups[i];
-            NoteWaveDataGroup new_group = {0};
+            Note *note = &hand->notes[j];
+            NoteWaveData new_note_wave_data = {0};
             
-            new_group.time = note_get_time(group->length, song->seconds_per_quarter_note);
+            if(note->is_rest)
+                new_note_wave_data.frequency = 0;
+            else
+                new_note_wave_data.frequency = note_get_frequency(note->letter, note->semitone, note->octave);
             
+            new_note_wave_data.time = note_get_time(note->length, song->seconds_per_quarter_note);
+            new_note_wave_data.forms_chord_with_next = note->forms_chord_with_next;
             
-            for(Int j = 0; j < group->notes.length; j++)
-            {
-                Note note = group->notes[j];
-                NoteWaveData new_note_wave_data = {0};
-                
-                new_note_wave_data.frequency = note_get_frequency(note.letter, note.semitone, note.octave);
-                
-                //hand_wave_data->notes.push(wave_data);
-                new_group.notes.push(new_note_wave_data);
-            }
-            new_hand_wave_data.note_groups.push(new_group);
+            new_hand_wave_data.notes.push(new_note_wave_data);
         }
         song_wave_data.hands.push(new_hand_wave_data);
     }
@@ -212,39 +189,34 @@ song_convert_flats_to_sharps(SynthSong *song)
     {
         Hand *hand = &song->hands[i];
         
-        for(Int j = 0; j < hand->note_groups.length; j++)
+        for(Int j = 0; j < hand->notes.length; j++)
         {
-            NoteGroup *group = &hand->note_groups[j];
+            Note *note = &hand->notes[j];
             
-            for(Int k = 0; k < group->notes.length; k++)
+            if(note->letter == 'd' && note->semitone == NoteSemitone::flat)
             {
-                Note *note = &group->notes[k];
-                
-                if(note->letter == 'd' && note->semitone == NoteSemitone::flat)
-                {
-                    note->letter = 'c';
-                    note->semitone = NoteSemitone::sharp;
-                }
-                else if(note->letter == 'e' && note->semitone == NoteSemitone::flat)
-                {
-                    note->letter = 'e';
-                    note->semitone = NoteSemitone::sharp;
-                }
-                else if(note->letter == 'g' && note->semitone == NoteSemitone::flat)
-                {
-                    note->letter = 'f';
-                    note->semitone = NoteSemitone::sharp;
-                }
-                else if(note->letter == 'a' && note->semitone == NoteSemitone::flat)
-                {
-                    note->letter = 'g';
-                    note->semitone = NoteSemitone::sharp;
-                }
-                else if(note->letter == 'b' && note->semitone == NoteSemitone::flat)
-                {
-                    note->letter = 'a';
-                    note->semitone = NoteSemitone::sharp;
-                }
+                note->letter = 'c';
+                note->semitone = NoteSemitone::sharp;
+            }
+            else if(note->letter == 'e' && note->semitone == NoteSemitone::flat)
+            {
+                note->letter = 'e';
+                note->semitone = NoteSemitone::sharp;
+            }
+            else if(note->letter == 'g' && note->semitone == NoteSemitone::flat)
+            {
+                note->letter = 'f';
+                note->semitone = NoteSemitone::sharp;
+            }
+            else if(note->letter == 'a' && note->semitone == NoteSemitone::flat)
+            {
+                note->letter = 'g';
+                note->semitone = NoteSemitone::sharp;
+            }
+            else if(note->letter == 'b' && note->semitone == NoteSemitone::flat)
+            {
+                note->letter = 'a';
+                note->semitone = NoteSemitone::sharp;
             }
         }
     }
@@ -261,24 +233,23 @@ song_ode_to_joy()
     song.hands.push({0});
     UInt octave = 4;
     
-    song.push_rest(0, NoteLength::quarter);
+    song.push_note(0, create_rest(NoteLength::quarter));
     
-    song.push_note(0, NoteLength::quarter, create_note('f', octave, NoteSemitone::none));
-    song.push_note(0, NoteLength::quarter, create_note('f', octave, NoteSemitone::none));
-    song.push_note(0, NoteLength::quarter, create_note('g', octave, NoteSemitone::none));
-    song.push_note(0, NoteLength::quarter, create_note('a', octave, NoteSemitone::none));
-    song.push_note(0, NoteLength::quarter, create_note('a', octave, NoteSemitone::none));
-    song.push_note(0, NoteLength::quarter, create_note('g', octave, NoteSemitone::none));
-    song.push_note(0, NoteLength::quarter, create_note('f', octave, NoteSemitone::none));
-    song.push_note(0, NoteLength::quarter, create_note('e', octave, NoteSemitone::none));
-    song.push_note(0, NoteLength::quarter, create_note('d', octave, NoteSemitone::none));
-    song.push_note(0, NoteLength::quarter, create_note('d', octave, NoteSemitone::none));
-    song.push_note(0, NoteLength::quarter, create_note('e', octave, NoteSemitone::none));
-    song.push_note(0, NoteLength::quarter, create_note('f', octave, NoteSemitone::none));
-    song.push_note(0, NoteLength::three_eighths, create_note('f', octave, NoteSemitone::none));
-    song.push_note(0, NoteLength::eighth, create_note('e', octave, NoteSemitone::none));
-    song.push_note(0, NoteLength::half, create_note('e', octave, NoteSemitone::none));
-#if 0
+    song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(0, create_note('g', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(0, create_note('a', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(0, create_note('a', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(0, create_note('g', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(0, create_note('d', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(0, create_note('d', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::three_eighths));
+    song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::half));
     
     song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
     song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
@@ -303,7 +274,7 @@ song_ode_to_joy()
     song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::quarter));
     song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::eighth));
     song.push_note(0, create_note('g', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('g', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
     song.push_note(0, create_note('d', octave, NoteSemitone::none, NoteLength::quarter));
     song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::quarter));
     song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::eighth));
@@ -332,6 +303,7 @@ song_ode_to_joy()
     song.push_note(0, create_note('d', octave, NoteSemitone::none, NoteLength::half));
     
     // Hand 2
+#if 1
     song.hands.push({0});
     octave = octave - 1;
     
@@ -384,32 +356,13 @@ song_ode_to_joy()
     {
         Hand *hand = &song.hands[i];
         
-        for(Int j = 0; j < hand->note_groups.length; j++)
+        for(Int j = 0; j < hand->notes.length; j++)
         {
-            NoteGroup *group = &hand->note_groups[j];
-            
-            for(Int k = 0; k < group->notes.length; k++)
-            {
-                Note *note = &group->notes[k];
-                if((note->letter == 'c' || note->letter == 'f') && note->semitone != NoteSemitone::natural)
-                    note->semitone = NoteSemitone::sharp;
-            }
-        }
-    }
-    
-#if 0
-    for(Int a = 0; a < song.hands.length && a < MAX_HANDS_PER_SONG; a++)
-    {
-        for(Int i = 0; i < song.hands[a].notes.length; i++)
-        {
-            Note *note = &song.hands[a].notes[i];
+            Note *note = &hand->notes[j];
             if((note->letter == 'c' || note->letter == 'f') && note->semitone != NoteSemitone::natural)
                 note->semitone = NoteSemitone::sharp;
-            
-            //log("%c%c", note->letter, note->semitone == NoteSemitone::sharp ? '#' : ' ');
         }
     }
-#endif
     
     return song;
 }

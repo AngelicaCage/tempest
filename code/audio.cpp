@@ -31,13 +31,12 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
     
     // Write audio starting at write cursor
     
+    Int write_cursor_copy = buffer->write_cursor;
+    
+    for(Int k = 0; k < samples_to_write; k++)
     {
-        Int write_cursor_copy = buffer->write_cursor;
-        for(Int k = 0; k < samples_to_write; k++)
-        {
-            buffer->data[write_cursor_copy] = 0;
-            write_cursor_copy = (write_cursor_copy+1) % sample_count;
-        }
+        buffer->data[write_cursor_copy] = 0;
+        write_cursor_copy = (write_cursor_copy+1) % sample_count;
     }
     
     F64 volume = 0.2;
@@ -45,97 +44,52 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
     
     SynthSongWaveData *song = &game_state->test_song_wave_data;
     
+    // Write sound data for each hand
     for(Int i = 0; i < song->hands.length && i < MAX_HANDS_PER_SONG; i++)
     {
         HandWaveData *hand = &song->hands[i];
-        hand->play_note_group_index = 0;
         
-        F64 time_accumualted = 0;
-        while(time_accumualted < game_state->time_in_song)
+        // Get playing note index for the hand
+        Int note_play_index = 0;
+        F64 time_accumulated = 0;
+        
+        while(time_accumulated < game_state->time_in_song)
         {
-            if(hand->play_note_group_index >= hand->note_groups.length)
-            {
-                hand->play_note_group_index = -1;
+            if(note_play_index > hand->notes.length)
                 break;
-            }
-            time_accumualted += hand->note_groups[hand->play_note_group_index].time;
-            hand->play_note_group_index++;
+            
+            time_accumulated += hand->notes[note_play_index].time;
+            note_play_index++;
         }
         
-        if(hand->play_note_group_index == 0) hand->play_note_group_index = 1;
-        hand->play_note_group_index -= 1;
-        
-        if(hand->play_note_group_index < 0)
+        note_play_index--;
+        if(note_play_index >= hand->notes.length)
             continue;
-        NoteWaveDataGroup *group = &hand->note_groups[hand->play_note_group_index];
         
-        Int write_cursor_copy = buffer->write_cursor;
-        for(Int i = 0; i < group->notes.length; i++)
+        if(note_play_index < 0) note_play_index = 0;
+        
+        
+        Int notes_playing = 1;
+        while(hand->notes[note_play_index+(notes_playing-1)].forms_chord_with_next)
+            notes_playing++;
+        
+        for(Int j = 0; j < notes_playing; j++)
         {
             write_cursor_copy = buffer->write_cursor;
-            NoteWaveData *note = &group->notes[i];
+            
+            NoteWaveData *note = &hand->notes[note_play_index + j];
             F64 x_scalar = note->frequency * hz_scalar;
+            F64 *play_x_to_use = &(hand->play_xs[0]);
             
             for(Int k = 0; k < samples_to_write; k++)
             {
-                buffer->data[write_cursor_copy] += sin(note->play_x) * F64(I32_MAX)*volume;
-                note->play_x += x_scalar;
+                buffer->data[write_cursor_copy] += sin(*play_x_to_use) * F64(I32_MAX)*volume;
+                *play_x_to_use += x_scalar;
                 write_cursor_copy = (write_cursor_copy+1) % sample_count;
             }
         }
-        
-        buffer->write_cursor = write_cursor_copy;
     }
+    
+    buffer->write_cursor = write_cursor_copy;
     game_state->time_in_song += F64(game_state->d_time);
-    
-#if 0
-    SynthSongWaveData *song_wave_data = &game_state->test_song_wave_data;
-    for(Int a = 0; a < song_wave_data->hands.length; a++)
-    {
-        HandWaveData *hand = &song_wave_data->hands[a];
-        hand->hz = 0;
-        F64 time_accumualted = 0;
-        Int note_index = 0;
-        while(time_accumualted < game_state->time_in_song)
-        {
-            if(note_index >= hand->notes.length)
-            {
-                note_index = -1;
-                break;
-            }
-            time_accumualted += hand->notes[note_index].time;
-            note_index++;
-        }
-        if(note_index < 0)
-            continue;
-        if(note_index == 0) note_index = 1;
-        note_index -= 1;
-        if(note_index < song_wave_data->hands[a].notes.length)
-            hand->hz = song_wave_data->hands[a].notes[note_index].hz;
-    }
-    
-    
-    F64 volume = 0.2;
-    F64 hz_scalar = 2.0*3.141592653589793/F64(AUDIO_SAMPLES_PER_SECOND);
-    
-    
-    for(Int i = 0; i < samples_to_write; i++)
-    {
-        buffer->data[buffer->write_cursor] = 0;
-        
-        for(Int a = 0; a < song_wave_data->hands.length; a++)
-        {
-            HandWaveData *hand = &song_wave_data->hands[a];
-            F64 x_scalar = hand->hz * hz_scalar;
-            
-            buffer->data[buffer->write_cursor] += sin(hand->x) * F64(I32_MAX)*volume;
-            
-            hand->x += x_scalar;
-        }
-        
-        buffer->write_cursor = (buffer->write_cursor+1) % sample_count;
-    }
-    
-    game_state->time_in_song += F64(game_state->d_time);
-#endif
 }
