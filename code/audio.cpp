@@ -36,57 +36,32 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
     
     U64 total_samples_written = buffer->total_samples_played + cursor_diff;
     
-    //F64 hz = 220.0;
-    Float hz = game_state->prev_hz;
-    Float target_hz = game_state->hz;
-    //log("%f -> %f", hz, target_hz);
-    
-    
-    Float target_x_multiplier = 0.06f;
-    if(game_state->input.keys.y.is_down)
-        target_x_multiplier = 0.05f;
-    
-    if(game_state->input.keys.k.is_down)
-    {
-        Int a = 2000;
-    }
-    
-    //Int prev_x = total_samples_written * Float(2.0*3.141592/(((F64)AUDIO_SAMPLES_PER_SECOND)/(F64)game_state->prev_hz));
-    
+    Float prev_hz = game_state->prev_hz;
+    Float hz = game_state->hz;
+    Float volume = 0.2f;
     Float hz_scalar = 2.0*3.141592/Float(AUDIO_SAMPLES_PER_SECOND);
-    Float start_samples_written = total_samples_written;
+    
+    // use prev y pos to find an x offset??
+    //Float prev_y = sinf(prev_hz*hz_scalar*game_state->prev_frame_end_index);
+    //Float wavelength = hz_scalar;
+    //Float index = asinf(prev_y) / (hz * hz_scalar);
+    //Float index = 0;
+    
+    Float index = game_state->prev_frame_end_index * prev_hz / hz;
     
     for(Int i = 0; i < samples_to_write; i++)
     {
-        Float actual_hz = interpolate(hz, target_hz, ((Float)i)/((Float)samples_to_write));
-        if(hz < target_hz)
-        {
-            ASSERT(actual_hz <= target_hz);
-            ASSERT(actual_hz >= hz);
-        }
-        else if(hz > target_hz)
-        {
-            ASSERT(actual_hz >= target_hz);
-            ASSERT(actual_hz <= hz);
-        }
+        Float x_scalar = hz * hz_scalar;
+        //log("%lf", x_scalar);
         
+        // Treat our start position as 0, construct sin functions around that
+        Float x = x_scalar*index;
         
-        Float x_scalar = actual_hz * hz_scalar;
-        log("%lf", x_scalar);
-        
-        // I think that the change gets stretched out based on total_samples_written and that screws things up?
-        
-        // Treat our start position as 0, construct sin functions around that?
-        
-        Float x = x_scalar*(Float(total_samples_written)-start_samples_written);
-        
-        Float volume = 0.2f;
         buffer->data[buffer->write_cursor] = sinf(x) * Float(I32_MAX)*volume;
         
         total_samples_written++;
         buffer->write_cursor = (buffer->write_cursor+1) % sample_count;
-        
-        //prev_x = adj_x;
-        game_state->prev_frame_end_x = x;
+        index++;
     }
+    game_state->prev_frame_end_index = index;
 }

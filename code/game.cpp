@@ -233,7 +233,7 @@ update_and_render(GameMemory *game_memory)
         
         game_state->show_debug_interface = true;
         game_state->hz = 220.0f;
-        game_state->prev_frame_end_x = 0;
+        game_state->prev_frame_end_index = 0;
     }
     game_state->target_fps = 144;
     game_state->fps = (sizeof(game_state->frame_profiles)/sizeof(FrameProfile)) /

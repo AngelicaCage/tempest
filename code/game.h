@@ -261,7 +261,7 @@ struct GameState
     
     Float prev_hz;
     Float hz;
-    Float prev_frame_end_x;
+    Float prev_frame_end_index;
 };
 
 #endif //GAME_H
