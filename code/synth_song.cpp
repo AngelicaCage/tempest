@@ -50,7 +50,7 @@ note_get_frequency(Char letter, NoteSemitone semitone, UInt octave)
 {
     if(letter == 'c')
     {
-        if(semitone == NoteSemitone::none)
+        if(semitone == NoteSemitone::none || semitone == NoteSemitone::natural)
         {
             return note_frequencies[0][octave-1];
         }
@@ -61,7 +61,7 @@ note_get_frequency(Char letter, NoteSemitone semitone, UInt octave)
     }
     else if(letter == 'd')
     {
-        if(semitone == NoteSemitone::none)
+        if(semitone == NoteSemitone::none || semitone == NoteSemitone::natural)
         {
             return note_frequencies[2][octave-1];
         }
@@ -72,14 +72,14 @@ note_get_frequency(Char letter, NoteSemitone semitone, UInt octave)
     }
     else if(letter == 'e')
     {
-        if(semitone == NoteSemitone::none)
+        if(semitone == NoteSemitone::none || semitone == NoteSemitone::natural)
         {
             return note_frequencies[4][octave-1];
         }
     }
     else if(letter == 'f')
     {
-        if(semitone == NoteSemitone::none)
+        if(semitone == NoteSemitone::none || semitone == NoteSemitone::natural)
         {
             return note_frequencies[5][octave-1];
         }
@@ -89,7 +89,7 @@ note_get_frequency(Char letter, NoteSemitone semitone, UInt octave)
     }
     else if(letter == 'g')
     {
-        if(semitone == NoteSemitone::none)
+        if(semitone == NoteSemitone::none || semitone == NoteSemitone::natural)
         {
             return note_frequencies[7][octave-1];
         }
@@ -100,7 +100,7 @@ note_get_frequency(Char letter, NoteSemitone semitone, UInt octave)
     }
     else if(letter == 'a')
     {
-        if(semitone == NoteSemitone::none)
+        if(semitone == NoteSemitone::none || semitone == NoteSemitone::natural)
         {
             return note_frequencies[9][octave-1];
         }
@@ -111,7 +111,7 @@ note_get_frequency(Char letter, NoteSemitone semitone, UInt octave)
     }
     else if(letter == 'b')
     {
-        if(semitone == NoteSemitone::none)
+        if(semitone == NoteSemitone::none || semitone == NoteSemitone::natural)
         {
             return note_frequencies[11][octave-1];
         }
@@ -233,6 +233,9 @@ song_ode_to_joy()
     // Hand 1
     song.hands.push({0});
     UInt octave = 4;
+    
+    song.push_note(0, create_rest(NoteLength::quarter));
+    
     song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
     song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
     song.push_note(0, create_note('g', octave, NoteSemitone::none, NoteLength::quarter));
@@ -272,7 +275,7 @@ song_ode_to_joy()
     song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::quarter));
     song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::eighth));
     song.push_note(0, create_note('g', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(0, create_note('g', octave, NoteSemitone::none, NoteLength::quarter));
     song.push_note(0, create_note('d', octave, NoteSemitone::none, NoteLength::quarter));
     song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::quarter));
     song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::eighth));
@@ -303,6 +306,9 @@ song_ode_to_joy()
     // Hand 2
     song.hands.push({0});
     octave = octave - 1;
+    
+    song.push_note(1, create_rest(NoteLength::quarter));
+    
     song.push_note(1, create_note('d', octave, NoteSemitone::none, NoteLength::whole));
     song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::three_quarters));
     song.push_note(1, create_note('a', octave, NoteSemitone::none, NoteLength::quarter));

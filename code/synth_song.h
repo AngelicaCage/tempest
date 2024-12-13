@@ -60,7 +60,6 @@ struct HandWaveData
     InplaceStack<NoteWaveData, MAX_NOTE_COUNT> notes;
 };
 
-
 struct SynthSongWaveData
 {
     InplaceStack<HandWaveData, MAX_HANDS_PER_SONG> hands;
