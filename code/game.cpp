@@ -234,7 +234,7 @@ update_and_render(GameMemory *game_memory)
         camera->orbit_distance = 10.0f;
         
         game_state->show_debug_interface = true;
-        game_state->hz = 261.0f;
+        
         game_state->test_song = song_ode_to_joy();
         game_state->test_song_wave_data = convert_song_to_wave_data(&game_state->test_song);
         game_state->time_in_song = 0;
@@ -353,9 +353,6 @@ update_and_render(GameMemory *game_memory)
         return;
     }
     
-    Float d_hz = 0.5f;
-    if(keys->up.is_down) game_state->hz += d_hz;
-    if(keys->down.is_down) game_state->hz -= d_hz;
     write_frame_audio(game_state, &game_memory->audio_buffer);
     
 #ifndef TEMPEST_RELEASE

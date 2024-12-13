@@ -31,35 +31,46 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
     
     // Write audio starting at write cursor
     
-    F64 hz = 0;
     SynthSongWaveData *song_wave_data = &game_state->test_song_wave_data;
-    F64 time_accumualted = 0;
-    Int note_index = 0;
-    while(time_accumualted < game_state->time_in_song)
+    for(Int a = 0; a < song_wave_data->hands.length; a++)
     {
-        time_accumualted += song_wave_data->hands[0].notes[note_index].time;
-        note_index++;
+        HandWaveData *hand = &song_wave_data->hands[a];
+        hand->hz = 0;
+        F64 time_accumualted = 0;
+        Int note_index = 0;
+        while(time_accumualted < game_state->time_in_song)
+        {
+            time_accumualted += hand->notes[note_index].time;
+            note_index++;
+        }
+        if(note_index == 0) note_index = 1;
+        note_index -= 1;
+        if(note_index < song_wave_data->hands[a].notes.length)
+            hand->hz = song_wave_data->hands[a].notes[note_index].hz;
+        
     }
-    if(note_index == 0) note_index = 1;
-    note_index -= 1;
-    if(note_index < song_wave_data->hands[0].notes.length)
-        hz = song_wave_data->hands[0].notes[note_index].hz;
     
     
     F64 volume = 0.2;
     F64 hz_scalar = 2.0*3.141592653589793/F64(AUDIO_SAMPLES_PER_SECOND);
     
-    F64 x_scalar = hz * hz_scalar;
-    F64 x = game_state->prev_sin_x;
     
     for(Int i = 0; i < samples_to_write; i++)
     {
-        buffer->data[buffer->write_cursor] = sin(x) * F64(I32_MAX)*volume;
+        buffer->data[buffer->write_cursor] = 0;
+        
+        for(Int a = 0; a < song_wave_data->hands.length; a++)
+        {
+            HandWaveData *hand = &song_wave_data->hands[a];
+            F64 x_scalar = hand->hz * hz_scalar;
+            
+            buffer->data[buffer->write_cursor] += sin(hand->x) * F64(I32_MAX)*volume;
+            
+            hand->x += x_scalar;
+        }
         
         buffer->write_cursor = (buffer->write_cursor+1) % sample_count;
-        x += x_scalar;
     }
     
-    game_state->prev_sin_x = x;
     game_state->time_in_song += F64(game_state->d_time);
 }

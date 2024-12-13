@@ -40,8 +40,7 @@ struct Hand
 struct SynthSong
 {
     F64 seconds_per_quarter_note;
-    Int hand_count;
-    Hand hands[MAX_HANDS_PER_SONG];
+    InplaceStack<Hand, MAX_HANDS_PER_SONG> hands;
     
     Void push_note(Int hand, Note note);
 };
@@ -54,13 +53,15 @@ struct NoteWaveData
 
 struct HandWaveData
 {
+    F64 x;
+    F64 hz;
     InplaceStack<NoteWaveData, MAX_NOTE_COUNT> notes;
 };
 
 
 struct SynthSongWaveData
 {
-    HandWaveData hands[MAX_HANDS_PER_SONG];
+    InplaceStack<HandWaveData, MAX_HANDS_PER_SONG> hands;
 };
 
 #endif //SYNTH_SONG_H

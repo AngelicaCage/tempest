@@ -10,6 +10,7 @@ Note create_note(Char letter, UInt octave, NoteSemitone semitone, NoteLength len
 {
     Note result = {0};
     
+    result.is_rest = false;
     result.letter = letter;
     result.octave = octave;
     result.semitone = semitone;
@@ -151,11 +152,19 @@ convert_song_to_wave_data(SynthSong *song)
     SynthSongWaveData song_wave_data = {0};
     
     F64 time_so_far = 0;
-    for(Int a = 0; a < song->hand_count && a < MAX_HANDS_PER_SONG; a++)
+    for(Int a = 0; a < song->hands.length && a < MAX_HANDS_PER_SONG; a++)
     {
-        for(Int i = 0; i < song->hands[a].notes.length; i++)
+        Hand *hand = &song->hands[a];
+        
+        song_wave_data.hands.push({0});
+        HandWaveData *hand_wave_data = &song_wave_data.hands[a];
+        
+        hand_wave_data->x = 0;
+        hand_wave_data->hz = 0;
+        
+        for(Int i = 0; i < hand->notes.length; i++)
         {
-            Note note = song->hands[a].notes[i];
+            Note note = hand->notes[i];
             NoteWaveData wave_data = {0};
             
             if(note.is_rest)
@@ -164,7 +173,7 @@ convert_song_to_wave_data(SynthSong *song)
                 wave_data.hz = note_get_frequency(note.letter, note.semitone, note.octave);
             wave_data.time = note_get_time(note.length, song->seconds_per_quarter_note);
             
-            song_wave_data.hands[a].notes.push(wave_data);
+            hand_wave_data->notes.push(wave_data);
         }
     }
     
@@ -175,7 +184,7 @@ convert_song_to_wave_data(SynthSong *song)
 Void
 song_convert_flats_to_sharps(SynthSong *song)
 {
-    for(Int a = 0; a < song->hand_count && a < MAX_HANDS_PER_SONG; a++)
+    for(Int a = 0; a < song->hands.length && a < MAX_HANDS_PER_SONG; a++)
     {
         for(Int i = 0; i < song->hands[a].notes.length; i++)
         {
@@ -216,7 +225,8 @@ song_ode_to_joy()
     SynthSong song = {0};
     
     song.seconds_per_quarter_note = 0.5;
-    song.hand_count = 1;
+    song.hands.push({0});
+    //song.hand_count = 1;
     
     UInt octave = 4;
     song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
@@ -286,7 +296,7 @@ song_ode_to_joy()
     song.push_note(0, create_note('d', octave, NoteSemitone::none, NoteLength::eighth));
     song.push_note(0, create_note('d', octave, NoteSemitone::none, NoteLength::half));
     
-    for(Int a = 0; a < song.hand_count && a < MAX_HANDS_PER_SONG; a++)
+    for(Int a = 0; a < song.hands.length && a < MAX_HANDS_PER_SONG; a++)
     {
         for(Int i = 0; i < song.hands[a].notes.length; i++)
         {
