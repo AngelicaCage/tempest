@@ -31,37 +31,21 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
     
     // Write audio starting at write cursor
     
-    // get_time() and extrapolate based on AUDIO_SAMPLES_PER_SECOND
-    F64 seconds_per_sample = 1.0 / (F64)AUDIO_SAMPLES_PER_SECOND;
+    F64 prev_hz = game_state->prev_hz;
+    F64 hz = game_state->hz;
+    F64 volume = 0.2;
+    F64 hz_scalar = 2.0*3.141592653589793/F64(AUDIO_SAMPLES_PER_SECOND);
     
-    U64 total_samples_written = buffer->total_samples_played + cursor_diff;
-    
-    Float prev_hz = game_state->prev_hz;
-    Float hz = game_state->hz;
-    Float volume = 0.2f;
-    Float hz_scalar = 2.0*3.141592/Float(AUDIO_SAMPLES_PER_SECOND);
-    
-    // use prev y pos to find an x offset??
-    //Float prev_y = sinf(prev_hz*hz_scalar*game_state->prev_frame_end_index);
-    //Float wavelength = hz_scalar;
-    //Float index = asinf(prev_y) / (hz * hz_scalar);
-    //Float index = 0;
-    
-    Float index = game_state->prev_frame_end_index * prev_hz / hz;
+    F64 x_scalar = hz * hz_scalar;
+    F64 x = game_state->prev_sin_x;
     
     for(Int i = 0; i < samples_to_write; i++)
     {
-        Float x_scalar = hz * hz_scalar;
-        //log("%lf", x_scalar);
+        buffer->data[buffer->write_cursor] = sin(x) * F64(I32_MAX)*volume;
         
-        // Treat our start position as 0, construct sin functions around that
-        Float x = x_scalar*index;
-        
-        buffer->data[buffer->write_cursor] = sinf(x) * Float(I32_MAX)*volume;
-        
-        total_samples_written++;
         buffer->write_cursor = (buffer->write_cursor+1) % sample_count;
-        index++;
+        
+        x += x_scalar;
     }
-    game_state->prev_frame_end_index = index;
+    game_state->prev_sin_x = x;
 }
