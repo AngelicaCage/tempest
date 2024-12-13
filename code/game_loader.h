@@ -22,13 +22,14 @@ FileContents
 #define AUDIO_SAMPLES_PER_SECOND (44100)
 #define AUDIO_BYTES_PER_SAMPLE (2)
 #define AUDIO_BUFFER_SECONDS (0.5f)
-#define AUDIO_BUFFER_SIZE ((Float)AUDIO_SAMPLES_PER_SECOND / AUDIO_BUFFER_SECONDS)
+#define AUDIO_BUFFER_SIZE ((Float)AUDIO_SAMPLES_PER_SECOND * AUDIO_BUFFER_SECONDS)
 
 struct AudioBuffer
 {
     Int play_cursor;
     Int write_cursor;
-    U16 data[(Int)AUDIO_BUFFER_SIZE];
+    U64 total_samples_played;
+    I16 data[(Int)AUDIO_BUFFER_SIZE];
 };
 
 struct GameMemory

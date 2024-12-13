@@ -232,6 +232,8 @@ update_and_render(GameMemory *game_memory)
         camera->orbit_distance = 10.0f;
         
         game_state->show_debug_interface = true;
+        game_state->hz = 220.0f;
+        game_state->prev_frame_end_x = 0;
     }
     game_state->target_fps = 144;
     game_state->fps = (sizeof(game_state->frame_profiles)/sizeof(FrameProfile)) /
@@ -347,6 +349,12 @@ update_and_render(GameMemory *game_memory)
         return;
     }
     
+    game_state->prev_hz = game_state->hz;
+    Float d_hz = 0.5f;
+    if(keys->up.is_down) game_state->hz += d_hz;
+    if(keys->down.is_down) game_state->hz -= d_hz;
+    write_frame_audio(game_state, &game_memory->audio_buffer);
+    
 #ifndef TEMPEST_RELEASE
     reload_changed_shaders(game_state);
 #endif
@@ -362,13 +370,17 @@ update_and_render(GameMemory *game_memory)
     
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     
-    draw_axes(game_state);
+    //draw_axes(game_state);
     
     draw_field(game_state);
     
     Float text_scale = 2.0f;
     
+    //log("%d", game_memory->audio_buffer.play_cursor);
+    
+    
     glDisable(GL_DEPTH_TEST);
+    
     ui_draw_log(game_state, global_log, text_scale);
     
     update_frame_timing_end(game_state);

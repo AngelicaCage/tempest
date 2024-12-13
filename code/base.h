@@ -33,6 +33,8 @@ typedef F32 Float;
 #define kilobytes(x) (x * 1000)
 #define megabytes(x) (x * 1000000)
 
+#define I32_MAX 32767
+
 struct _ansi_colors
 {
 #ifdef _WIN32

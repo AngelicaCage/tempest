@@ -365,7 +365,7 @@ ui_draw_debug_interface(GameState *game_state, GameMemory *game_memory, Float te
         Float sample_width = 1;
         Float horizontal_spacing = 0;
         Float height = 120;
-        Float width = 500;
+        Float width = 2000;
         
         Float top = draw_pos.y;
         Float bottom = top + height;
@@ -376,16 +376,24 @@ ui_draw_debug_interface(GameState *game_state, GameMemory *game_memory, Float te
         Int sample_count = sizeof(buffer->data)/2;
         I16 *samples = (I16 *)buffer->data;
         
-        ui_draw_rect(game_state, 0, top, sample_count*(sample_width+horizontal_spacing), height, color(0, 0, 0, 0.4f));
+        ui_draw_rect(game_state, 0, top, width, height, color(0, 0, 0, 0.4f));
         
         ui_draw_debug_text(game_state, v2(5, top+10), text_scale, "Audio Buffer", Color::white());
         
+        //sleep(0.06f);
         //Int max = 1000;
         for(Int i = 0; i < width; i++)
         {
             //Float fraction = profile->elapsed_time / profile->target_max_time;
             // NOTE: convert two U8s to U16
             Int sample_index = ((Float)i / (Float)width) * sample_count;
+            Int end = buffer->write_cursor;
+            if(end - buffer->play_cursor < 0)
+                end = sample_count;
+            sample_index /= 20;
+            if(sample_index > sample_count)
+                break;
+            //Int sample_index = buffer->play_cursor + ((Float)i / (Float)width) * (end - buffer->play_cursor);
             Float fraction = ((Float)samples[sample_index]) / (Float)32767;
             
             if(fraction < 0)
@@ -399,5 +407,10 @@ ui_draw_debug_interface(GameState *game_state, GameMemory *game_memory, Float te
             //ui_draw_rect(game_state, i*(sample_width+horizontal_spacing), sample_top, sample_width, sample_height, color(shade, shade, shade, 1.0f));
             ui_draw_rect(game_state, i*(sample_width+horizontal_spacing), center + fraction*(height/2), 2, 2, color(shade, shade, shade, 1.0f));
         }
+        
+        ui_draw_rect(game_state, (Float)(buffer->play_cursor % sample_count) / (Float)sample_count * (Float)width,
+                     top, 2, height, Color::red());
+        ui_draw_rect(game_state, (Float)(buffer->write_cursor % sample_count) / (Float)sample_count * (Float)width,
+                     top, 2, height, Color::green());
     }
 }

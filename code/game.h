@@ -258,6 +258,10 @@ struct GameState
     
     Mesh rect_mesh;
     Mesh circle_mesh;
+    
+    Float prev_hz;
+    Float hz;
+    Float prev_frame_end_x;
 };
 
 #endif //GAME_H

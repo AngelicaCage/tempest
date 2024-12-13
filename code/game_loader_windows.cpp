@@ -314,7 +314,7 @@ initialize_xaudio2(AudioBuffer *buffer)
     while (buffer_index < AUDIO_BUFFER_SIZE)
     {
         phase += (2.0f * 3.141592f) / (AUDIO_SAMPLES_PER_SECOND / 220);
-        I16 sample = (I16)(sin(phase) * INT16_MAX * 0.01f);
+        I16 sample = (I16)(sin(phase) * INT16_MAX * 0.1f);
         buffer->data[buffer_index++] = sample;
     }
     
@@ -441,8 +441,11 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         {
             XAUDIO2_VOICE_STATE xaudio2_voice_state = {0};
             xaudio2_data.source_voice->GetState(&xaudio2_voice_state, 0);
-            game_memory.audio_buffer.play_cursor = xaudio2_voice_state.SamplesPlayed %
-            (sizeof(game_memory.audio_buffer.data) / 2);
+            
+            AudioBuffer *audio_buffer = &game_memory.audio_buffer;
+            audio_buffer->total_samples_played = xaudio2_voice_state.SamplesPlayed;
+            audio_buffer->play_cursor = audio_buffer->total_samples_played
+                % (sizeof(audio_buffer->data)/sizeof(U16));
         }
         
         F64 frame_end_time = get_time();
