@@ -7,6 +7,12 @@
 //#include "stb/stb_perlin.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
+namespace stb_vorbis
+{
+#define STB_VORBIS_IMPLEMENTATION
+#include "stb/stb_vorbis.c"
+};
+
 
 #include "base.h"
 #include "log.h"
@@ -31,10 +37,10 @@ Void (*sleep)(F64);
 #include "shaders.h"
 #include "color.h"
 #include "timing.h"
+#include "audio.h"
 
 #include "input.h"
 #include "gpu.h"
-#include "synth_song.h"
 #include "game.h"
 
 #include "math/vectors.cpp"
@@ -47,7 +53,6 @@ Void (*sleep)(F64);
 #include "camera.cpp"
 
 #include "timing.cpp"
-#include "synth_song.cpp"
 #include "audio.cpp"
 #include "field.cpp"
 
@@ -203,7 +208,7 @@ update_and_render(GameMemory *game_memory)
                 // ex: file_contents.read_bool();
                 // and the same the other way around, with writing
                 // find a good way to write structs, piece by piece so no weird packing issues
-                Char *data_pointer = save_file_contents.data;
+                U8 *data_pointer = save_file_contents.data;
                 
                 game_state->save.has_seen_tutorial = *(B32 *)data_pointer;
                 data_pointer += sizeof(B32);
@@ -234,12 +239,35 @@ update_and_render(GameMemory *game_memory)
         camera->orbit_distance = 10.0f;
         
         game_state->show_debug_interface = true;
-        
-        //game_state->test_song = song_ode_to_joy();
-        game_state->test_song = song_gone_angels();
-        game_state->test_song_wave_data = convert_song_to_wave_data(&game_state->test_song);
         game_state->time_in_song = 0;
+        
+        //game_state->test_track = load_wav_file(GAME_DATA_DIRECTORY "/audio/test/crystalized_silver.wav");
+        // Load test ogg file
+        
+        {
+            FileContents test_audio_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/doll_judgement.ogg");
+            ASSERT(test_audio_contents.file_found);
+            ASSERT(test_audio_contents.allocated);
+            ASSERT(test_audio_contents.contains_proper_data);
+            
+            I16 *decoded_audio;
+            Int channel_count;
+            Int sample_rate;
+            Int samples_decoded = stb_vorbis::stb_vorbis_decode_memory(test_audio_contents.data, test_audio_contents.size,
+                                                                       &channel_count, &sample_rate, &decoded_audio);
+            mem_free(test_audio_contents.data);
+            
+            game_state->test_track.length = samples_decoded;
+            game_state->test_track.data = decoded_audio;
+            game_state->test_track.position = 0;
+            
+        }
     }
+    
+    
+    
+    
+    
     game_state->target_fps = 144;
     game_state->fps = (sizeof(game_state->frame_profiles)/sizeof(FrameProfile)) /
     (game_state->frame_profiles.last().start_time - game_state->frame_profiles[0].start_time);

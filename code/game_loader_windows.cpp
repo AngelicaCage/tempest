@@ -191,7 +191,7 @@ read_file_contents(const Char *path)
     }
     
     result.size = file_size.QuadPart;
-    result.data = (Char *)mem_alloc(result.size);
+    result.data = (U8 *)mem_alloc(result.size);
     result.allocated = true;
     
     DWORD bytes_read;

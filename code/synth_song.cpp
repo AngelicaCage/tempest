@@ -662,21 +662,6 @@ song_gone_angels()
     song.push_note(parse_note_string("f#.3/4", octave));
 #endif
     
-    
-    
-    
-    //song.push_note(0, create_note('', octave, NoteSemitone::none, NoteLength::quarter));
-    //song.push_note(0, create_note('', octave, NoteSemitone::none, NoteLength::quarter));
-    //song.push_note(0, create_note('', octave, NoteSemitone::none, NoteLength::quarter));
-    //song.push_note(0, create_note('', octave, NoteSemitone::none, NoteLength::quarter));
-    //song.push_note(0, create_note('', octave, NoteSemitone::none, NoteLength::quarter));
-    //song.push_note(0, create_note('', octave, NoteSemitone::none, NoteLength::quarter));
-    //song.push_note(0, create_note('', octave, NoteSemitone::none, NoteLength::quarter));
-    //song.push_note(0, create_note('', octave, NoteSemitone::none, NoteLength::quarter));
-    
-    //song.push_note(0, create_note('', octave, NoteSemitone::none, NoteLength::quarter));
-    
-    
     song_convert_flats_to_sharps(&song);
     
     return song;

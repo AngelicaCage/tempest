@@ -40,7 +40,7 @@ gpu_compile_shader_from_path(Shader *shader)
     else
         shader->id = glCreateShader(GL_GEOMETRY_SHADER);
     
-    glShaderSource(shader->id, 1, &file_read_result.data, (I32 *)(&file_read_result.size));
+    glShaderSource(shader->id, 1, (Char **)(&file_read_result.data), (I32 *)(&file_read_result.size));
     glCompileShader(shader->id);
     
     free(file_read_result.data);

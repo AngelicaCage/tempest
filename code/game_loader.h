@@ -15,7 +15,7 @@ FileContents
     Bool allocated;
     Bool contains_proper_data;
     // Later: change this to U8 * ?
-    Char *data;
+    U8 *data;
     U64 size;
 };
 
