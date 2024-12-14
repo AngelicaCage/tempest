@@ -361,6 +361,7 @@ ui_draw_debug_interface(GameState *game_state, GameMemory *game_memory, Float te
     
     
     // Draw audio buffer
+#if 1
     {
         Float sample_width = 1;
         Float horizontal_spacing = 0;
@@ -379,7 +380,6 @@ ui_draw_debug_interface(GameState *game_state, GameMemory *game_memory, Float te
         
         ui_draw_debug_text(game_state, v2(5, top+10), text_scale, "Audio Buffer", Color::white());
         
-        //sleep(0.06f);
         //Int max = 1000;
         for(Int i = 0; i < width; i++)
         {
@@ -412,4 +412,44 @@ ui_draw_debug_interface(GameState *game_state, GameMemory *game_memory, Float te
         ui_draw_rect(game_state, (Float)(buffer->write_cursor % sample_count) / (Float)sample_count * (Float)width,
                      top, 2, height, Color::green());
     }
+#endif
+    
+#if 0
+    {
+        Float sample_width = 1;
+        Float horizontal_spacing = 0;
+        Float height = 100;
+        Float width = 1500;
+        
+        Float top = 0;
+        Float bottom = top + height;
+        
+        Float center = top + height/2;
+        
+        AudioTrack *track = &game_state->test_track;
+        
+        ui_draw_rect(game_state, 0, 0, 3000, 3000, color(0, 0, 0, 1.0f));
+        
+        Int x = 0;
+        Int y = 0;
+        for(Int i = 0; i < track->length; i++)
+        {
+            I16 sample = track->data[i + 50000];
+            Float fraction = ((Float)sample) / (Float)I16_MAX;
+            
+            Float shade = 1.0f;
+            ui_draw_rect(game_state, x, y + center + fraction*height/2, 2, 2, color(shade, shade, shade, 1.0f));
+            x++;
+            if(x > (Int)game_state->window_dim.x)
+            {
+                y += height;
+                x = 0;
+            }
+            
+            if(y > (Int)game_state->window_dim.y)
+                break;
+        }
+        
+    }
+#endif
 }

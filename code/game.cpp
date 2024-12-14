@@ -7,12 +7,9 @@
 //#include "stb/stb_perlin.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
-namespace stb_vorbis
-{
-#define STB_VORBIS_IMPLEMENTATION
-#include "stb/stb_vorbis.c"
-};
 
+#define DR_FLAC_IMPLEMENTATION
+#include "dr_libs/dr_flac.h"
 
 #include "base.h"
 #include "log.h"
@@ -245,27 +242,74 @@ update_and_render(GameMemory *game_memory)
         // Load test ogg file
         
         {
-#if 1
-            FileContents test_audio_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/doll_judgement.ogg");
-            //FileContents test_audio_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/sample-1.oga");
+#if 0
+            fx_flac_t *flac_alloc = FX_FLAC_ALLOC_DEFAULT();
+            
+            //FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/seikan_hikou.flac");
+            FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/t1.flac");
+            
+            ASSERT(audio_file_contents.file_found);
+            ASSERT(audio_file_contents.allocated);
+            ASSERT(audio_file_contents.contains_proper_data);
+            
+            I32 *out_buffer = (I32 *)mem_alloc(megabytes(60));
+            
+            U32 bytes_read = 0;
+            U32 samples_written = 0;
+            //U8 *read_cursor = audio_file_contents.data;
+            //I32 *write_cursor = out_buffer;
+            
+            fx_flac_state_t decode_result;
+            while(true)
+            {
+                U32 bytes_read_this_iteration;
+                U32 samples_written_this_iteration = 512;
+                
+                U8 *read_cursor = audio_file_contents.data + bytes_read;
+                I32 *write_cursor = out_buffer + samples_written * sizeof(I32);
+                decode_result = fx_flac_process(flac_alloc,
+                                                read_cursor, &bytes_read_this_iteration,
+                                                write_cursor, &samples_written_this_iteration);
+                ASSERT(decode_result != FLAC_ERR);
+                
+                bytes_read += bytes_read_this_iteration;
+                //if(bytes_read_this_iteration == 0)
+                //bytes_read += 512;
+                samples_written += samples_written_this_iteration;
+                
+                if(bytes_read_this_iteration == 0 && samples_written_this_iteration == 0 &&
+                   !(bytes_read == 0 || samples_written == 0))
+                    break;
+            }
             
             
-            ASSERT(test_audio_contents.file_found);
-            ASSERT(test_audio_contents.allocated);
-            ASSERT(test_audio_contents.contains_proper_data);
-            
-            I16 *decoded_audio;
-            Int channel_count;
-            Int sample_rate;
-            Int samples_decoded = stb_vorbis::stb_vorbis_decode_memory(test_audio_contents.data, test_audio_contents.size,
-                                                                       &channel_count, &sample_rate, &decoded_audio);
-            mem_free(test_audio_contents.data);
-            
-            game_state->test_track.length = samples_decoded;
-            game_state->test_track.data = decoded_audio;
+            game_state->test_track.length = samples_written;
+            game_state->test_track.data = (I16 *)mem_alloc(samples_written * sizeof(I16));
             game_state->test_track.position = 0;
             
+            for(Int i = 0; i < samples_written; i++)
+            {
+                game_state->test_track.data[i] = (out_buffer[i]) >> 16;
+            }
+            
+            free(out_buffer);
 #endif
+        }
+        
+        
+        {
+            FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/seikan_hikou.flac");
+            
+            drflac *flac = drflac_open_memory(audio_file_contents.data, audio_file_contents.size, NULL);
+            
+            I16* samples = (I16 *)mem_alloc(flac->totalPCMFrameCount * flac->channels * sizeof(I16));
+            U64 interleaved_sample_read_count = drflac_read_pcm_frames_s16(flac, flac->totalPCMFrameCount, samples);
+            
+            
+            game_state->test_track.length = interleaved_sample_read_count;
+            game_state->test_track.data = samples;
+            game_state->test_track.position = 0;
+            
         }
     }
     
@@ -287,6 +331,9 @@ update_and_render(GameMemory *game_memory)
         }
         average /= game_state->frame_profiles.length;
         game_state->d_time = average;
+        
+        if(game_state->frame_profiles.length < 10)
+            game_state->d_time = 1.0f/game_state->target_fps;
     }
     
     Float d_time = game_state->d_time;

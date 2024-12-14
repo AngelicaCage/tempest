@@ -301,21 +301,17 @@ initialize_xaudio2(AudioBuffer *buffer)
     wave_format.wFormatTag = WAVE_FORMAT_PCM;
     wave_format.nChannels = 2; // 2 channels
     wave_format.nSamplesPerSec = AUDIO_SAMPLES_PER_SECOND;
+    wave_format.wBitsPerSample = AUDIO_BYTES_PER_SAMPLE*8;
     wave_format.nBlockAlign = wave_format.nChannels * AUDIO_BYTES_PER_SAMPLE;
     wave_format.nAvgBytesPerSec = wave_format.nSamplesPerSec * wave_format.nBlockAlign;
-    wave_format.wBitsPerSample = AUDIO_BYTES_PER_SAMPLE*8;
     wave_format.cbSize = 0;
     
     IXAudio2SourceVoice *xaudio2_source_voice;
     ASSERT(SUCCEEDED(xaudio2_instance->CreateSourceVoice(&xaudio2_source_voice, &wave_format)));
     
-    double phase = 0;
     U32 buffer_index = 0;
     while (buffer_index < AUDIO_BUFFER_SIZE)
     {
-        phase += (2.0f * 3.141592f) / (AUDIO_SAMPLES_PER_SECOND / 220);
-        I16 sample = (I16)(sin(phase) * INT16_MAX * 0.1f);
-        //buffer->data[buffer_index++] = sample;
         buffer->data[buffer_index++] = 0;
     }
     
