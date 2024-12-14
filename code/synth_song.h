@@ -18,6 +18,7 @@ enum class NoteSemitone
 
 enum class NoteLength
 {
+    sixteenth,
     eighth,
     quarter,
     three_eighths,

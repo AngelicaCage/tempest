@@ -403,6 +403,7 @@ ui_draw_debug_interface(GameState *game_state, GameMemory *game_memory, Float te
             Float sample_top = bottom - sample_height;
             Float shade = 0.8f;
             //ui_draw_rect(game_state, i*(sample_width+horizontal_spacing), sample_top, sample_width, sample_height, color(shade, shade, shade, 1.0f));
+            // TODO: line drawing
             ui_draw_rect(game_state, i*(sample_width+horizontal_spacing), center + fraction*(height/2), 2, 2, color(shade, shade, shade, 1.0f));
         }
         

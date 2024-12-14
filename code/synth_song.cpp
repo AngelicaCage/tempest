@@ -81,7 +81,9 @@ Note parse_note_string(const Char *str, Int octave)
         result.semitone = NoteSemitone::none;
     }
     
-    if(streq(&(str[index]), "1/8"))
+    if(streq(&(str[index]), "1/16"))
+        result.length = NoteLength::sixteenth;
+    else if(streq(&(str[index]), "1/8"))
         result.length = NoteLength::eighth;
     else if(streq(&(str[index]), "1/4"))
         result.length = NoteLength::quarter;
@@ -93,6 +95,8 @@ Note parse_note_string(const Char *str, Int octave)
         result.length = NoteLength::three_quarters;
     else if(streq(&(str[index]), "1"))
         result.length = NoteLength::whole;
+    else
+        ASSERT(false);
     
     if(str[strlen(str)-1] == '+')
         result.forms_chord_with_next = true;
@@ -199,11 +203,15 @@ note_get_frequency(Char letter, NoteSemitone semitone, UInt octave)
 F64
 note_get_time(NoteLength length, F64 seconds_per_quarter_note)
 {
-    if(length == NoteLength::eighth)
+    if(length == NoteLength::sixteenth)
+    {
+        return 0.25*seconds_per_quarter_note;
+    }
+    else if(length == NoteLength::eighth)
     {
         return 0.5*seconds_per_quarter_note;
     }
-    if(length == NoteLength::quarter)
+    else if(length == NoteLength::quarter)
     {
         return 1*seconds_per_quarter_note;
     }
@@ -458,89 +466,159 @@ song_gone_angels()
     song.hands.push({0});
     UInt octave = 4;
     
-    song.push_note(0, create_note('e', octave+1, NoteSemitone::none, NoteLength::three_quarters, true));
-    song.push_note(0, create_note('a', octave, NoteSemitone::none, NoteLength::three_quarters, true));
-    song.push_note(0, create_note('b', octave, NoteSemitone::none, NoteLength::three_quarters));
-    song.push_note(0, create_note('a', octave, NoteSemitone::none, NoteLength::quarter));
-    song.push_note(0, create_note('d', octave+1, NoteSemitone::none, NoteLength::three_eighths));
-    song.push_note(0, create_note('c', octave+1, NoteSemitone::none, NoteLength::eighth));
+#if 1
+    song.push_note(create_note('e', octave+1, NoteSemitone::none, NoteLength::three_quarters, true));
+    song.push_note(create_note('a', octave, NoteSemitone::none, NoteLength::three_quarters, true));
+    song.push_note(create_note('b', octave, NoteSemitone::none, NoteLength::three_quarters));
+    song.push_note(create_note('a', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(create_note('d', octave+1, NoteSemitone::none, NoteLength::three_eighths));
+    song.push_note(create_note('c', octave+1, NoteSemitone::none, NoteLength::eighth));
     
-    song.push_note(0, create_note('c', octave+1, NoteSemitone::none, NoteLength::quarter, true));
-    song.push_note(0, create_note('a', octave, NoteSemitone::flat, NoteLength::quarter));
-    song.push_note(0, create_note('b', octave, NoteSemitone::none, NoteLength::half));
-    song.push_note(0, create_note('b', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('c', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('d', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('c', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('b', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('c', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('c', octave+1, NoteSemitone::none, NoteLength::quarter, true));
+    song.push_note(create_note('a', octave, NoteSemitone::flat, NoteLength::quarter));
+    song.push_note(create_note('b', octave, NoteSemitone::none, NoteLength::half));
+    song.push_note(create_note('b', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('c', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('d', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('c', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('b', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('c', octave+1, NoteSemitone::none, NoteLength::eighth));
     
-    song.push_note(0, create_note('g', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('b', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('c', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('f', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('b', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('c', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('e', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('b', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('g', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('d', octave, NoteSemitone::sharp, NoteLength::eighth));
-    song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('g', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('b', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('c', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('f', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('b', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('c', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('e', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('b', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('g', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('e', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('d', octave, NoteSemitone::sharp, NoteLength::eighth));
+    song.push_note(create_note('e', octave, NoteSemitone::none, NoteLength::eighth));
     
-    song.push_note(0, create_note('b', octave, NoteSemitone::none, NoteLength::half));
-    song.push_note(0, create_note('a', octave, NoteSemitone::none, NoteLength::quarter));
-    song.push_note(0, create_note('a', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('b', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('c', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('d', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('b', octave, NoteSemitone::none, NoteLength::half));
+    song.push_note(create_note('a', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(create_note('a', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('e', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('b', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('e', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('c', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('d', octave+1, NoteSemitone::none, NoteLength::eighth));
     
-    song.push_note(0, create_note('e', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('a', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('b', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('c', octave+2, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('b', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('a', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('e', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('d', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('c', octave+1, NoteSemitone::sharp, NoteLength::eighth));
-    song.push_note(0, create_note('d', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('e', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('a', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('b', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('c', octave+2, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('b', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('a', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('e', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('d', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('c', octave+1, NoteSemitone::sharp, NoteLength::eighth));
+    song.push_note(create_note('d', octave+1, NoteSemitone::none, NoteLength::eighth));
     
-    song.push_note(0, create_note('g', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('a', octave, NoteSemitone::sharp, NoteLength::eighth));
-    song.push_note(0, create_note('c', octave+1, NoteSemitone::sharp, NoteLength::eighth));
-    song.push_note(0, create_note('f', octave+1, NoteSemitone::sharp, NoteLength::eighth));
-    song.push_note(0, create_note('a', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('b', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('e', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('g', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('b', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('d', octave+1, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('g', octave, NoteSemitone::none, NoteLength::eighth));
-    song.push_note(0, create_note('d', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('g', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('a', octave, NoteSemitone::sharp, NoteLength::eighth));
+    song.push_note(create_note('c', octave+1, NoteSemitone::sharp, NoteLength::eighth));
+    song.push_note(create_note('f', octave+1, NoteSemitone::sharp, NoteLength::eighth));
+    song.push_note(create_note('a', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('b', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('e', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('g', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('b', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('d', octave+1, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('g', octave, NoteSemitone::none, NoteLength::eighth));
+    song.push_note(create_note('d', octave+1, NoteSemitone::none, NoteLength::eighth));
     
-    song.push_note(0, create_note('c', octave+1, NoteSemitone::sharp, NoteLength::eighth));
-    song.push_note(0, create_note('f', octave+1, NoteSemitone::sharp, NoteLength::eighth));
-    song.push_note(0, create_note('a', octave+1, NoteSemitone::sharp, NoteLength::eighth));
-    song.push_note(0, create_note('c', octave+2, NoteSemitone::sharp, NoteLength::eighth));
-    song.push_note(0, create_note('f', octave+2, NoteSemitone::sharp, NoteLength::eighth));
-    song.push_note(0, create_note('c', octave+2, NoteSemitone::sharp, NoteLength::half));
-    song.push_note(0, create_note('c', octave, NoteSemitone::sharp, NoteLength::quarter));
+    song.push_note(create_note('c', octave+1, NoteSemitone::sharp, NoteLength::eighth));
+    song.push_note(create_note('f', octave+1, NoteSemitone::sharp, NoteLength::eighth));
+    song.push_note(create_note('a', octave+1, NoteSemitone::sharp, NoteLength::eighth));
+    song.push_note(create_note('c', octave+2, NoteSemitone::sharp, NoteLength::eighth));
+    song.push_note(create_note('f', octave+2, NoteSemitone::sharp, NoteLength::eighth));
+    song.push_note(create_note('c', octave+2, NoteSemitone::sharp, NoteLength::half));
+    song.push_note(create_note('c', octave, NoteSemitone::sharp, NoteLength::quarter));
     
     // From now on: C#, F#
-    song.push_note(0, create_note('b', octave, NoteSemitone::none, NoteLength::half, true));
-    song.push_note(0, create_note('d', octave, NoteSemitone::none, NoteLength::half));
-    song.push_note(0, create_rest(NoteLength::eighth));
-    song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::quarter));
-    song.push_note(0, create_note('f', octave, NoteSemitone::none, NoteLength::half));
-    song.push_note(0, create_note('e', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(create_note('b', octave, NoteSemitone::none, NoteLength::half, true));
+    song.push_note(create_note('d', octave, NoteSemitone::none, NoteLength::half));
+    song.push_note(create_rest(NoteLength::eighth));
+    song.push_note(create_note('f#', octave, NoteSemitone::none, NoteLength::quarter));
+    song.push_note(create_note('f#', octave, NoteSemitone::none, NoteLength::half));
+    song.push_note(create_note('e', octave, NoteSemitone::none, NoteLength::quarter));
+#endif
     
+    song.push_note(parse_note_string("f#.3/8+", octave));
+    song.push_note(parse_note_string("b.3/8", octave-1));
+    song.push_note(parse_note_string("b.3/8+", octave));
+    song.push_note(parse_note_string("f#.3/8", octave));
+    song.push_note(parse_note_string("f#.1/4", octave));
+    song.push_note(parse_note_string("e.1/4", octave));
+    song.push_note(parse_note_string("f#.1/4", octave));
+    
+    song.push_note(parse_note_string("g.3/8+", octave));
+    song.push_note(parse_note_string("e.3/8", octave));
+    song.push_note(parse_note_string("d.3/8+", octave));
+    song.push_note(parse_note_string("b.3/8", octave-1));
+    song.push_note(parse_note_string("c#.3/8+", octave));
+    song.push_note(parse_note_string("a#.3/8", octave-1));
+    song.push_note(parse_note_string("c#.3/8", octave));
+    song.push_note(parse_note_string("g.1/4", octave));
+    
+    song.push_note(parse_note_string("f#.1/2+", octave));
+    song.push_note(parse_note_string("d.1/2", octave));
+    song.push_note(parse_note_string("c#.1/8", octave));
+    song.push_note(parse_note_string("d.1/8", octave));
+    song.push_note(parse_note_string("f#.1/8", octave));
+    song.push_note(parse_note_string("b.1/8", octave-1));
+    song.push_note(create_rest(NoteLength::three_eighths));
+    song.push_note(parse_note_string("f#.1/8", octave));
+    
+    song.push_note(parse_note_string("g.3/8+", octave));
+    song.push_note(parse_note_string("b.3/8", octave-1));
+    song.push_note(parse_note_string("c#.3/8", octave));
+    song.push_note(parse_note_string("d.3/8", octave));
+    song.push_note(parse_note_string("c#.3/8", octave));
+    
+    song.push_note(parse_note_string("f#.3/8+", octave));
+    song.push_note(parse_note_string("b.3/8", octave-1));
+    song.push_note(parse_note_string("b.1/4", octave-1));
+    song.push_note(parse_note_string("b.1/16", octave-1));
+    song.push_note(parse_note_string("a#.1/16", octave-1));
+    song.push_note(parse_note_string("b.1/16", octave-1));
+    song.push_note(parse_note_string("c.1/4", octave));
+    song.push_note(parse_note_string("d.1/4", octave));
+    
+    song.push_note(parse_note_string("c#.3/4+", octave));
+    song.push_note(parse_note_string("g#.3/4", octave-1));
+    song.push_note(parse_note_string("c#.1/4", octave));
+    song.push_note(parse_note_string("g#.1/4", octave));
+    song.push_note(parse_note_string("f.1/4", octave));
+    
+    song.push_note(parse_note_string("f#.3/4+", octave));
+    song.push_note(parse_note_string("c#.3/4+", octave));
+    song.push_note(parse_note_string("b.3/4", octave-1));
+    song.push_note(parse_note_string("f#.1/4+", octave));
+    song.push_note(parse_note_string("c#.1/4", octave));
+    song.push_note(parse_note_string("c#.1/4+", octave+1));
+    song.push_note(parse_note_string("f#.1/4", octave));
+    song.push_note(parse_note_string("b#.1/4+", octave));
+    song.push_note(parse_note_string("f#.1/4", octave));
+    
+    song.push_note(parse_note_string("b.3/4+", octave));
+    song.push_note(parse_note_string("f#.3/4+", octave));
+    song.push_note(parse_note_string("d.3/4", octave));
+    song.push_note(parse_note_string("f#.3/4+", octave));
+    song.push_note(parse_note_string("d.3/4+", octave));
+    song.push_note(parse_note_string("b.3/4", octave-1));
+    song.push_note(create_rest(NoteLength::eighth));
+    song.push_note(parse_note_string("e.1/4", octave));
+    
+    //song.push_note(parse_note_string("", octave));
     
     song.hands.push({0});
     octave = octave - 1;
     
+#if 0
     
     song.push_note(parse_note_string("e.3/4+", octave+1));
     song.push_note(parse_note_string("a.3/4+", octave));
@@ -574,13 +652,14 @@ song_gone_angels()
     song.push_note(parse_note_string("e.3/4", octave));
     
     song.push_note(parse_note_string("e.3/4+", octave+1));
-    song.push_note(parse_note_string("c.3/4+", octave+1));
+    push_note(parse_note_string("c.3/4+", octave+1));
     song.push_note(parse_note_string("a.3/4+", octave));
-    song.push_note(parse_note_string("f.3/8", octave));
-    song.push_note(parse_note_string("e.3/8+", octave+1));
-    song.push_note(parse_note_string("c_.3/8+", octave+1));
+    song.push_note(parse_note_string("f.3/4", octave));
+    song.push_note(parse_note_string("e.3/4+", octave+1));
+    song.push_note(parse_note_string("c_.3/4+", octave+1));
     song.push_note(parse_note_string("a.3/4+", octave));
-    song.push_note(parse_note_string("f#.3/8", octave));
+    song.push_note(parse_note_string("f#.3/4", octave));
+#endif
     
     
     
