@@ -299,7 +299,7 @@ initialize_xaudio2(AudioBuffer *buffer)
     
     WAVEFORMATEX wave_format;
     wave_format.wFormatTag = WAVE_FORMAT_PCM;
-    wave_format.nChannels = 1; // 1 channel
+    wave_format.nChannels = 2; // 2 channels
     wave_format.nSamplesPerSec = AUDIO_SAMPLES_PER_SECOND;
     wave_format.nBlockAlign = wave_format.nChannels * AUDIO_BYTES_PER_SAMPLE;
     wave_format.nAvgBytesPerSec = wave_format.nSamplesPerSec * wave_format.nBlockAlign;

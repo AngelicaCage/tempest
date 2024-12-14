@@ -261,6 +261,9 @@ struct GameState
     
     F64 time_in_song;
     AudioTrack test_track;
+    
+    F64 at_1, at_2;
+    //Bool was_last_sample_even
 };
 
 #endif //GAME_H

@@ -365,7 +365,7 @@ ui_draw_debug_interface(GameState *game_state, GameMemory *game_memory, Float te
         Float sample_width = 1;
         Float horizontal_spacing = 0;
         Float height = 120;
-        Float width = 2000;
+        Float width = 1500;
         
         Float top = draw_pos.y;
         Float bottom = top + height;

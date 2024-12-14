@@ -245,7 +245,11 @@ update_and_render(GameMemory *game_memory)
         // Load test ogg file
         
         {
+#if 1
             FileContents test_audio_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/doll_judgement.ogg");
+            //FileContents test_audio_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/sample-1.oga");
+            
+            
             ASSERT(test_audio_contents.file_found);
             ASSERT(test_audio_contents.allocated);
             ASSERT(test_audio_contents.contains_proper_data);
@@ -261,6 +265,7 @@ update_and_render(GameMemory *game_memory)
             game_state->test_track.data = decoded_audio;
             game_state->test_track.position = 0;
             
+#endif
         }
     }
     

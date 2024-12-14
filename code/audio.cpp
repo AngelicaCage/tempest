@@ -112,7 +112,6 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
         {
             cursor_diff += sample_count;
         }
-        
     }
     
     Int samples_to_write = max_samples_to_write - cursor_diff;
@@ -124,6 +123,7 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
     Int write_cursor_copy = buffer->write_cursor;
     
     F64 volume = 0.2;
+    F64 hz_scalar = 2.0*3.141592653589793/F64(AUDIO_SAMPLES_PER_SECOND);
     
     for(Int i = 0; i < samples_to_write; i++)
     {
@@ -134,9 +134,34 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
     write_cursor_copy = buffer->write_cursor;
     for(Int i = 0; i < samples_to_write; i++)
     {
-        buffer->data[write_cursor_copy] += game_state->test_track.data[game_state->test_track.position];
-        game_state->test_track.position++;
+#if 1
+        if(write_cursor_copy % 2 == 0)
+        {
+            buffer->data[write_cursor_copy] = game_state->test_track.data[game_state->test_track.position+0] * volume;
+        }
+        else
+        {
+            buffer->data[write_cursor_copy] = game_state->test_track.data[game_state->test_track.position+1] * volume;
+            //buffer->data[write_cursor_copy] = game_state->test_track.data[game_state->test_track.position+0];
+            game_state->test_track.position += 2;
+        }
         write_cursor_copy = (write_cursor_copy+1) % sample_count;
+#else
+        if(write_cursor_copy % 2 == 0)
+        { // Write to left ear
+            F64 x_scalar = 130 * hz_scalar;
+            buffer->data[write_cursor_copy] += sin(game_state->at_1) * volume * (F64)I32_MAX;
+            game_state->at_1 += x_scalar;
+        }
+        else
+        { // Write to right ear
+            F64 x_scalar = 466 * hz_scalar;
+            buffer->data[write_cursor_copy] += sin(game_state->at_2) * volume * (F64)I32_MAX;
+            game_state->at_2 += x_scalar;
+        }
+        
+        write_cursor_copy = (write_cursor_copy+1) % sample_count;
+#endif
     }
     
     
