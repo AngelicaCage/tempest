@@ -235,7 +235,8 @@ update_and_render(GameMemory *game_memory)
         
         game_state->show_debug_interface = true;
         
-        game_state->test_song = song_ode_to_joy();
+        //game_state->test_song = song_ode_to_joy();
+        game_state->test_song = song_gone_angels();
         game_state->test_song_wave_data = convert_song_to_wave_data(&game_state->test_song);
         game_state->time_in_song = 0;
     }

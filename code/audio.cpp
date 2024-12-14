@@ -50,24 +50,25 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
         HandWaveData *hand = &song->hands[i];
         
         // Get playing note index for the hand
-        Int note_play_index = 0;
-        F64 time_accumulated = 0;
+        Int note_play_index = -1;
+        F64 time_to_note_end = 0;
         
-        while(time_accumulated < game_state->time_in_song)
+        for(Int j = 0; j < hand->notes.length; j++)
         {
-            if(note_play_index > hand->notes.length)
-                break;
+            if(!(j > 0 && hand->notes[j-1].forms_chord_with_next))
+                time_to_note_end += hand->notes[j].time;
             
-            time_accumulated += hand->notes[note_play_index].time;
-            note_play_index++;
+            if(game_state->time_in_song < time_to_note_end)
+            {
+                note_play_index = j;
+                break;
+            }
         }
         
-        note_play_index--;
-        if(note_play_index >= hand->notes.length)
+        if(note_play_index == -1)
             continue;
         
-        if(note_play_index < 0) note_play_index = 0;
-        
+        //log("%d", note_play_index);
         
         Int notes_playing = 1;
         while(hand->notes[note_play_index+(notes_playing-1)].forms_chord_with_next)
@@ -79,7 +80,7 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
             
             NoteWaveData *note = &hand->notes[note_play_index + j];
             F64 x_scalar = note->frequency * hz_scalar;
-            F64 *play_x_to_use = &(hand->play_xs[0]);
+            F64 *play_x_to_use = &(hand->play_xs[j]);
             
             for(Int k = 0; k < samples_to_write; k++)
             {

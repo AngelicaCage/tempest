@@ -49,6 +49,7 @@ struct SynthSong
     InplaceStack<Hand, MAX_HANDS_PER_SONG> hands;
     
     Void push_note(Int hand, Note note);
+    Void push_note(Note note);
 };
 
 struct NoteWaveData
