@@ -432,13 +432,22 @@ ui_draw_debug_interface(GameState *game_state, GameMemory *game_memory, Float te
         
         Int x = 0;
         Int y = 0;
-        for(Int i = 0; i < track->length; i++)
+        Int scalar = 20;
+        Bool has_drawn_cursor = false;
+        for(Int i = 0; i < track->length / scalar; i++)
         {
-            I16 sample = track->data[i + 50000];
+            I16 sample = track->data[i * scalar];
             Float fraction = ((Float)sample) / (Float)I16_MAX;
             
             Float shade = 1.0f;
             ui_draw_rect(game_state, x, y + center + fraction*height/2, 2, 2, color(shade, shade, shade, 1.0f));
+            
+            if(!has_drawn_cursor && i*scalar > track->position)
+            {
+                ui_draw_rect(game_state, x, y + center - height/2, 2, height, Color::red());
+                has_drawn_cursor = true;
+            }
+            
             x++;
             if(x > (Int)game_state->window_dim.x)
             {

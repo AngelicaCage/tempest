@@ -10,6 +10,8 @@
 
 #define DR_FLAC_IMPLEMENTATION
 #include "dr_libs/dr_flac.h"
+#define DR_WAV_IMPLEMENTATION
+#include "dr_libs/dr_wav.h"
 
 #include "base.h"
 #include "log.h"
@@ -238,79 +240,39 @@ update_and_render(GameMemory *game_memory)
         game_state->show_debug_interface = true;
         game_state->time_in_song = 0;
         
-        //game_state->test_track = load_wav_file(GAME_DATA_DIRECTORY "/audio/test/crystalized_silver.wav");
-        // Load test ogg file
-        
-        {
-#if 0
-            fx_flac_t *flac_alloc = FX_FLAC_ALLOC_DEFAULT();
-            
-            //FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/seikan_hikou.flac");
-            FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/t1.flac");
-            
-            ASSERT(audio_file_contents.file_found);
-            ASSERT(audio_file_contents.allocated);
-            ASSERT(audio_file_contents.contains_proper_data);
-            
-            I32 *out_buffer = (I32 *)mem_alloc(megabytes(60));
-            
-            U32 bytes_read = 0;
-            U32 samples_written = 0;
-            //U8 *read_cursor = audio_file_contents.data;
-            //I32 *write_cursor = out_buffer;
-            
-            fx_flac_state_t decode_result;
-            while(true)
-            {
-                U32 bytes_read_this_iteration;
-                U32 samples_written_this_iteration = 512;
-                
-                U8 *read_cursor = audio_file_contents.data + bytes_read;
-                I32 *write_cursor = out_buffer + samples_written * sizeof(I32);
-                decode_result = fx_flac_process(flac_alloc,
-                                                read_cursor, &bytes_read_this_iteration,
-                                                write_cursor, &samples_written_this_iteration);
-                ASSERT(decode_result != FLAC_ERR);
-                
-                bytes_read += bytes_read_this_iteration;
-                //if(bytes_read_this_iteration == 0)
-                //bytes_read += 512;
-                samples_written += samples_written_this_iteration;
-                
-                if(bytes_read_this_iteration == 0 && samples_written_this_iteration == 0 &&
-                   !(bytes_read == 0 || samples_written == 0))
-                    break;
-            }
-            
-            
-            game_state->test_track.length = samples_written;
-            game_state->test_track.data = (I16 *)mem_alloc(samples_written * sizeof(I16));
-            game_state->test_track.position = 0;
-            
-            for(Int i = 0; i < samples_written; i++)
-            {
-                game_state->test_track.data[i] = (out_buffer[i]) >> 16;
-            }
-            
-            free(out_buffer);
-#endif
-        }
-        
-        
+#if 1
         {
             FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/seikan_hikou.flac");
+            //FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/godzilla.flac");
             
             drflac *flac = drflac_open_memory(audio_file_contents.data, audio_file_contents.size, NULL);
             
             I16* samples = (I16 *)mem_alloc(flac->totalPCMFrameCount * flac->channels * sizeof(I16));
             U64 interleaved_sample_read_count = drflac_read_pcm_frames_s16(flac, flac->totalPCMFrameCount, samples);
             
-            
             game_state->test_track.length = interleaved_sample_read_count;
             game_state->test_track.data = samples;
             game_state->test_track.position = 0;
             
         }
+#else
+        {
+            FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/roland2.wav");
+            //FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/godzilla.flac");
+            
+            UInt channels;
+            UInt sample_rate;
+            U64 frame_count;
+            drwav_int16* samples = drwav_open_memory_and_read_pcm_frames_s16(audio_file_contents.data, audio_file_contents.size,
+                                                                             &channels, &sample_rate, &frame_count, NULL);
+            //I16* samples = (I16 *)mem_alloc(wav->totalPCMFrameCount * wav->channels * sizeof(I16));
+            //U64 interleaved_sample_read_count = drwav_read_pcm_frames_s16(wav, wav->totalPCMFrameCount, samples);
+            
+            game_state->test_track.length = frame_count;
+            game_state->test_track.data = samples;
+            game_state->test_track.position = 0;
+        }
+#endif
     }
     
     

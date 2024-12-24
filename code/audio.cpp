@@ -95,7 +95,9 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
     Int sample_count = sizeof(buffer->data)/2;
     
     Float frame_time = game_state->d_time;
-    Int max_samples_to_write = AUDIO_SAMPLES_PER_SECOND * frame_time * 2.5f;
+    Int max_samples_to_write = AUDIO_SAMPLES_PER_SECOND * frame_time * 10.5f;
+    max_samples_to_write = clamp(max_samples_to_write, 0, sizeof(buffer->data));
+    // TODO: fix this sample/frame confusion up
     
     Int cursor_diff = buffer->write_cursor - buffer->play_cursor;
     if(cursor_diff < 0)
@@ -147,6 +149,8 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
         {
             if(track->position+1 >= track->length)
                 break;
+            //buffer->data[write_cursor_copy] = track->data[track->position+1] * volume;
+            buffer->data[write_cursor_copy] = 0;
             buffer->data[write_cursor_copy] = track->data[track->position+1] * volume;
             track->position += 2;
         }
@@ -169,7 +173,10 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
 #endif
     }
     
-    log("%d", track->position);
+    //log("%d", track->position);
+    
+    //if(track->position > 200000)
+    //track->position = 100000;
     
     buffer->write_cursor = (buffer->write_cursor + samples_to_write) % sample_count;
 }

@@ -435,14 +435,14 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         glfwPollEvents();
         
         // Update xaudio2
+        if(1)
         {
             XAUDIO2_VOICE_STATE xaudio2_voice_state = {0};
             xaudio2_data.source_voice->GetState(&xaudio2_voice_state, 0);
             
             AudioBuffer *audio_buffer = &game_memory.audio_buffer;
             audio_buffer->total_samples_played = xaudio2_voice_state.SamplesPlayed;
-            audio_buffer->play_cursor = audio_buffer->total_samples_played
-                % (sizeof(audio_buffer->data)/sizeof(U16));
+            audio_buffer->play_cursor = (audio_buffer->total_samples_played * 2) % (sizeof(audio_buffer->data)/sizeof(I16));
         }
         
         F64 frame_end_time = get_time();
