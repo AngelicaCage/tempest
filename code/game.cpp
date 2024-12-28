@@ -240,7 +240,7 @@ update_and_render(GameMemory *game_memory)
         game_state->show_debug_interface = true;
         game_state->time_in_song = 0;
         
-#if 1
+#if 0
         {
             FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/seikan_hikou.flac");
             //FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/godzilla.flac");

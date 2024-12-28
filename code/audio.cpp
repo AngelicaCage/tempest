@@ -138,7 +138,6 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
     
     for(Int i = 0; i < samples_to_write; i++)
     {
-#if 1
         if(write_cursor_copy % 2 == 0)
         {
             if(track->position >= track->length)
@@ -155,28 +154,7 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
             track->position += 2;
         }
         write_cursor_copy = (write_cursor_copy+1) % sample_count;
-#else
-        if(write_cursor_copy % 2 == 0)
-        { // Write to left ear
-            F64 x_scalar = 130 * hz_scalar;
-            buffer->data[write_cursor_copy] += sin(game_state->at_1) * volume * (F64)I16_MAX;
-            game_state->at_1 += x_scalar;
-        }
-        else
-        { // Write to right ear
-            F64 x_scalar = 466 * hz_scalar;
-            buffer->data[write_cursor_copy] += sin(game_state->at_2) * volume * (F64)I16_MAX;
-            game_state->at_2 += x_scalar;
-        }
-        
-        write_cursor_copy = (write_cursor_copy+1) % sample_count;
-#endif
     }
-    
-    //log("%d", track->position);
-    
-    //if(track->position > 200000)
-    //track->position = 100000;
     
     buffer->write_cursor = (buffer->write_cursor + samples_to_write) % sample_count;
 }
