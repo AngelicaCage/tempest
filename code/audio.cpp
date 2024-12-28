@@ -86,30 +86,30 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
     
     U64 write_cursor_copy = buffer->write_cursor_absolute;
     
-    F64 volume = 0.1;
+    F64 volume = 0.2;
     
-    for(Int i = 0; i < frames_to_write; i++)
-    {
-        U32 write_cursor_copy_actual = U32(write_cursor_copy % U64(AUDIO_BUFFER_FRAME_COUNT));
-        buffer->samples[write_cursor_copy_actual*2] = 0;
-        buffer->samples[write_cursor_copy_actual*2+1] = 0;
-        write_cursor_copy++;
-    }
-    
-    PlayingAudioTrack *track = &game_state->playing_track;
     write_cursor_copy = buffer->write_cursor_absolute;
     
     for(Int i = 0; i < frames_to_write; i++)
     {
-        if(track->current_frame >= track->audio->frame_count)
-            break;
-        
         U32 write_cursor_copy_actual = U32(write_cursor_copy % U64(AUDIO_BUFFER_FRAME_COUNT));
         
-        buffer->samples[write_cursor_copy_actual*2] = track->audio->samples[track->current_frame*2] * volume;
-        buffer->samples[write_cursor_copy_actual*2+1] = track->audio->samples[track->current_frame*2+1] * volume;
+        buffer->samples[write_cursor_copy_actual*2] = 0;
+        buffer->samples[write_cursor_copy_actual*2+1] = 0;
         
-        track->current_frame++;
+        for(Int a = 0; a < game_state->playing_audio_tracks.length; a++)
+        {
+            PlayingAudioTrack *track = &(game_state->playing_audio_tracks[a]);
+            
+            if(track->current_frame >= track->audio->frame_count)
+                break;
+            
+            buffer->samples[write_cursor_copy_actual*2] += track->audio->samples[track->current_frame*2] * volume;
+            buffer->samples[write_cursor_copy_actual*2+1] += track->audio->samples[track->current_frame*2+1] * volume;
+            
+            track->current_frame++;
+        }
+        
         write_cursor_copy++;
     }
     

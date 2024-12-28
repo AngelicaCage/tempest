@@ -259,8 +259,8 @@ struct GameState
     Mesh rect_mesh;
     Mesh circle_mesh;
     
-    AudioTrack test_track;
-    PlayingAudioTrack playing_track;
+    InplaceList<AudioTrack, 32> audio_tracks;
+    InplaceList<PlayingAudioTrack, 32> playing_audio_tracks;
 };
 
 #endif //GAME_H

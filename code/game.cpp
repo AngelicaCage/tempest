@@ -267,12 +267,37 @@ update_and_render(GameMemory *game_memory)
             drwav_int16* samples = drwav_open_memory_and_read_pcm_frames_s16(audio_file_contents.data, audio_file_contents.size,
                                                                              &channels, &sample_rate, &frame_count, NULL);
             
-            game_state->test_track.frame_count = frame_count;
-            game_state->test_track.samples_per_frame = channels;
-            game_state->test_track.samples = samples;
+            AudioTrack new_track;
+            new_track.frame_count = frame_count;
+            new_track.samples_per_frame = channels;
+            new_track.samples = samples;
+            AudioTrack *new_track_ptr = game_state->audio_tracks.add(new_track);
             
-            game_state->playing_track.audio = &game_state->test_track;
-            game_state->playing_track.current_frame = 0;
+            PlayingAudioTrack new_playing_track;
+            new_playing_track.audio = new_track_ptr;
+            new_playing_track.current_frame = 0;
+            game_state->playing_audio_tracks.add(new_playing_track);
+        }
+        {
+            FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/iron_lotus.wav");
+            
+            UInt channels;
+            UInt sample_rate;
+            U64 frame_count;
+            drwav_int16* samples = drwav_open_memory_and_read_pcm_frames_s16(audio_file_contents.data, audio_file_contents.size,
+                                                                             &channels, &sample_rate, &frame_count, NULL);
+            
+            AudioTrack new_track;
+            new_track.frame_count = frame_count;
+            new_track.samples_per_frame = channels;
+            new_track.samples = samples;
+            AudioTrack *new_track_ptr = game_state->audio_tracks.add(new_track);
+            
+            PlayingAudioTrack new_playing_track;
+            new_playing_track.audio = new_track_ptr;
+            new_playing_track.current_frame = 0;
+            game_state->playing_audio_tracks.add(new_playing_track);
+            
         }
 #endif
     }
@@ -421,15 +446,13 @@ update_and_render(GameMemory *game_memory)
     
     Float text_scale = 2.0f;
     
-    //log("%d", game_memory->audio_buffer.play_cursor);
-    
-    
     glDisable(GL_DEPTH_TEST);
     
     ui_draw_log(game_state, global_log, text_scale);
     
-    update_frame_timing_end(game_state);
-    
     if(game_state->show_debug_interface)
         ui_draw_debug_interface(game_state, game_memory, text_scale);
+    
+    update_frame_timing_end(game_state);
+    
 }

@@ -115,6 +115,40 @@ List<t> allocate_list()
 }
 
 template <typename T, Int length_allocated>
+struct InplaceList
+{
+    T data[length_allocated];
+    Int length = 0;
+    
+    inline T *add(T element) {
+        if(length < length_allocated - 1) {
+            data[length] = element;
+            length++;
+        }
+        return &(data[length-1]);
+    }
+    inline Void pop() {
+        length--;
+    }
+    inline int remove_at(U64 index)
+    {
+        if(index >= 0 && index < length)
+        {
+            for(U64 i = index; i < length; i++)
+            {
+                data[i] = data[i+1];
+            }
+            length--;
+            return 1;
+        }
+        return 0;
+    }
+    inline T& operator[](Int index) {
+        return data[index];
+    }
+};
+
+template <typename T, Int length_allocated>
 struct InplaceStack
 {
     T data[length_allocated];

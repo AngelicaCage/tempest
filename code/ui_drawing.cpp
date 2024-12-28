@@ -365,7 +365,7 @@ ui_draw_debug_interface(GameState *game_state, GameMemory *game_memory, Float te
     
     
     // Draw audio buffer
-#if 1
+#if 0
     {
         Float sample_width = 1;
         Float horizontal_spacing = 0;

@@ -17,8 +17,11 @@ struct AudioTrack
 struct PlayingAudioTrack
 {
     AudioTrack *audio;
+    
+    Float volume;
+    
+    Bool loop;
     U64 current_frame;
-    // Later: add looping
 };
 
 #endif //AUDIO_H
