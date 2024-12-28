@@ -19,17 +19,33 @@ FileContents
     U64 size;
 };
 
-#define AUDIO_SAMPLES_PER_SECOND (44100)
+// Later: make a more reasoned size
+#define AUDIO_FRAMES_PER_SECOND (44100)
+#define AUDIO_SAMPLES_PER_FRAME (2)
 #define AUDIO_BYTES_PER_SAMPLE (2)
 #define AUDIO_BUFFER_SECONDS (0.5f)
-#define AUDIO_BUFFER_SIZE ((Float)AUDIO_SAMPLES_PER_SECOND * AUDIO_BUFFER_SECONDS)
+#define AUDIO_BUFFER_FRAME_COUNT ((Int)((Float)AUDIO_FRAMES_PER_SECOND * AUDIO_BUFFER_SECONDS * AUDIO_SAMPLES_PER_FRAME))
+#define AUDIO_BUFFER_SAMPLE_COUNT ((Int)(AUDIO_BUFFER_FRAME_COUNT * AUDIO_SAMPLES_PER_FRAME))
 
 struct AudioBuffer
 {
-    Int play_cursor;
-    Int write_cursor;
-    U64 total_samples_played;
-    I16 data[(Int)AUDIO_BUFFER_SIZE];
+    // All measured in frames
+    U64 play_cursor_absolute;
+    U64 write_cursor_absolute;
+    
+    //U32 play_cursor;
+    //U32 write_cursor;
+    U64 total_frames_played;
+    I16 samples[AUDIO_BUFFER_SAMPLE_COUNT];
+    
+    inline U32 play_cursor_actual()
+    {
+        return U32(play_cursor_absolute % U64(AUDIO_BUFFER_FRAME_COUNT));
+    }
+    inline U32 write_cursor_actual()
+    {
+        return U32(write_cursor_absolute % U64(AUDIO_BUFFER_FRAME_COUNT));
+    }
 };
 
 struct GameMemory

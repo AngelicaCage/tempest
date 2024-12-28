@@ -117,6 +117,7 @@ update_and_render(GameMemory *game_memory)
     
     if(!game_state->initialized)
     {
+        game_memory->d_time = 1.f/144.f;
         // Initialize memory
         game_state->initialized = true;
         srand(get_time());
@@ -238,39 +239,40 @@ update_and_render(GameMemory *game_memory)
         camera->orbit_distance = 10.0f;
         
         game_state->show_debug_interface = true;
-        game_state->time_in_song = 0;
         
 #if 0
         {
-            FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/seikan_hikou.flac");
-            //FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/godzilla.flac");
+            //FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/seikan_hikou.flac");
+            FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/godzilla.flac");
             
             drflac *flac = drflac_open_memory(audio_file_contents.data, audio_file_contents.size, NULL);
             
             I16* samples = (I16 *)mem_alloc(flac->totalPCMFrameCount * flac->channels * sizeof(I16));
             U64 interleaved_sample_read_count = drflac_read_pcm_frames_s16(flac, flac->totalPCMFrameCount, samples);
             
-            game_state->test_track.length = interleaved_sample_read_count;
-            game_state->test_track.data = samples;
-            game_state->test_track.position = 0;
+            game_state->test_track.frame_count = interleaved_sample_read_count * 2;
+            game_state->test_track.samples_per_frame = 2;
+            game_state->test_track.samples = samples;
             
+            game_state->playing_track.audio = &game_state->test_track;
+            game_state->playing_track.current_frame = 0;
         }
 #else
         {
             FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/roland2.wav");
-            //FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/godzilla.flac");
             
             UInt channels;
             UInt sample_rate;
             U64 frame_count;
             drwav_int16* samples = drwav_open_memory_and_read_pcm_frames_s16(audio_file_contents.data, audio_file_contents.size,
                                                                              &channels, &sample_rate, &frame_count, NULL);
-            //I16* samples = (I16 *)mem_alloc(wav->totalPCMFrameCount * wav->channels * sizeof(I16));
-            //U64 interleaved_sample_read_count = drwav_read_pcm_frames_s16(wav, wav->totalPCMFrameCount, samples);
             
-            game_state->test_track.length = frame_count;
-            game_state->test_track.data = samples;
-            game_state->test_track.position = 0;
+            game_state->test_track.frame_count = frame_count;
+            game_state->test_track.samples_per_frame = channels;
+            game_state->test_track.samples = samples;
+            
+            game_state->playing_track.audio = &game_state->test_track;
+            game_state->playing_track.current_frame = 0;
         }
 #endif
     }

@@ -300,7 +300,7 @@ initialize_xaudio2(AudioBuffer *buffer)
     WAVEFORMATEX wave_format;
     wave_format.wFormatTag = WAVE_FORMAT_PCM;
     wave_format.nChannels = 2; // 2 channels
-    wave_format.nSamplesPerSec = AUDIO_SAMPLES_PER_SECOND;
+    wave_format.nSamplesPerSec = AUDIO_FRAMES_PER_SECOND;
     wave_format.wBitsPerSample = AUDIO_BYTES_PER_SAMPLE*8;
     wave_format.nBlockAlign = wave_format.nChannels * AUDIO_BYTES_PER_SAMPLE;
     wave_format.nAvgBytesPerSec = wave_format.nSamplesPerSec * wave_format.nBlockAlign;
@@ -310,15 +310,17 @@ initialize_xaudio2(AudioBuffer *buffer)
     ASSERT(SUCCEEDED(xaudio2_instance->CreateSourceVoice(&xaudio2_source_voice, &wave_format)));
     
     U32 buffer_index = 0;
-    while (buffer_index < AUDIO_BUFFER_SIZE)
+    while (buffer_index < AUDIO_BUFFER_SAMPLE_COUNT)
     {
-        buffer->data[buffer_index++] = 0;
+        buffer->samples[buffer_index++] = 0;
     }
+    buffer->play_cursor_absolute = 0;
+    buffer->write_cursor_absolute = 0;
     
     XAUDIO2_BUFFER xaudio2_buffer{};
     xaudio2_buffer.Flags = XAUDIO2_END_OF_STREAM;
-    xaudio2_buffer.AudioBytes = sizeof(buffer->data);
-    xaudio2_buffer.pAudioData = (U8 *)buffer->data;
+    xaudio2_buffer.AudioBytes = sizeof(buffer->samples);
+    xaudio2_buffer.pAudioData = (U8 *)buffer->samples;
     xaudio2_buffer.PlayBegin = 0;
     xaudio2_buffer.PlayLength = 0;
     xaudio2_buffer.LoopBegin = 0;
@@ -435,14 +437,16 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         glfwPollEvents();
         
         // Update xaudio2
-        if(1)
         {
             XAUDIO2_VOICE_STATE xaudio2_voice_state = {0};
             xaudio2_data.source_voice->GetState(&xaudio2_voice_state, 0);
             
             AudioBuffer *audio_buffer = &game_memory.audio_buffer;
-            audio_buffer->total_samples_played = xaudio2_voice_state.SamplesPlayed;
-            audio_buffer->play_cursor = (audio_buffer->total_samples_played * 2) % (sizeof(audio_buffer->data)/sizeof(I16));
+            
+            // I think XAUDIO2_VOICE_STATE.SamplesPlayed is the number of frames played?
+            audio_buffer->total_frames_played = xaudio2_voice_state.SamplesPlayed;
+            
+            audio_buffer->play_cursor_absolute = audio_buffer->total_frames_played;
         }
         
         F64 frame_end_time = get_time();

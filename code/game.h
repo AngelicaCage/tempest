@@ -259,11 +259,8 @@ struct GameState
     Mesh rect_mesh;
     Mesh circle_mesh;
     
-    F64 time_in_song;
     AudioTrack test_track;
-    
-    F64 at_1, at_2;
-    //Bool was_last_sample_even
+    PlayingAudioTrack playing_track;
 };
 
 #endif //GAME_H

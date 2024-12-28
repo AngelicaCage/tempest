@@ -62,99 +62,56 @@ write_song_data(GameState *game_state, AudioBuffer *buffer)
 
 
 
-#if 0
-AudioTrack
-load_wav_file(const Char *path)
-{
-    FileContents file_contents = read_file_contents(path);
-    ASSERT(file_contents.file_found);
-    ASSERT(file_contents.allocated);
-    ASSERT(file_contents.contains_proper_data);
-    ASSERT(file_contents.size > 44);
-    
-    AudioTrack track = {0};
-    U64 data_section_size = *((U64 *)(&file_contents.data[40]));
-    U8 *data_start = &(file_contents.data[44]);
-    
-    track.length = data_section_size;
-    for(U64 i = 0; i < data_section_size; i++)
-    {
-    }
-    
-    mem_free(file_contents.data);
-    return track;
-}
-#endif
-
-
-
 
 Void
 write_frame_audio(GameState *game_state, AudioBuffer *buffer)
 {
-    Int sample_count = sizeof(buffer->data)/2;
+    Int buffer_sample_count = sizeof(buffer->samples)/sizeof(I16);
+    Int buffer_frame_count = buffer_sample_count / 2;
     
-    Float frame_time = game_state->d_time;
-    Int max_samples_to_write = AUDIO_SAMPLES_PER_SECOND * frame_time * 10.5f;
-    max_samples_to_write = clamp(max_samples_to_write, 0, sizeof(buffer->data));
-    // TODO: fix this sample/frame confusion up
+    Float d_time = game_state->d_time;
+    // Later: use a more reasoned value
+    Int max_frames_to_write = AUDIO_FRAMES_PER_SECOND * d_time * 10.5f;
+    max_frames_to_write = clamp(max_frames_to_write, 0, AUDIO_BUFFER_FRAME_COUNT);
     
-    Int cursor_diff = buffer->write_cursor - buffer->play_cursor;
+    Int cursor_diff = Int(buffer->write_cursor_absolute - buffer->play_cursor_absolute);
     if(cursor_diff < 0)
     {
-        // Assume that the write cursor has wrapped around, not that the play cursor has gone past the write cursor
-        // In the future we should account for the latter case though
-        if(-cursor_diff < sample_count / 2)
-        {
-            // The play cursor probably overran the write cursor
-            buffer->write_cursor = buffer->play_cursor;
-            cursor_diff = 0;
-        }
-        else
-        {
-            cursor_diff += sample_count;
-        }
+        buffer->write_cursor_absolute = buffer->play_cursor_absolute;
     }
     
-    Int samples_to_write = max_samples_to_write - cursor_diff;
-    if(samples_to_write <= 0)
+    Int frames_to_write = max_frames_to_write - cursor_diff;
+    if(frames_to_write <= 0)
         return;
     
-    // Write audio starting at write cursor
-    
-    Int write_cursor_copy = buffer->write_cursor;
+    U64 write_cursor_copy = buffer->write_cursor_absolute;
     
     F64 volume = 0.1;
-    F64 hz_scalar = 2.0*3.141592653589793/F64(AUDIO_SAMPLES_PER_SECOND);
     
-    for(Int i = 0; i < samples_to_write; i++)
+    for(Int i = 0; i < frames_to_write; i++)
     {
-        buffer->data[write_cursor_copy] = 0;
-        write_cursor_copy = (write_cursor_copy+1) % sample_count;
+        U32 write_cursor_copy_actual = U32(write_cursor_copy % U64(AUDIO_BUFFER_FRAME_COUNT));
+        buffer->samples[write_cursor_copy_actual*2] = 0;
+        buffer->samples[write_cursor_copy_actual*2+1] = 0;
+        write_cursor_copy++;
     }
     
-    AudioTrack *track = &game_state->test_track;
-    write_cursor_copy = buffer->write_cursor;
+    PlayingAudioTrack *track = &game_state->playing_track;
+    write_cursor_copy = buffer->write_cursor_absolute;
     
-    for(Int i = 0; i < samples_to_write; i++)
+    for(Int i = 0; i < frames_to_write; i++)
     {
-        if(write_cursor_copy % 2 == 0)
-        {
-            if(track->position >= track->length)
-                break;
-            buffer->data[write_cursor_copy] = track->data[track->position+0] * volume;
-        }
-        else
-        {
-            if(track->position+1 >= track->length)
-                break;
-            //buffer->data[write_cursor_copy] = track->data[track->position+1] * volume;
-            buffer->data[write_cursor_copy] = 0;
-            buffer->data[write_cursor_copy] = track->data[track->position+1] * volume;
-            track->position += 2;
-        }
-        write_cursor_copy = (write_cursor_copy+1) % sample_count;
+        if(track->current_frame >= track->audio->frame_count)
+            break;
+        
+        U32 write_cursor_copy_actual = U32(write_cursor_copy % U64(AUDIO_BUFFER_FRAME_COUNT));
+        
+        buffer->samples[write_cursor_copy_actual*2] = track->audio->samples[track->current_frame*2] * volume;
+        buffer->samples[write_cursor_copy_actual*2+1] = track->audio->samples[track->current_frame*2+1] * volume;
+        
+        track->current_frame++;
+        write_cursor_copy++;
     }
     
-    buffer->write_cursor = (buffer->write_cursor + samples_to_write) % sample_count;
+    buffer->write_cursor_absolute += U64(frames_to_write);
 }
