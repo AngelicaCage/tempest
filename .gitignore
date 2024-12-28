@@ -5,6 +5,7 @@ code/glad
 code/glm
 code/stb
 code/dr_libs
+code/imgui
 debugging_session.rdbg
 cover_image*
 screenshots

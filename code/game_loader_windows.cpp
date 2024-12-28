@@ -7,6 +7,20 @@
 #include "glad/glad.c"
 #define GLFW_DLL
 #include "glfw/glfw3.h"
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include "glfw/glfw3native.h"
+
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui/imgui.h"
+#include "imgui/imgui.cpp"
+#include "imgui/imgui_draw.cpp"
+#include "imgui/imgui_tables.cpp"
+#include "imgui/imgui_widgets.cpp"
+#include "imgui/imgui_demo.cpp"
+#define IMGUI_IMPL_OPENGL_LOADER_CUSTOM
+#include "imgui/backends/imgui_impl_glfw.cpp"
+#include "imgui/backends/imgui_impl_opengl3.cpp"
+
 
 #include "base.h"
 #include "log.h"
@@ -382,6 +396,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         ASSERT(false);
     }
     glfwMakeContextCurrent(window);
+    glfwSwapInterval(1);
     
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -402,6 +417,26 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     game_memory.d_time = 0.06f;
     
     XAudio2Data xaudio2_data = initialize_xaudio2(&game_memory.audio_buffer);
+    
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+    ImGui_ImplOpenGL3_Init();
+    
+    
+    if(0)
+    {
+        int present = glfwJoystickPresent(GLFW_JOYSTICK_1);
+        
+        int count;
+        //const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &count);
+    }
     
     while(game_memory.game_running)
     {
@@ -430,22 +465,31 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         if(glfwWindowShouldClose(window))
             break;
         
+        glfwPollEvents();
+        
+#if 1
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGui::ShowDemoWindow();
+        ImGui::Render();
+#endif
+        
         (game_code.update_and_render)(&game_memory);
         
-        glfwSwapInterval(1);
+#if 1
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#endif
+        
         glfwSwapBuffers(window);
-        glfwPollEvents();
+        
         
         // Update xaudio2
         {
             XAUDIO2_VOICE_STATE xaudio2_voice_state = {0};
             xaudio2_data.source_voice->GetState(&xaudio2_voice_state, 0);
-            
             AudioBuffer *audio_buffer = &game_memory.audio_buffer;
-            
-            // I think XAUDIO2_VOICE_STATE.SamplesPlayed is the number of frames played?
             audio_buffer->total_frames_played = xaudio2_voice_state.SamplesPlayed;
-            
             audio_buffer->play_cursor_absolute = audio_buffer->total_frames_played;
         }
         
@@ -454,6 +498,10 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         if(game_memory.d_time < 0)
             game_memory.d_time = 0.001f;
     }
+    
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
     
     glfwTerminate();
     return 0;
