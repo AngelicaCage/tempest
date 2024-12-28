@@ -61,6 +61,59 @@ write_song_data(GameState *game_state, AudioBuffer *buffer)
 }
 
 
+#if 0
+Sound *
+load_sound_wav(GameState *game_state, const Char *path)
+{
+    
+    FileContents audio_file_contents = read_file_contents(path);
+    
+    UInt channels;
+    UInt sample_rate;
+    U64 frame_count;
+    drwav_int16* samples = drwav_open_memory_and_read_pcm_frames_s16(audio_file_contents.data, audio_file_contents.size,
+                                                                     &channels, &sample_rate, &frame_count, NULL);
+    
+    Sound sound;
+    sound.frame_count = frame_count;
+    sound.samples_per_frame = channels;
+    sound.samples = samples;
+    
+    return game_state->sounds.add(sound);
+}
+#endif
+
+Sound *
+load_sound_mp3(GameState *game_state, const Char *path)
+{
+    
+    FileContents audio_file_contents = read_file_contents(path);
+    
+    UInt sample_rate;
+    U64 frame_count;
+    drmp3_config config;
+    config.channels = 2;
+    config.sampleRate = AUDIO_FRAMES_PER_SECOND;
+    I16* samples = drmp3_open_memory_and_read_pcm_frames_s16(audio_file_contents.data, audio_file_contents.size,
+                                                             &config, &frame_count, NULL);
+    
+    Sound sound;
+    sound.frame_count = frame_count;
+    sound.samples = samples;
+    
+    return game_state->sounds.add(sound);
+}
+
+
+Void
+play_sound(GameState *game_state, Sound *sound, Bool loop)
+{
+    PlayingSound playing_sound;
+    playing_sound.sound = sound;
+    playing_sound.current_frame = 0;
+    playing_sound.loop = loop;
+    game_state->playing_sounds.add(playing_sound);
+}
 
 
 Void
@@ -97,21 +150,35 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
         buffer->samples[write_cursor_copy_actual*2] = 0;
         buffer->samples[write_cursor_copy_actual*2+1] = 0;
         
-        for(Int a = 0; a < game_state->playing_audio_tracks.length; a++)
+        for(Int a = 0; a < game_state->playing_sounds.length; a++)
         {
-            PlayingAudioTrack *track = &(game_state->playing_audio_tracks[a]);
+            PlayingSound *playing_sound = &(game_state->playing_sounds[a]);
             
-            if(track->current_frame >= track->audio->frame_count)
-                break;
+            if(playing_sound->current_frame >= playing_sound->sound->frame_count)
+            {
+                if(!playing_sound->loop)
+                {
+                    game_state->playing_sounds.remove_at(a);
+                    continue;
+                }
+                else
+                {
+                    playing_sound->current_frame = 0;
+                }
+            }
             
-            buffer->samples[write_cursor_copy_actual*2] += track->audio->samples[track->current_frame*2] * volume;
-            buffer->samples[write_cursor_copy_actual*2+1] += track->audio->samples[track->current_frame*2+1] * volume;
+            buffer->samples[write_cursor_copy_actual*2] += 
+                playing_sound->sound->samples[playing_sound->current_frame*2] * volume;
+            buffer->samples[write_cursor_copy_actual*2+1] += 
+                playing_sound->sound->samples[playing_sound->current_frame*2+1] * volume;
             
-            track->current_frame++;
+            playing_sound->current_frame++;
         }
         
         write_cursor_copy++;
     }
+    
+    log("%d", game_state->playing_sounds.length);
     
     buffer->write_cursor_absolute += U64(frames_to_write);
 }

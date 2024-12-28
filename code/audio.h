@@ -6,17 +6,17 @@
 // Frame refers to all the audio data at an instance in time (a frame). If there are 2 channels
 // then it will be 2 samples, 1 -> 1, etc.
 // So samples array length == samples_per_frame*frame_count
-struct AudioTrack
+struct Sound
 {
-    U32 samples_per_frame;
+    // We always use 2-channel audio, so 2 samples per frame
     U64 frame_count;
     
     I16 *samples;
 };
 
-struct PlayingAudioTrack
+struct PlayingSound
 {
-    AudioTrack *audio;
+    Sound *sound;
     
     Float volume;
     

@@ -8,10 +8,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 
-#define DR_FLAC_IMPLEMENTATION
-#include "dr_libs/dr_flac.h"
-#define DR_WAV_IMPLEMENTATION
-#include "dr_libs/dr_wav.h"
+//#define DR_WAV_IMPLEMENTATION
+//#include "dr_libs/dr_wav.h"
+#define DR_MP3_IMPLEMENTATION
+#include "dr_libs/dr_mp3.h"
+
 
 #include "base.h"
 #include "log.h"
@@ -240,68 +241,12 @@ update_and_render(GameMemory *game_memory)
         
         game_state->show_debug_interface = true;
         
-#if 0
-        {
-            //FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/seikan_hikou.flac");
-            FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/godzilla.flac");
-            
-            drflac *flac = drflac_open_memory(audio_file_contents.data, audio_file_contents.size, NULL);
-            
-            I16* samples = (I16 *)mem_alloc(flac->totalPCMFrameCount * flac->channels * sizeof(I16));
-            U64 interleaved_sample_read_count = drflac_read_pcm_frames_s16(flac, flac->totalPCMFrameCount, samples);
-            
-            game_state->test_track.frame_count = interleaved_sample_read_count * 2;
-            game_state->test_track.samples_per_frame = 2;
-            game_state->test_track.samples = samples;
-            
-            game_state->playing_track.audio = &game_state->test_track;
-            game_state->playing_track.current_frame = 0;
-        }
-#else
-        {
-            FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/roland2.wav");
-            
-            UInt channels;
-            UInt sample_rate;
-            U64 frame_count;
-            drwav_int16* samples = drwav_open_memory_and_read_pcm_frames_s16(audio_file_contents.data, audio_file_contents.size,
-                                                                             &channels, &sample_rate, &frame_count, NULL);
-            
-            AudioTrack new_track;
-            new_track.frame_count = frame_count;
-            new_track.samples_per_frame = channels;
-            new_track.samples = samples;
-            AudioTrack *new_track_ptr = game_state->audio_tracks.add(new_track);
-            
-            PlayingAudioTrack new_playing_track;
-            new_playing_track.audio = new_track_ptr;
-            new_playing_track.current_frame = 0;
-            game_state->playing_audio_tracks.add(new_playing_track);
-        }
-        {
-            FileContents audio_file_contents = read_file_contents(GAME_DATA_DIRECTORY "/audio/test/iron_lotus.wav");
-            
-            UInt channels;
-            UInt sample_rate;
-            U64 frame_count;
-            drwav_int16* samples = drwav_open_memory_and_read_pcm_frames_s16(audio_file_contents.data, audio_file_contents.size,
-                                                                             &channels, &sample_rate, &frame_count, NULL);
-            
-            AudioTrack new_track;
-            new_track.frame_count = frame_count;
-            new_track.samples_per_frame = channels;
-            new_track.samples = samples;
-            AudioTrack *new_track_ptr = game_state->audio_tracks.add(new_track);
-            
-            PlayingAudioTrack new_playing_track;
-            new_playing_track.audio = new_track_ptr;
-            new_playing_track.current_frame = 0;
-            game_state->playing_audio_tracks.add(new_playing_track);
-            
-        }
-#endif
+        Sound *new_sound_ptr = load_sound_mp3(game_state,
+                                              GAME_DATA_DIRECTORY "/audio/test/bunker_1.mp3");
+        play_sound(game_state, new_sound_ptr, true);
+        
+        load_sound_mp3(game_state, GAME_DATA_DIRECTORY "/audio/test/bell.mp3");
     }
-    
     
     
     
@@ -398,6 +343,9 @@ update_and_render(GameMemory *game_memory)
     {
         update_main_menu(game_state);
     }
+    
+    if(keys->j.just_pressed)
+        play_sound(game_state, &game_state->sounds[1], false);
     
     start_timing_section(&game_state->frame_profiles.last(), "update_field_data");
     update_field_data(game_state, &(game_state->field));
