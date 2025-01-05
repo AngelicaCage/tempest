@@ -1,4 +1,5 @@
 
+#if 0
 RectI
 window_get_rect(GLFWwindow *window)
 {
@@ -39,3 +40,4 @@ window_toggle_fullscreen(GLFWwindow *window, RectI windowed_rect, Bool *current_
         glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
     }
 }
+#endif

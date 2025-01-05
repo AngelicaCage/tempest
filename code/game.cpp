@@ -1,5 +1,5 @@
 #include "glad/glad.c"
-#include "glfw/glfw3.h"
+//#include "glfw/glfw3.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
@@ -90,7 +90,6 @@ write_to_save_file(GameState *game_state)
 extern "C" __declspec(dllexport) void __cdecl
 update_and_render(GameMemory *game_memory)
 {
-    // TODO: move glfw to platform layer, abstract functionality
     if(!game_memory->functions_loaded)
     {
         get_file_last_write_time = game_memory->get_file_last_write_time;
@@ -99,12 +98,14 @@ update_and_render(GameMemory *game_memory)
         get_time = game_memory->get_time;
         sleep = game_memory->sleep;
         
+#if 0
         glfwMakeContextCurrent(game_memory->window);
         if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
         {
             log_error("failed to initialize GLAD");
             ASSERT(false);
         }
+#endif
     }
     
     GameState *game_state = (GameState *)game_memory->memory;
@@ -126,10 +127,6 @@ update_and_render(GameMemory *game_memory)
         
         game_state->paused = false;
         game_state->should_quit = false;
-        
-        fill_key_data(input);
-        
-        glfwSetScrollCallback(game_memory->window, scroll_callback);
         
         compile_fallback_shaders();
         
@@ -275,6 +272,7 @@ update_and_render(GameMemory *game_memory)
     
     player->shot_cooldown_max = 0.15f;
     
+#if 0
     update_input(input, game_memory->window, d_time);
     input->d_scroll = d_scroll;
     d_scroll = 0;
@@ -295,11 +293,13 @@ update_and_render(GameMemory *game_memory)
     
     if(keys->f11.just_pressed)
         window_toggle_fullscreen(game_memory->window, game_state->windowed_rect, &game_state->fullscreen);
+#endif
     
     if(keys->f1.just_pressed)
         game_state->show_debug_interface = !game_state->show_debug_interface;
     
     F64 new_mouse_pos[2];
+#if 0
     glfwGetCursorPos(game_memory->window, &new_mouse_pos[0], &new_mouse_pos[1]);
     input->d_mouse_pos = v2((Float)new_mouse_pos[0] - input->mouse_pos.x,
                             (Float)new_mouse_pos[1] - input->mouse_pos.y);
@@ -307,6 +307,7 @@ update_and_render(GameMemory *game_memory)
     
     RectI window_rect = window_get_rect(game_memory->window);
     game_state->window_dim = v2(window_rect.w, window_rect.h);
+#endif
     
     if(game_state->in_game)
     {
