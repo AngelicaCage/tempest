@@ -3,8 +3,6 @@
 #ifndef WINDOWS_GAME_LOADER_H
 #define WINDOWS_GAME_LOADER_H
 
-#include "glfw/glfw3.h"
-
 #include "base.h"
 #include "log.h"
 
@@ -60,7 +58,6 @@ struct GameMemory
     AudioBuffer audio_buffer;
     
     Log *global_log;
-    GLFWwindow *window;
     
     // Later: put names in the arguments?
     U64 (*get_file_last_write_time)(const Char *);

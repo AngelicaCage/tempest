@@ -6,6 +6,8 @@ code/glm
 code/stb
 code/dr_libs
 code/imgui
+code/gl
+code/khr
 debugging_session.rdbg
 cover_image*
 screenshots

@@ -1,15 +1,20 @@
 #include <windows.h>
 #include <xaudio2.h>
-//#include <dsound.h>
+#include "khr/khrplatform.h"
+#include <gl/gl.h>
+#include "gl/glext.h"
+#include "gl/wglext.h"
 #include <stdio.h>
 #include <math.h>
 
+#if 0
+{
 #include "glad/glad.c"
 #define GLFW_DLL
 #include "glfw/glfw3.h"
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include "glfw/glfw3native.h"
-
+    
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui/imgui.h"
 #include "imgui/imgui.cpp"
@@ -20,7 +25,8 @@
 #define IMGUI_IMPL_OPENGL_LOADER_CUSTOM
 #include "imgui/backends/imgui_impl_glfw.cpp"
 #include "imgui/backends/imgui_impl_opengl3.cpp"
-
+}
+#endif
 
 #include "base.h"
 #include "log.h"
@@ -271,11 +277,6 @@ Void error_callback( Int error, const Char *msg ) {
 
 Float width_over_height = 1000.0f/1000.0f;
 
-Void framebuffer_size_callback(GLFWwindow* window, Int width, Int height)
-{
-    glViewport(0, 0, width, height * width_over_height);
-}
-
 #if 0
 Void
 initialize_directsound()
@@ -347,9 +348,161 @@ initialize_xaudio2(AudioBuffer *buffer)
     return {xaudio2_instance, xaudio2_mastering_voice, xaudio2_source_voice};
 }
 
+LRESULT CALLBACK
+window_message_callback(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message) {
+        case WM_KEYDOWN:
+        if (wParam == VK_ESCAPE) {
+            PostQuitMessage(0);
+        }
+        break;
+        case WM_CLOSE:
+        PostQuitMessage(0);
+        break;
+        default:
+        return DefWindowProc(hWnd, message, wParam, lParam);
+    }
+    return 0;       // message handled
+}
+
+ATOM
+register_fake_window_class(HINSTANCE hInstance)
+{
+    WNDCLASSEX wcex;
+    ZeroMemory(&wcex, sizeof(wcex));
+    wcex.cbSize = sizeof(wcex);
+    wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+    wcex.lpfnWndProc = window_message_callback;
+    wcex.hInstance = hInstance;
+    wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wcex.lpszClassName = "Core";
+    return RegisterClassEx(&wcex);
+}
 
 Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+    // Open window and initialize OpenGL
+    
+    register_fake_window_class(hInstance);
+    
+    HWND fakeWND = CreateWindow("Core", "Fake Window",      // window class, title
+                                WS_CLIPSIBLINGS | WS_CLIPCHILDREN, // style
+                                0, 0,           // position x, y
+                                1, 1,           // width, height
+                                NULL, NULL,     // parent window, menu
+                                hInstance, NULL);       // instance, param
+    HDC fakeDC = GetDC(fakeWND);
+    
+    
+    PIXELFORMATDESCRIPTOR fakePFD;
+    ZeroMemory(&fakePFD, sizeof(fakePFD));
+    fakePFD.nSize = sizeof(fakePFD);
+    fakePFD.nVersion = 1;
+    fakePFD.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+    fakePFD.iPixelType = PFD_TYPE_RGBA;
+    fakePFD.cColorBits = 32;
+    fakePFD.cAlphaBits = 8;
+    fakePFD.cDepthBits = 24;
+    
+    int fakePFDID = ChoosePixelFormat(fakeDC, &fakePFD);
+    if (fakePFDID == 0) {
+        log_error("ChoosePixelFormat() failed.");
+        return 1;
+    }
+    
+    if (SetPixelFormat(fakeDC, fakePFDID, &fakePFD) == false) {
+        log_error("SetPixelFormat() failed.");
+        return 1;
+    }
+    
+    HGLRC fakeRC = wglCreateContext(fakeDC);    // Rendering Contex
+    if (fakeRC == 0) {
+        log_error("wglCreateContext() failed.");
+        return 1;
+    }
+    if (wglMakeCurrent(fakeDC, fakeRC) == false) {
+        log_error("wglMakeCurrent() failed.");
+        return 1;
+    }
+    
+    PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = nullptr;
+    wglChoosePixelFormatARB = reinterpret_cast<PFNWGLCHOOSEPIXELFORMATARBPROC>(wglGetProcAddress("wglChoosePixelFormatARB"));
+    if (wglChoosePixelFormatARB == nullptr) {
+        log_error("wglGetProcAddress() failed.");
+        return 1;
+    }
+    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = nullptr;
+    wglCreateContextAttribsARB = reinterpret_cast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(wglGetProcAddress("wglCreateContextAttribsARB"));
+    if (wglCreateContextAttribsARB == nullptr) {
+        log_error("wglGetProcAddress() failed.");
+        return 1;
+    }
+    
+    // Now create real window
+    
+    HWND WND = CreateWindow(
+                            "Core", "OpenGL Window",       // class name, window name
+                            WS_CAPTION | WS_SYSMENU | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, // style
+                            0, 0,      // posx, posy
+                            500, 300,   // width, height
+                            NULL, NULL,                    // parent window, menu
+                            hInstance, NULL);              // instance, param
+    HDC DC = GetDC(WND);
+    
+    const int pixelAttribs[] = {
+        WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+        WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+        WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
+        WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+        WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
+        WGL_COLOR_BITS_ARB, 32,
+        WGL_ALPHA_BITS_ARB, 8,
+        WGL_DEPTH_BITS_ARB, 24,
+        WGL_STENCIL_BITS_ARB, 8,
+        WGL_SAMPLE_BUFFERS_ARB, GL_TRUE,
+        WGL_SAMPLES_ARB, 4,
+        0
+    };
+    int pixelFormatID; UINT numFormats;
+    bool status = wglChoosePixelFormatARB(DC, pixelAttribs, NULL, 1, &pixelFormatID, &numFormats);
+    if (status == false || numFormats == 0) {
+        log_error("wglChoosePixelFormatARB() failed.");
+        return 1;
+    }
+    
+    PIXELFORMATDESCRIPTOR PFD;
+    DescribePixelFormat(DC, pixelFormatID, sizeof(PFD), &PFD);
+    SetPixelFormat(DC, pixelFormatID, &PFD);
+    
+    
+    const int major_min = 4, minor_min = 5;
+    int  contextAttribs[] = {
+        WGL_CONTEXT_MAJOR_VERSION_ARB, major_min,
+        WGL_CONTEXT_MINOR_VERSION_ARB, minor_min,
+        WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+        0
+    };
+    HGLRC RC = wglCreateContextAttribsARB(DC, 0, contextAttribs);
+    if (RC == NULL) {
+        log_error("wglCreateContextAttribsARB() failed.");
+        return 1;
+    }
+    
+    wglMakeCurrent(NULL, NULL);
+    wglDeleteContext(fakeRC);
+    ReleaseDC(fakeWND, fakeDC);
+    DestroyWindow(fakeWND);
+    if (!wglMakeCurrent(DC, RC)) {
+        log_error("wglMakeCurrent() failed.");
+        return 1;
+    }
+    
+    SetWindowText(WND, (LPCSTR)glGetString(GL_VERSION));
+    ShowWindow(WND, SW_SHOWNORMAL);
+    
+    // End of window and OpenGL setup
+    
     Log _global_log;
     global_log = &_global_log;
     
@@ -367,9 +520,9 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     Int dll_load_result = load_game_dll(&game_code, &module_handle);
     if(dll_load_result == 1)
     {
-        print_error("issue with dll loading");
-        ASSERT(false);
-        return 1;
+        //print_error("issue with dll loading");
+        //ASSERT(false);
+        //return 1;
     }
     GameMemory game_memory = {0};
     game_memory.game_running = true;
@@ -381,34 +534,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     game_memory.allocated = true;
     
     
-    // INITIALIZE WINDOW AND OPENGL
-    glfwSetErrorCallback( error_callback );
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    
-    GLFWwindow* window = glfwCreateWindow(1920, 1080, "Tempest", NULL, NULL);
-    if (window == NULL)
-    {
-        print_error("failed to create GLFW window");
-        glfwTerminate();
-        ASSERT(false);
-    }
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
-    
-    if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        print_error("failed to initialize GLAD");
-        ASSERT(false);
-    }
-    
-    framebuffer_size_callback(window, 1920, 1080);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    
-    
-    game_memory.window = window;
+    //game_memory.window = window;
     game_memory.get_file_last_write_time = get_file_last_write_time;
     game_memory.read_file_contents = read_file_contents;
     game_memory.write_file_contents = write_file_contents;
@@ -418,28 +544,13 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     
     XAudio2Data xaudio2_data = initialize_xaudio2(&game_memory.audio_buffer);
     
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    
-    // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
-    ImGui_ImplOpenGL3_Init();
-    
-    
-    if(0)
-    {
-        int present = glfwJoystickPresent(GLFW_JOYSTICK_1);
-        
-        int count;
-        //const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &count);
-    }
-    
     while(game_memory.game_running)
     {
+        glClearColor(0.129f, 0.586f, 0.949f, 1.0f); // rgb(33,150,243)
+        glClear(GL_COLOR_BUFFER_BIT);
+        SwapBuffers(DC);
+        
+#if 0
 #ifndef TEMPEST_RELEASE
         FILETIME old_dll_last_write_time = dll_last_write_time;
         get_game_dll_last_write_time(&dll_last_write_time);
@@ -462,26 +573,8 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 #endif
         F64 frame_start_time = get_time();
         
-        if(glfwWindowShouldClose(window))
-            break;
+        //(game_code.update_and_render)(&game_memory);
         
-        glfwPollEvents();
-        
-#if 1
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-        ImGui::ShowDemoWindow();
-        ImGui::Render();
-#endif
-        
-        (game_code.update_and_render)(&game_memory);
-        
-#if 1
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-#endif
-        
-        glfwSwapBuffers(window);
         
         
         // Update xaudio2
@@ -497,12 +590,8 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         game_memory.d_time = frame_end_time - frame_start_time;
         if(game_memory.d_time < 0)
             game_memory.d_time = 0.001f;
+#endif
     }
     
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-    
-    glfwTerminate();
     return 0;
 }
