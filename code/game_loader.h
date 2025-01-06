@@ -1,14 +1,13 @@
 /* date = November 11th 2024 0:16 pm */
 
-#ifndef WINDOWS_GAME_LOADER_H
-#define WINDOWS_GAME_LOADER_H
+#ifndef GAME_LOADER_H
+#define GAME_LOADER_H
 
 #include "base.h"
 #include "log.h"
 
 struct KeyData
 {
-    Int key_code;
     Bool just_pressed;
     Bool is_down;
     Float press_time;
@@ -21,6 +20,10 @@ struct Keys
     {
         struct
         {
+            KeyData mouse_left;
+            KeyData mouse_middle;
+            KeyData mouse_right;
+            
             KeyData left;
             KeyData right;
             KeyData up;
@@ -86,14 +89,9 @@ struct Keys
             KeyData caps_lock;
             KeyData escape;
             
-            // Later: switch the order of these names
-            KeyData shift_left;
-            KeyData shift_right;
-            KeyData control_left;
-            KeyData control_right;
-            KeyData alt_left;
-            KeyData alt_right;
-            KeyData function;
+            KeyData shift;
+            KeyData control;
+            KeyData alt;
             
             KeyData f1;
             KeyData f2;
@@ -107,10 +105,23 @@ struct Keys
             KeyData f10;
             KeyData f11;
             KeyData f12;
+            KeyData f13;
+            KeyData f14;
+            KeyData f15;
+            KeyData f16;
+            KeyData f17;
+            KeyData f18;
+            KeyData f19;
+            KeyData f20;
+            KeyData f21;
+            KeyData f22;
+            KeyData f23;
+            KeyData f24;
         };
         struct
         {
-            KeyData nav[6];
+            KeyData mouse[3];
+            KeyData navigation[6];
             KeyData letters[26];
             KeyData numbers[10];
             KeyData symbols[11];
@@ -120,21 +131,15 @@ struct Keys
         };
         struct
         {
-            KeyData data[6+26+10+11+7+7+12];
+            KeyData data[3+6+26+10+11+7+7+12];
         };
     };
-    
 };
 
 struct Input
 {
-    F32 key_first_repeat_time;
-    F32 key_repeat_speed;
-    
     Float mouse_pos[2];
     Float d_mouse_pos[2];
-    Bool left_mouse_down;
-    Bool right_mouse_down;
     
     Float d_scroll;
     
@@ -147,7 +152,6 @@ FileContents
     Bool file_found;
     Bool allocated;
     Bool contains_proper_data;
-    // Later: change this to U8 * ?
     U8 *data;
     U64 size;
 };
@@ -191,7 +195,7 @@ struct GameMemory
     Bool allocated;
     
     AudioBuffer audio_buffer;
-    // TODO: have global_log stored here? Inline stack alloc?
+    // TODO: have global_log stored here? Inline circular array?
     Log *global_log;
     Input input;
     
@@ -214,4 +218,4 @@ struct GameCode
 
 
 
-#endif //WINDOWS_GAME_LOADER_H
+#endif //GAME_LOADER_H

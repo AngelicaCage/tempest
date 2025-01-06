@@ -183,7 +183,7 @@ update_gameplay(GameState *game_state)
     }
     
     Float player_speed = 5.0f;
-    if(keys->shift_left.is_down)
+    if(keys->shift.is_down)
         player_speed = 2.5f;
     
     if(!game_state->player_dead)

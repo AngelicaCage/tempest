@@ -39,7 +39,6 @@
 #define GAME_DLL_PATH "tempest.dll"
 #endif
 
-
 // Later: more extensive error logging on all of these
 
 void
@@ -349,109 +348,10 @@ initialize_xaudio2(AudioBuffer *buffer)
 }
 
 
-#if 0
-Void
-fill_key_data(Input *input)
-{
-    input->key_first_repeat_time = 0.4f;
-    input->key_repeat_speed = 0.02f;
-    
-    Keys *keys = &input->keys;
-    
-    for(int i = 0; i < sizeof(input->keys.data) / sizeof(KeyData); i++)
-    {
-        keys->data[i] = {0};
-    }
-    keys->left.key_code = GLFW_KEY_LEFT;
-    keys->right.key_code = GLFW_KEY_RIGHT;
-    keys->up.key_code = GLFW_KEY_UP;
-    keys->down.key_code = GLFW_KEY_DOWN;
-    keys->page_up.key_code = GLFW_KEY_PAGE_UP;
-    keys->page_down.key_code = GLFW_KEY_PAGE_DOWN;
-    //keys->Key.key_code = GLFW_KEY_;
-    keys->a.key_code = GLFW_KEY_A;
-    keys->b.key_code = GLFW_KEY_B;
-    keys->c.key_code = GLFW_KEY_C;
-    keys->d.key_code = GLFW_KEY_D;
-    keys->e.key_code = GLFW_KEY_E;
-    keys->f.key_code = GLFW_KEY_F;
-    keys->g.key_code = GLFW_KEY_G;
-    keys->h.key_code = GLFW_KEY_H;
-    keys->i.key_code = GLFW_KEY_I;
-    keys->j.key_code = GLFW_KEY_J;
-    keys->k.key_code = GLFW_KEY_K;
-    keys->l.key_code = GLFW_KEY_L;
-    keys->m.key_code = GLFW_KEY_M;
-    keys->n.key_code = GLFW_KEY_N;
-    keys->o.key_code = GLFW_KEY_O;
-    keys->p.key_code = GLFW_KEY_P;
-    keys->q.key_code = GLFW_KEY_Q;
-    keys->r.key_code = GLFW_KEY_R;
-    keys->s.key_code = GLFW_KEY_S;
-    keys->t.key_code = GLFW_KEY_T;
-    keys->u.key_code = GLFW_KEY_U;
-    keys->v.key_code = GLFW_KEY_V;
-    keys->w.key_code = GLFW_KEY_W;
-    keys->x.key_code = GLFW_KEY_X;
-    keys->y.key_code = GLFW_KEY_Y;
-    keys->z.key_code = GLFW_KEY_Z;
-    //keys->Key.key_code = GLFW_KEY_;
-    keys->number_0.key_code = GLFW_KEY_0;
-    keys->number_1.key_code = GLFW_KEY_1;
-    keys->number_2.key_code = GLFW_KEY_2;
-    keys->number_3.key_code = GLFW_KEY_3;
-    keys->number_4.key_code = GLFW_KEY_4;
-    keys->number_5.key_code = GLFW_KEY_5;
-    keys->number_6.key_code = GLFW_KEY_6;
-    keys->number_7.key_code = GLFW_KEY_7;
-    keys->number_8.key_code = GLFW_KEY_8;
-    keys->number_9.key_code = GLFW_KEY_9;
-    //keys->Key.key_code = GLFW_KEY_;
-    keys->grave.key_code = GLFW_KEY_GRAVE_ACCENT;
-    keys->minus.key_code = GLFW_KEY_MINUS;
-    keys->equal.key_code = GLFW_KEY_EQUAL;
-    keys->left_bracket.key_code = GLFW_KEY_LEFT_BRACKET;
-    keys->right_bracket.key_code = GLFW_KEY_RIGHT_BRACKET;
-    keys->backslash.key_code = GLFW_KEY_BACKSLASH;
-    keys->semicolon.key_code = GLFW_KEY_SEMICOLON;
-    keys->quote.key_code = GLFW_KEY_APOSTROPHE;
-    keys->slash.key_code = GLFW_KEY_SLASH;
-    keys->comma.key_code = GLFW_KEY_COMMA;
-    keys->period.key_code = GLFW_KEY_PERIOD;
-    //keys->Key.key_code = GLFW_KEY_;
-    keys->space.key_code = GLFW_KEY_SPACE;
-    keys->backspace.key_code = GLFW_KEY_BACKSPACE;
-    keys->del.key_code = GLFW_KEY_DELETE;
-    keys->tab.key_code = GLFW_KEY_TAB;
-    keys->enter.key_code = GLFW_KEY_ENTER;
-    keys->caps_lock.key_code = GLFW_KEY_CAPS_LOCK;
-    keys->escape.key_code = GLFW_KEY_ESCAPE;
-    //keys->Key.key_code = GLFW_KEY_;
-    keys->shift_left.key_code = GLFW_KEY_LEFT_SHIFT;
-    keys->shift_right.key_code = GLFW_KEY_RIGHT_SHIFT;
-    keys->control_left.key_code = GLFW_KEY_LEFT_CONTROL;
-    keys->control_right.key_code = GLFW_KEY_RIGHT_CONTROL;
-    keys->alt_left.key_code = GLFW_KEY_LEFT_ALT;
-    keys->alt_right.key_code = GLFW_KEY_RIGHT_ALT;
-    keys->function.key_code = GLFW_KEY_RIGHT_SUPER;
-    //keys->Key.key_code = GLFW_KEY_;
-    keys->f1.key_code = GLFW_KEY_F1;
-    keys->f2.key_code = GLFW_KEY_F2;
-    keys->f3.key_code = GLFW_KEY_F3;
-    keys->f4.key_code = GLFW_KEY_F4;
-    keys->f5.key_code = GLFW_KEY_F5;
-    keys->f6.key_code = GLFW_KEY_F6;
-    keys->f7.key_code = GLFW_KEY_F7;
-    keys->f8.key_code = GLFW_KEY_F8;
-    keys->f9.key_code = GLFW_KEY_F9;
-    keys->f10.key_code = GLFW_KEY_F10;
-    keys->f11.key_code = GLFW_KEY_F11;
-    keys->f12.key_code = GLFW_KEY_F12;
-}
-
 Void
 update_input(Input *input, Float d_time)
 {
+#if 0
     input->left_mouse_down = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     input->right_mouse_down = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
     
@@ -491,37 +391,158 @@ update_input(Input *input, Float d_time)
             }
         }
     }
-}
-
-Float d_scroll;
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-    d_scroll = (Float)yoffset;
-}
 #endif
+}
 
 
+KeyData *
+get_key_data_for_key_code(Input *input, WPARAM key_code)
+{
+    Keys *keys = &input->keys;
+    
+    if(key_code == VK_LBUTTON) return &keys->mouse_left;
+    if(key_code == VK_MBUTTON) return &keys->mouse_middle;
+    if(key_code == VK_RBUTTON) return &keys->mouse_right;
+    
+    if(key_code == VK_LEFT) return &keys->left;
+    if(key_code == VK_RIGHT) return &keys->right;
+    if(key_code == VK_UP) return &keys->up;
+    if(key_code == VK_DOWN) return &keys->down;
+    if(key_code == VK_PRIOR) return &keys->page_up;
+    if(key_code == VK_NEXT) return &keys->page_down;
+    
+    if(key_code == 0x41) return &keys->a;
+    if(key_code == 0x42) return &keys->b;
+    if(key_code == 0x43) return &keys->c;
+    if(key_code == 0x44) return &keys->d;
+    if(key_code == 0x45) return &keys->e;
+    if(key_code == 0x46) return &keys->f;
+    if(key_code == 0x47) return &keys->g;
+    if(key_code == 0x48) return &keys->h;
+    if(key_code == 0x49) return &keys->i;
+    if(key_code == 0x4A) return &keys->j;
+    if(key_code == 0x4B) return &keys->k;
+    if(key_code == 0x4C) return &keys->l;
+    if(key_code == 0x4D) return &keys->m;
+    if(key_code == 0x4E) return &keys->n;
+    if(key_code == 0x4F) return &keys->o;
+    if(key_code == 0x50) return &keys->p;
+    if(key_code == 0x51) return &keys->q;
+    if(key_code == 0x52) return &keys->r;
+    if(key_code == 0x53) return &keys->s;
+    if(key_code == 0x54) return &keys->t;
+    if(key_code == 0x55) return &keys->u;
+    if(key_code == 0x56) return &keys->v;
+    if(key_code == 0x57) return &keys->w;
+    if(key_code == 0x58) return &keys->x;
+    if(key_code == 0x59) return &keys->y;
+    if(key_code == 0x5A) return &keys->z;
+    
+    if(key_code == 0x30) return &keys->number_0;
+    if(key_code == 0x31) return &keys->number_1;
+    if(key_code == 0x32) return &keys->number_2;
+    if(key_code == 0x33) return &keys->number_3;
+    if(key_code == 0x34) return &keys->number_4;
+    if(key_code == 0x35) return &keys->number_5;
+    if(key_code == 0x36) return &keys->number_6;
+    if(key_code == 0x37) return &keys->number_7;
+    if(key_code == 0x38) return &keys->number_8;
+    if(key_code == 0x39) return &keys->number_9;
+    
+    if(key_code == VK_OEM_3) return &keys->grave;
+    if(key_code == VK_OEM_MINUS) return &keys->minus;
+    if(key_code == VK_OEM_PLUS) return &keys->equal;
+    if(key_code == VK_OEM_4) return &keys->left_bracket;
+    if(key_code == VK_OEM_6) return &keys->right_bracket;
+    if(key_code == VK_OEM_5) return &keys->backslash;
+    if(key_code == VK_OEM_1) return &keys->semicolon;
+    if(key_code == VK_OEM_7) return &keys->quote;
+    if(key_code == VK_OEM_2) return &keys->slash;
+    if(key_code == VK_OEM_COMMA) return &keys->comma;
+    if(key_code == VK_OEM_PERIOD) return &keys->period;
+    
+    if(key_code == VK_SPACE) return &keys->space;
+    if(key_code == VK_BACK) return &keys->backspace;
+    if(key_code == VK_DELETE) return &keys->del;
+    if(key_code == VK_TAB) return &keys->tab;
+    if(key_code == VK_RETURN) return &keys->enter;
+    if(key_code == VK_CAPITAL) return &keys->caps_lock;
+    if(key_code == VK_ESCAPE) return &keys->escape;
+    
+    if(key_code == VK_SHIFT) return &keys->shift;
+    if(key_code == VK_CONTROL) return &keys->control;
+    if(key_code == VK_MENU) return &keys->alt;
+    
+    if(key_code == VK_F1) return &keys->f1;
+    if(key_code == VK_F2) return &keys->f2;
+    if(key_code == VK_F3) return &keys->f3;
+    if(key_code == VK_F4) return &keys->f4;
+    if(key_code == VK_F5) return &keys->f5;
+    if(key_code == VK_F6) return &keys->f6;
+    if(key_code == VK_F7) return &keys->f7;
+    if(key_code == VK_F8) return &keys->f8;
+    if(key_code == VK_F9) return &keys->f9;
+    if(key_code == VK_F10) return &keys->f10;
+    if(key_code == VK_F11) return &keys->f11;
+    if(key_code == VK_F12) return &keys->f12;
+    if(key_code == VK_F13) return &keys->f13;
+    if(key_code == VK_F14) return &keys->f14;
+    if(key_code == VK_F15) return &keys->f15;
+    if(key_code == VK_F16) return &keys->f16;
+    if(key_code == VK_F17) return &keys->f17;
+    if(key_code == VK_F18) return &keys->f18;
+    if(key_code == VK_F19) return &keys->f19;
+    if(key_code == VK_F20) return &keys->f20;
+    if(key_code == VK_F21) return &keys->f21;
+    if(key_code == VK_F22) return &keys->f22;
+    if(key_code == VK_F23) return &keys->f23;
+    if(key_code == VK_F24) return &keys->f24;
+    
+    return NULL;
+}
+
+
+Void
+process_window_messages(Bool *game_running, Input *input)
+{
+    Bool peek_message_result;
+    MSG message = {0};
+    
+    while((peek_message_result = PeekMessage(&message, NULL, 0, 0, PM_REMOVE)) != 0)
+    { 
+        if(peek_message_result == -1)
+        {
+            // handle the error and possibly exit
+            Int a = 0;
+        }
+        else
+        {
+            if(message.message == WM_KEYDOWN)
+            {
+                KeyData *key = get_key_data_for_key_code(input, message.wParam);
+                if(key)
+                    key->is_down = true;
+            }
+            else if(message.message == WM_KEYUP)
+            {
+                KeyData *key = get_key_data_for_key_code(input, message.wParam);
+                if(key)
+                    key->is_down = false;
+            }
+        }
+        
+        DispatchMessage(&message);
+    } 
+}
 
 LRESULT CALLBACK
 window_message_callback(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    switch (message) {
-        case WM_KEYDOWN:
-        if (wParam == VK_ESCAPE) {
-            PostQuitMessage(0);
-        }
-        break;
-        case WM_CLOSE:
-        PostQuitMessage(0);
-        break;
-        default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
-    }
-    return 0;       // message handled
+    return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
 ATOM
-register_fake_window_class(HINSTANCE hInstance)
+register_window_class(HINSTANCE hInstance)
 {
     WNDCLASSEX wcex;
     ZeroMemory(&wcex, sizeof(wcex));
@@ -534,11 +555,13 @@ register_fake_window_class(HINSTANCE hInstance)
     return RegisterClassEx(&wcex);
 }
 
+
+
 Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
     // Open window and initialize OpenGL
     
-    register_fake_window_class(hInstance);
+    register_window_class(hInstance);
     
     HWND fakeWND = CreateWindow("Core", "Fake Window",      // window class, title
                                 WS_CLIPSIBLINGS | WS_CLIPCHILDREN, // style
@@ -700,9 +723,17 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     
     while(game_memory.game_running)
     {
-        glClearColor(0.129f, 0.586f, 0.949f, 1.0f); // rgb(33,150,243)
+        process_window_messages(&game_memory.game_running, &game_memory.input);
+        
+        if(game_memory.input.keys.j.is_down)
+            glClearColor(0.129f, 0.586f, 0.949f, 1.0f); // rgb(33,150,243)
+        else
+            glClearColor(0, 0, 0, 1.0f); // rgb(33,150,243)
+        
         glClear(GL_COLOR_BUFFER_BIT);
         SwapBuffers(DC);
+        
+        update_input(&game_memory.input, game_memory.d_time);
         
 #if 0
 #ifndef TEMPEST_RELEASE
