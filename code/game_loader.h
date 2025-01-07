@@ -140,9 +140,7 @@ struct Input
 {
     Float mouse_pos[2];
     Float d_mouse_pos[2];
-    
     Float d_scroll;
-    
     Keys keys;
 };
 

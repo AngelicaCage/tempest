@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <windowsx.h>
 #include <xaudio2.h>
 #include "khr/khrplatform.h"
 #include <gl/gl.h>
@@ -38,6 +39,8 @@
 #else
 #define GAME_DLL_PATH "tempest.dll"
 #endif
+
+#define FAKE_WINDOW_NAME ("Fake Window (Indestructible!!!!)")
 
 // Later: more extensive error logging on all of these
 
@@ -507,28 +510,60 @@ process_window_messages(Bool *game_running, Input *input)
 {
     Bool peek_message_result;
     MSG message = {0};
+    Keys *keys = &input->keys;
     
     while((peek_message_result = PeekMessage(&message, NULL, 0, 0, PM_REMOVE)) != 0)
     { 
-        if(peek_message_result == -1)
+        if(message.message == WM_KEYDOWN)
         {
-            // handle the error and possibly exit
-            Int a = 0;
+            KeyData *key = get_key_data_for_key_code(input, message.wParam);
+            if(key)
+                key->is_down = true;
         }
-        else
+        else if(message.message == WM_KEYUP)
         {
-            if(message.message == WM_KEYDOWN)
-            {
-                KeyData *key = get_key_data_for_key_code(input, message.wParam);
-                if(key)
-                    key->is_down = true;
-            }
-            else if(message.message == WM_KEYUP)
-            {
-                KeyData *key = get_key_data_for_key_code(input, message.wParam);
-                if(key)
-                    key->is_down = false;
-            }
+            KeyData *key = get_key_data_for_key_code(input, message.wParam);
+            if(key)
+                key->is_down = false;
+        }
+        else if(message.message == WM_QUIT)
+        {
+            // Later: tell the game when the window is being closed so it can ask
+            // the user if they want to save
+            *game_running = false;
+        }
+        else if(message.message == WM_LBUTTONDOWN)
+        {
+            keys->mouse_left.is_down = true;
+        }
+        else if(message.message == WM_LBUTTONUP)
+        {
+            keys->mouse_left.is_down = false;
+        }
+        else if(message.message == WM_MBUTTONDOWN)
+        {
+            keys->mouse_middle.is_down = true;
+        }
+        else if(message.message == WM_MBUTTONUP)
+        {
+            keys->mouse_middle.is_down = false;
+        }
+        else if(message.message == WM_RBUTTONDOWN)
+        {
+            keys->mouse_right.is_down = true;
+        }
+        else if(message.message == WM_RBUTTONUP)
+        {
+            keys->mouse_right.is_down = false;
+        }
+        else if(message.message == WM_MOUSEMOVE)
+        {
+            input->mouse_pos[0] = float(GET_X_LPARAM(message.lParam));
+            input->mouse_pos[1] = float(GET_Y_LPARAM(message.lParam));
+        }
+        else if(message.message == WM_MOUSEWHEEL)
+        {
+            input->d_scroll += GET_WHEEL_DELTA_WPARAM(message.wParam);
         }
         
         DispatchMessage(&message);
@@ -538,6 +573,30 @@ process_window_messages(Bool *game_running, Input *input)
 LRESULT CALLBACK
 window_message_callback(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    if(message == WM_DESTROY)
+    {
+        // I feel sinful writing this
+        
+        Char name_buffer[100];
+        GetWindowTextA(hWnd, name_buffer, 100);
+        
+        // Later: move this into a macro
+        const Char *fake_window_name = FAKE_WINDOW_NAME;
+        Bool names_equal = true;
+        for(Int i = 0; i < 100; i++)
+        {
+            if(!name_buffer[i] && !fake_window_name[i])
+                break;
+            if(name_buffer[i] != fake_window_name[i])
+            {
+                names_equal = false;
+                break;
+            }
+        }
+        
+        if(!names_equal)
+            PostQuitMessage(0);
+    }
     return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
@@ -563,7 +622,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     
     register_window_class(hInstance);
     
-    HWND fakeWND = CreateWindow("Core", "Fake Window",      // window class, title
+    HWND fakeWND = CreateWindow("Core", FAKE_WINDOW_NAME,      // window class, title
                                 WS_CLIPSIBLINGS | WS_CLIPCHILDREN, // style
                                 0, 0,           // position x, y
                                 1, 1,           // width, height
@@ -723,9 +782,19 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     
     while(game_memory.game_running)
     {
-        process_window_messages(&game_memory.game_running, &game_memory.input);
+        {
+            game_memory.input.d_scroll = 0;
+            Float prev_mouse_pos[2];
+            prev_mouse_pos[0] = game_memory.input.mouse_pos[0];
+            prev_mouse_pos[1] = game_memory.input.mouse_pos[1];
+            
+            process_window_messages(&game_memory.game_running, &game_memory.input);
+            
+            game_memory.input.d_mouse_pos[0] = game_memory.input.mouse_pos[0] - prev_mouse_pos[0];
+            game_memory.input.d_mouse_pos[1] = game_memory.input.mouse_pos[1] - prev_mouse_pos[1];
+        }
         
-        if(game_memory.input.keys.j.is_down)
+        if(game_memory.input.keys.mouse_left.is_down)
             glClearColor(0.129f, 0.586f, 0.949f, 1.0f); // rgb(33,150,243)
         else
             glClearColor(0, 0, 0, 1.0f); // rgb(33,150,243)
