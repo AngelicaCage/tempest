@@ -304,7 +304,6 @@ struct GameMemory
     FileContents (*read_file_contents)(const Char *);
     Bool (*write_file_contents)(const Char *, U8 *, U64);
     F64 (*get_time)();
-    Void (*sleep)(F64);
     
     F64 d_time;
 };

@@ -21,7 +21,6 @@ U64 (*get_file_last_write_time)(const Char *);
 FileContents (*read_file_contents)(const Char *);
 Bool (*write_file_contents)(const Char *, U8 *, U64);
 F64 (*get_time)();
-Void (*sleep)(F64);
 
 #include "list.h"
 #include "math/math.h"
@@ -91,7 +90,6 @@ update_and_render(GameMemory *game_memory)
         read_file_contents = game_memory->read_file_contents;
         write_file_contents = game_memory->write_file_contents;
         get_time = game_memory->get_time;
-        sleep = game_memory->sleep;
         
         copy_opengl_functions(game_memory);
     }

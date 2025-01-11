@@ -72,6 +72,7 @@ get_time()
     return ((F64)(ticks.QuadPart)) / ((F64)(freq.QuadPart));
 }
 
+#if 0
 Void
 sleep(F64 seconds)
 {
@@ -95,6 +96,7 @@ sleep(F64 seconds)
     while(time_diff < seconds);
 #endif
 }
+#endif
 
 U64 get_file_last_write_time(const Char *path)
 {
@@ -109,38 +111,32 @@ U64 get_file_last_write_time(const Char *path)
     return 0;
 }
 
-Int
+Bool
 get_game_dll_last_write_time(LPFILETIME time)
 {
     WIN32_FILE_ATTRIBUTE_DATA Data;
     if(GetFileAttributesEx(GAME_DLL_PATH, GetFileExInfoStandard, &Data))
-    {
         *time = Data.ftLastWriteTime;
-    }
     else
-    {
-        return 1;
-    }
+        return false;
     
-    return 0;
+    return true;
 }
 
 
-Int
+Bool
 unload_game_dll(GameCode *game_code, HINSTANCE *module_handle)
 {
-    int result = 0;
+    Int load_result = FreeLibrary(*module_handle);
     
-    result = FreeLibrary(*module_handle);
-    if(result)
-    {
-        game_code->loaded = false;
-    }
+    if(!load_result)
+        return false;
     
-    return result;
+    game_code->loaded = false;
+    return true;
 }
 
-Int
+Bool
 load_game_dll(GameCode *game_code, HINSTANCE *module_handle)
 {
 #ifndef TEMPEST_RELEASE
@@ -153,8 +149,8 @@ load_game_dll(GameCode *game_code, HINSTANCE *module_handle)
     
     if(module_handle == NULL)
     {
-        print_error("dll wasn't loaded properly");
-        return 1;
+        log_error("dll wasn't loaded properly");
+        return false;
     }
     
     game_code->update_and_render = (void (*) (GameMemory*)) GetProcAddress(*module_handle, "update_and_render");
@@ -165,15 +161,15 @@ load_game_dll(GameCode *game_code, HINSTANCE *module_handle)
     }
     else
     {
-        print_error("functions didn't load correctly");
+        log_error("functions didn't load correctly");
         
         log_windows_error(GetLastError());
         
         FreeLibrary(*module_handle);
-        return 1;
+        return false;
     }
     
-    return 0;
+    return true;
 }
 
 FileContents
@@ -273,20 +269,6 @@ Void error_callback( Int error, const Char *msg ) {
 
 Float width_over_height = 1000.0f/1000.0f;
 
-#if 0
-Void
-initialize_directsound()
-{
-    // load the library
-    HMODULE directsound_library = LoadLibraryA("dsound.dll");
-    
-    if(directsound_library)
-    {
-    }
-    
-    // get directsound object
-}
-#endif
 
 struct XAudio2Data
 {
@@ -576,19 +558,6 @@ window_message_callback(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-ATOM
-register_window_class(HINSTANCE hInstance)
-{
-    WNDCLASSEX wcex;
-    ZeroMemory(&wcex, sizeof(wcex));
-    wcex.cbSize = sizeof(wcex);
-    wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-    wcex.lpfnWndProc = window_message_callback;
-    wcex.hInstance = hInstance;
-    wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wcex.lpszClassName = "Core";
-    return RegisterClassEx(&wcex);
-}
 
 #define LOAD_OPENGL_FUNCTION_REGULAR(_function_name) { \
 functions->_function_name = _function_name;\
@@ -668,31 +637,25 @@ load_opengl_functions(OpenGLFunctions *functions)
 #endif
 }
 
-Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+ATOM
+register_window_class(HINSTANCE hInstance)
 {
+    WNDCLASSEX wcex;
+    ZeroMemory(&wcex, sizeof(wcex));
     
-    GameMemory game_memory = {0};
-    game_memory.game_running = true;
-    game_memory.functions_loaded = false;
-    game_memory.size = megabytes(10);
-    game_memory.memory = mem_alloc(game_memory.size);
-    zero_memory(game_memory.memory, game_memory.size);
-    game_memory.allocated = true;
+    wcex.cbSize = sizeof(wcex);
+    wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+    wcex.lpfnWndProc = window_message_callback;
+    wcex.hInstance = hInstance;
+    wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wcex.lpszClassName = "Core";
     
-    global_log = &game_memory.global_log;
-    
-    
-    //game_memory.window = window;
-    game_memory.get_file_last_write_time = get_file_last_write_time;
-    game_memory.read_file_contents = read_file_contents;
-    game_memory.write_file_contents = write_file_contents;
-    game_memory.get_time = get_time;
-    game_memory.sleep = sleep;
-    
-    game_memory.d_time = 0.06f;
-    
-    // Open window and initialize OpenGL
-    
+    return RegisterClassEx(&wcex);
+}
+
+Bool
+initialize_window_and_opengl(HINSTANCE hInstance, HWND *window_handle, HDC *device_context_handle)
+{
     register_window_class(hInstance);
     
     HWND fakeWND = CreateWindow("Core", FAKE_WINDOW_NAME,      // window class, title
@@ -717,45 +680,48 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     int fakePFDID = ChoosePixelFormat(fakeDC, &fakePFD);
     if (fakePFDID == 0) {
         log_error("ChoosePixelFormat() failed.");
-        return 1;
+        return false;
     }
     
     if (SetPixelFormat(fakeDC, fakePFDID, &fakePFD) == false) {
         log_error("SetPixelFormat() failed.");
-        return 1;
+        return false;
     }
     
     HGLRC fakeRC = wglCreateContext(fakeDC);    // Rendering Contex
     if (fakeRC == 0) {
         log_error("wglCreateContext() failed.");
-        return 1;
+        return false;
     }
     if (wglMakeCurrent(fakeDC, fakeRC) == false) {
         log_error("wglMakeCurrent() failed.");
-        return 1;
+        return false;
     }
     
-    load_opengl_functions(&game_memory.opengl_functions);
-#if 1
     PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = nullptr;
     wglChoosePixelFormatARB = reinterpret_cast<PFNWGLCHOOSEPIXELFORMATARBPROC>(wglGetProcAddress("wglChoosePixelFormatARB"));
     if (wglChoosePixelFormatARB == nullptr) {
         log_error("wglGetProcAddress() failed.");
-        return 1;
+        return false;
     }
     PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = nullptr;
     wglCreateContextAttribsARB = reinterpret_cast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(wglGetProcAddress("wglCreateContextAttribsARB"));
     if (wglCreateContextAttribsARB == nullptr) {
         log_error("wglGetProcAddress() failed.");
-        return 1;
+        return false;
     }
-#endif
     
     // Now create real window
     
-    HWND WND = CreateWindow(
-                            "Core", "OpenGL Window",       // class name, window name
-                            WS_CAPTION | WS_SYSMENU | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, // style
+    //DWORD window_style = WS_CAPTION | WS_SYSMENU | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+    DWORD window_style = WS_CAPTION
+        | WS_SYSMENU
+        | WS_MAXIMIZEBOX
+        | WS_MINIMIZEBOX
+        | WS_SIZEBOX;
+    
+    HWND WND = CreateWindow("Core", "OpenGL Window", // class name, window name
+                            window_style, // style
                             0, 0,      // posx, posy
                             1920, 1080,   // width, height
                             NULL, NULL,                    // parent window, menu
@@ -780,7 +746,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     bool status = wglChoosePixelFormatARB(DC, pixelAttribs, NULL, 1, &pixelFormatID, &numFormats);
     if (status == false || numFormats == 0) {
         log_error("wglChoosePixelFormatARB() failed.");
-        return 1;
+        return false;
     }
     
     PIXELFORMATDESCRIPTOR PFD;
@@ -798,7 +764,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     HGLRC RC = wglCreateContextAttribsARB(DC, 0, contextAttribs);
     if (RC == NULL) {
         log_error("wglCreateContextAttribsARB() failed.");
-        return 1;
+        return false;
     }
     
     wglMakeCurrent(NULL, NULL);
@@ -807,38 +773,54 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     DestroyWindow(fakeWND);
     if (!wglMakeCurrent(DC, RC)) {
         log_error("wglMakeCurrent() failed.");
-        return 1;
+        return false;
     }
     
-    SetWindowText(WND, (LPCSTR)glGetString(GL_VERSION));
+    //SetWindowText(WND, (LPCSTR)glGetString(GL_VERSION));
+    SetWindowText(WND, "Tempest");
     ShowWindow(WND, SW_SHOWNORMAL);
     
-    // End of window and OpenGL setup
+    *window_handle = WND;
+    *device_context_handle = DC;
     
+    return true;
+}
+
+Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+{
+    // Setup game memory
+    GameMemory game_memory = {0};
+    game_memory.game_running = true;
+    game_memory.functions_loaded = false;
+    game_memory.size = megabytes(10);
+    game_memory.memory = mem_alloc(game_memory.size);
+    zero_memory(game_memory.memory, game_memory.size);
+    game_memory.allocated = true;
+    global_log = &game_memory.global_log;
+    game_memory.get_file_last_write_time = get_file_last_write_time;
+    game_memory.read_file_contents = read_file_contents;
+    game_memory.write_file_contents = write_file_contents;
+    game_memory.get_time = get_time;
+    game_memory.d_time = 0.06f;
+    
+    // Open window and initialize OpenGL
+    HWND window;
+    HDC device_context;
+    ASSERT(initialize_window_and_opengl(hInstance, &window, &device_context));
+    load_opengl_functions(&game_memory.opengl_functions);
+    
+    // Load game code
     GameCode game_code = {0};
     HINSTANCE module_handle = 0;
-    
     FILETIME dll_last_write_time;
-    if(get_game_dll_last_write_time(&dll_last_write_time))
-    {
-        print_error("couldn't open DLL file for time reading");
-        ASSERT(false);
-        return 1;
-    }
-    
-    Int dll_load_result = load_game_dll(&game_code, &module_handle);
-    if(dll_load_result == 1)
-    {
-        //print_error("issue with dll loading");
-        //ASSERT(false);
-        //return 1;
-    }
-    
+    get_game_dll_last_write_time(&dll_last_write_time);
+    ASSERT(load_game_dll(&game_code, &module_handle));
     
     XAudio2Data xaudio2_data = initialize_xaudio2(&game_memory.audio_buffer);
     
     while(game_memory.game_running)
     {
+        // Update input
         {
             game_memory.input.d_scroll = 0;
             Float prev_mouse_pos[2];
@@ -851,13 +833,12 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
             GetCursorPos(&new_mouse_pos);
             game_memory.input.mouse_pos[0] = float(new_mouse_pos.x);
             game_memory.input.mouse_pos[1] = float(new_mouse_pos.y);
+            
+            update_input(&game_memory.input, game_memory.d_time);
         }
         
-        update_input(&game_memory.input, game_memory.d_time);
-        
-        // TODO: account for titlebar
         RECT window_rect;
-        GetWindowRect(WND, &window_rect);
+        GetClientRect(window, &window_rect);
         game_memory.window_info.rect = create_rect(Float(window_rect.left),
                                                    Float(window_rect.top),
                                                    Float(window_rect.right - window_rect.left),
@@ -901,7 +882,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         if(game_memory.d_time < 0)
             game_memory.d_time = 0.001f;
         
-        SwapBuffers(DC);
+        SwapBuffers(device_context);
     }
     
     return 0;
