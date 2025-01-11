@@ -3,8 +3,9 @@
 #ifndef OPENGL_FUNCTIONS_INLINE_H
 #define OPENGL_FUNCTIONS_INLINE_H
 
+
 UInt (*glCreateShader)(Enum shaderType);
-Void (*glShaderSource)(UInt shader, UInt count, const Char **string, const Int *length);
+Void (*glShaderSource)(UInt shader, Int count, const Char *const *string, const Int *length);
 Void (*glCompileShader)(UInt shader);
 Void (*glGetShaderiv)(UInt shader, Enum pname, Int *params);
 Void (*glGetShaderInfoLog)(UInt shader, Int maxLength, Int *length, Char *infoLog);
@@ -18,13 +19,13 @@ Void (*glGetProgramInfoLog)(UInt program, Int maxLength, Int *length, Char *info
 Void (*glGetActiveUniform)(UInt program, UInt index, Int bufSize, Int *length, Int *size, Enum *type, Char *name);
 Void (*glGenBuffers)(Int n, UInt *buffers);
 Void (*glGenVertexArrays)(Int n, UInt *arrays);
-Void (*glGetAttribLocation)(UInt program, const Char *name);
+Int (*glGetAttribLocation)(UInt program, const Char *name);
 Int (*glGetUniformLocation)(UInt program, const Char *name);
 Void (*glBindVertexArray)(UInt array);
 Void (*glEnableVertexAttribArray)(UInt index);
-Void (*glVertexAttribPointer)(UInt index, Int size, Enum type, Bool normalized, Int stride, const Void *pointer);
+Void (*glVertexAttribPointer)(UInt index, Int size, UInt type, U8 normalized, Int stride, const Void *pointer);
 Void (*glBindBuffer)(Enum target, UInt buffer);
-Void (*glBufferData)(Enum target, U64 size, const Void *data, Enum usage);
+Void (*glBufferData)(Enum target, I64 size, const Void *data, Enum usage);
 Void (*glUseProgram)(UInt program);
 Void (*glDeleteVertexArrays)(Int n, const UInt *arrays);
 Void (*glDeleteBuffers)(Int n, const UInt *buffers);
@@ -37,8 +38,8 @@ Void (*glUniform3f)(Int location, Float v0, Float v1, Float v2);
 Void (*glUniform2fv)(Int location, Int count, const Float *value);
 Void (*glUniform3fv)(Int location, Int count, const Float *value);
 Void (*glUniform4fv)(Int location, Int count, const Float *value);
-Void (*glUniformMatrix3fv)(Int location, Int count, Bool transpose, const Float *value);
-Void (*glUniformMatrix4fv)(Int location, Int count, Bool transpose, const Float *value);
+Void (*glUniformMatrix3fv)(Int location, Int count, B8 transpose, const Float *value);
+Void (*glUniformMatrix4fv)(Int location, Int count, B8 transpose, const Float *value);
 
 Void (*glPolygonMode)(Enum face, Enum mode);
 Void (*glLineWidth)(Float width);
@@ -61,13 +62,78 @@ Void (*glEnable)(Enum cap);
 Void (*glDisable)(Enum cap);
 Void (*glBlendFunc)(Enum sfactor, Enum dfactor);
 
+
+#define COPY_OPENGL_FUNCTION(_function_name) {\
+_function_name = functions->_function_name;\
+ASSERT(_function_name);\
+}
+
 Void
 copy_opengl_functions(GameMemory *memory)
 {
     OpenGLFunctions *functions = &memory->opengl_functions;
-    glCreateShader = functions->glCreateShader;
-    //gl = functions->gl
-    Int a = 2;
+    
+    COPY_OPENGL_FUNCTION(glCreateShader);
+    COPY_OPENGL_FUNCTION(glShaderSource);
+    COPY_OPENGL_FUNCTION(glCompileShader);
+    COPY_OPENGL_FUNCTION(glGetShaderiv);
+    COPY_OPENGL_FUNCTION(glGetShaderInfoLog);
+    COPY_OPENGL_FUNCTION(glCreateProgram);
+    COPY_OPENGL_FUNCTION(glAttachShader);
+    COPY_OPENGL_FUNCTION(glDetachShader);
+    COPY_OPENGL_FUNCTION(glLinkProgram);
+    COPY_OPENGL_FUNCTION(glValidateProgram);
+    COPY_OPENGL_FUNCTION(glGetProgramiv);
+    COPY_OPENGL_FUNCTION(glGetProgramInfoLog);
+    COPY_OPENGL_FUNCTION(glGetActiveUniform);
+    COPY_OPENGL_FUNCTION(glGenBuffers);
+    COPY_OPENGL_FUNCTION(glGenVertexArrays);
+    COPY_OPENGL_FUNCTION(glGetAttribLocation);
+    COPY_OPENGL_FUNCTION(glGetUniformLocation);
+    COPY_OPENGL_FUNCTION(glBindVertexArray);
+    COPY_OPENGL_FUNCTION(glEnableVertexAttribArray);
+    COPY_OPENGL_FUNCTION(glVertexAttribPointer);
+    COPY_OPENGL_FUNCTION(glBindBuffer);
+    COPY_OPENGL_FUNCTION(glBufferData);
+    COPY_OPENGL_FUNCTION(glUseProgram);
+    COPY_OPENGL_FUNCTION(glDeleteVertexArrays);
+    COPY_OPENGL_FUNCTION(glDeleteBuffers);
+    COPY_OPENGL_FUNCTION(glDeleteProgram);
+    COPY_OPENGL_FUNCTION(glDeleteShader);
+    
+    COPY_OPENGL_FUNCTION(glUniform1i);
+    COPY_OPENGL_FUNCTION(glUniform1f);
+    COPY_OPENGL_FUNCTION(glUniform3f);
+    COPY_OPENGL_FUNCTION(glUniform2fv);
+    COPY_OPENGL_FUNCTION(glUniform3fv);
+    COPY_OPENGL_FUNCTION(glUniform4fv);
+    COPY_OPENGL_FUNCTION(glUniformMatrix3fv);
+    COPY_OPENGL_FUNCTION(glUniformMatrix4fv);
+    
+    COPY_OPENGL_FUNCTION(glPolygonMode);
+    COPY_OPENGL_FUNCTION(glLineWidth);
+    COPY_OPENGL_FUNCTION(glDrawArrays);
+    COPY_OPENGL_FUNCTION(glDrawElements);
+    
+    COPY_OPENGL_FUNCTION(glGetError);
+    
+    COPY_OPENGL_FUNCTION(glGenTextures);
+    COPY_OPENGL_FUNCTION(glBindTexture);
+    COPY_OPENGL_FUNCTION(glTexImage2D);
+    COPY_OPENGL_FUNCTION(glTexParameterf);
+    COPY_OPENGL_FUNCTION(glTexParameteri);
+    COPY_OPENGL_FUNCTION(glActiveTexture);
+    
+    COPY_OPENGL_FUNCTION(glBlendEquationSeparate);
+    COPY_OPENGL_FUNCTION(glClear);
+    COPY_OPENGL_FUNCTION(glClearColor);
+    COPY_OPENGL_FUNCTION(glEnable);
+    COPY_OPENGL_FUNCTION(glDisable);
+    COPY_OPENGL_FUNCTION(glBlendFunc);
+    
+#if 0
+    COPY_OPENGL_FUNCTION(gl);
+#endif
 }
 
 

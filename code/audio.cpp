@@ -178,7 +178,7 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
         write_cursor_copy++;
     }
     
-    log("%d", game_state->playing_sounds.length);
+    //log("%d", game_state->playing_sounds.length);
     
     buffer->write_cursor_absolute += U64(frames_to_write);
 }

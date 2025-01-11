@@ -608,7 +608,11 @@ register_window_class(HINSTANCE hInstance)
     return RegisterClassEx(&wcex);
 }
 
-#define LOAD_OPENGL_FUNCTION(_function_name, _function_proc) { \
+#define LOAD_OPENGL_FUNCTION_REGULAR(_function_name) { \
+functions->_function_name = _function_name;\
+ASSERT(functions->_function_name);\
+}
+#define LOAD_OPENGL_FUNCTION_PROC(_function_name, _function_proc) { \
 functions->_function_name = reinterpret_cast<PFNGL##_function_proc##PROC>(wglGetProcAddress(#_function_name));\
 ASSERT(functions->_function_name);\
 }
@@ -618,22 +622,68 @@ load_opengl_functions(OpenGLFunctions *functions)
 {
     //wglChoosePixelFormatARB = reinterpret_cast<PFNWGLCHOOSEPIXELFORMATARBPROC>(wglGetProcAddress("wglChoosePixelFormatARB"));
     
-    //LOAD_OPENGL_FUNCTION(glShaderSource, SHADERSOURCE);
-    LOAD_OPENGL_FUNCTION(glCreateShader, CREATESHADER);
-    LOAD_OPENGL_FUNCTION(glCompileShader, COMPILESHADER);
-    LOAD_OPENGL_FUNCTION(glGetShaderiv, GETSHADERIV);
-    LOAD_OPENGL_FUNCTION(glGetShaderInfoLog, GETSHADERINFOLOG);
-    LOAD_OPENGL_FUNCTION(glCreateProgram, CREATEPROGRAM);
-    LOAD_OPENGL_FUNCTION(glAttachShader, ATTACHSHADER);
-    LOAD_OPENGL_FUNCTION(glDetachShader, DETACHSHADER);
-    LOAD_OPENGL_FUNCTION(glLinkProgram, LINKPROGRAM);
-    LOAD_OPENGL_FUNCTION(glValidateProgram, VALIDATEPROGRAM);
-    LOAD_OPENGL_FUNCTION(glGetProgramiv, GETPROGRAMIV);
-    LOAD_OPENGL_FUNCTION(glGetProgramInfoLog, GETPROGRAMINFOLOG);
-    LOAD_OPENGL_FUNCTION(glGetActiveUniform, GETACTIVEUNIFORM);
-    LOAD_OPENGL_FUNCTION(glGenBuffers, GENBUFFERS);
-    LOAD_OPENGL_FUNCTION(glGenVertexArrays, GENVERTEXARRAYS);
-    //LOAD_OPENGL_FUNCTION(gl, );
+    LOAD_OPENGL_FUNCTION_PROC(glShaderSource, SHADERSOURCE);
+    LOAD_OPENGL_FUNCTION_PROC(glCreateShader, CREATESHADER);
+    LOAD_OPENGL_FUNCTION_PROC(glCompileShader, COMPILESHADER);
+    LOAD_OPENGL_FUNCTION_PROC(glGetShaderiv, GETSHADERIV);
+    LOAD_OPENGL_FUNCTION_PROC(glGetShaderInfoLog, GETSHADERINFOLOG);
+    LOAD_OPENGL_FUNCTION_PROC(glCreateProgram, CREATEPROGRAM);
+    LOAD_OPENGL_FUNCTION_PROC(glAttachShader, ATTACHSHADER);
+    LOAD_OPENGL_FUNCTION_PROC(glDetachShader, DETACHSHADER);
+    LOAD_OPENGL_FUNCTION_PROC(glLinkProgram, LINKPROGRAM);
+    LOAD_OPENGL_FUNCTION_PROC(glValidateProgram, VALIDATEPROGRAM);
+    LOAD_OPENGL_FUNCTION_PROC(glGetProgramiv, GETPROGRAMIV);
+    LOAD_OPENGL_FUNCTION_PROC(glGetProgramInfoLog, GETPROGRAMINFOLOG);
+    LOAD_OPENGL_FUNCTION_PROC(glGetActiveUniform, GETACTIVEUNIFORM);
+    LOAD_OPENGL_FUNCTION_PROC(glGenBuffers, GENBUFFERS);
+    LOAD_OPENGL_FUNCTION_PROC(glGenVertexArrays, GENVERTEXARRAYS);
+    LOAD_OPENGL_FUNCTION_PROC(glGetAttribLocation, GETATTRIBLOCATION);
+    LOAD_OPENGL_FUNCTION_PROC(glGetUniformLocation, GETUNIFORMLOCATION);
+    LOAD_OPENGL_FUNCTION_PROC(glBindVertexArray, BINDVERTEXARRAY);
+    LOAD_OPENGL_FUNCTION_PROC(glEnableVertexAttribArray, ENABLEVERTEXATTRIBARRAY);
+    LOAD_OPENGL_FUNCTION_PROC(glVertexAttribPointer, VERTEXATTRIBPOINTER);
+    LOAD_OPENGL_FUNCTION_PROC(glBindBuffer, BINDBUFFER);
+    LOAD_OPENGL_FUNCTION_PROC(glBufferData, BUFFERDATA);
+    LOAD_OPENGL_FUNCTION_PROC(glUseProgram, USEPROGRAM);
+    LOAD_OPENGL_FUNCTION_PROC(glDeleteVertexArrays, DELETEVERTEXARRAYS);
+    LOAD_OPENGL_FUNCTION_PROC(glDeleteBuffers, DELETEBUFFERS);
+    LOAD_OPENGL_FUNCTION_PROC(glDeleteProgram, DELETEPROGRAM);
+    LOAD_OPENGL_FUNCTION_PROC(glDeleteShader, DELETESHADER);
+    
+    LOAD_OPENGL_FUNCTION_PROC(glUniform1i, UNIFORM1I);
+    LOAD_OPENGL_FUNCTION_PROC(glUniform1f, UNIFORM1F);
+    LOAD_OPENGL_FUNCTION_PROC(glUniform3f, UNIFORM3F);
+    LOAD_OPENGL_FUNCTION_PROC(glUniform2fv, UNIFORM2FV);
+    LOAD_OPENGL_FUNCTION_PROC(glUniform3fv, UNIFORM3FV);
+    LOAD_OPENGL_FUNCTION_PROC(glUniform4fv, UNIFORM4FV);
+    LOAD_OPENGL_FUNCTION_PROC(glUniformMatrix3fv, UNIFORMMATRIX3FV);
+    LOAD_OPENGL_FUNCTION_PROC(glUniformMatrix4fv, UNIFORMMATRIX4FV);
+    
+    LOAD_OPENGL_FUNCTION_REGULAR(glPolygonMode);
+    LOAD_OPENGL_FUNCTION_REGULAR(glLineWidth);
+    LOAD_OPENGL_FUNCTION_REGULAR(glDrawArrays);
+    LOAD_OPENGL_FUNCTION_REGULAR(glDrawElements);
+    
+    LOAD_OPENGL_FUNCTION_REGULAR(glGetError);
+    
+    LOAD_OPENGL_FUNCTION_REGULAR(glGenTextures);
+    LOAD_OPENGL_FUNCTION_REGULAR(glBindTexture);
+    LOAD_OPENGL_FUNCTION_REGULAR(glTexImage2D);
+    LOAD_OPENGL_FUNCTION_REGULAR(glTexParameterf);
+    LOAD_OPENGL_FUNCTION_REGULAR(glTexParameteri);
+    LOAD_OPENGL_FUNCTION_PROC(glActiveTexture, ACTIVETEXTURE);
+    
+    LOAD_OPENGL_FUNCTION_PROC(glBlendEquationSeparate, BLENDEQUATIONSEPARATE);
+    LOAD_OPENGL_FUNCTION_REGULAR(glClear);
+    LOAD_OPENGL_FUNCTION_REGULAR(glClearColor);
+    LOAD_OPENGL_FUNCTION_REGULAR(glEnable);
+    LOAD_OPENGL_FUNCTION_REGULAR(glDisable);
+    LOAD_OPENGL_FUNCTION_REGULAR(glBlendFunc);
+    
+#if 0
+    LOAD_OPENGL_FUNCTION_REGULAR(gl);
+    LOAD_OPENGL_FUNCTION_PROC(gl, );
+#endif
 }
 
 Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
@@ -829,7 +879,6 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
             glClearColor(0, 0, 0, 1.0f); // rgb(33,150,243)
         
         glClear(GL_COLOR_BUFFER_BIT);
-        SwapBuffers(DC);
         
         update_input(&game_memory.input, game_memory.d_time);
         
@@ -874,6 +923,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         if(game_memory.d_time < 0)
             game_memory.d_time = 0.001f;
 #endif
+        SwapBuffers(DC);
     }
     
     return 0;

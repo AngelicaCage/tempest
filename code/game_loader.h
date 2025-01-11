@@ -26,7 +26,7 @@ typedef char GLchar;
 struct OpenGLFunctions
 {
     UInt (*glCreateShader)(Enum shaderType);
-    Void (*glShaderSource)(UInt shader, Int count, const Char **string, const Int *length);
+    Void (*glShaderSource)(UInt shader, Int count, const Char *const *string, const Int *length);
     Void (*glCompileShader)(UInt shader);
     Void (*glGetShaderiv)(UInt shader, Enum pname, Int *params);
     Void (*glGetShaderInfoLog)(UInt shader, Int maxLength, Int *length, Char *infoLog);
@@ -40,13 +40,13 @@ struct OpenGLFunctions
     Void (*glGetActiveUniform)(UInt program, UInt index, Int bufSize, Int *length, Int *size, Enum *type, Char *name);
     Void (*glGenBuffers)(Int n, UInt *buffers);
     Void (*glGenVertexArrays)(Int n, UInt *arrays);
-    Void (*glGetAttribLocation)(UInt program, const Char *name);
+    Int (*glGetAttribLocation)(UInt program, const Char *name);
     Int (*glGetUniformLocation)(UInt program, const Char *name);
     Void (*glBindVertexArray)(UInt array);
     Void (*glEnableVertexAttribArray)(UInt index);
-    Void (*glVertexAttribPointer)(UInt index, Int size, Enum type, Bool normalized, Int stride, const Void *pointer);
+    Void (*glVertexAttribPointer)(UInt index, Int size, UInt type, U8 normalized, Int stride, const Void *pointer);
     Void (*glBindBuffer)(Enum target, UInt buffer);
-    Void (*glBufferData)(Enum target, U64 size, const Void *data, Enum usage);
+    Void (*glBufferData)(Enum target, I64 size, const Void *data, Enum usage);
     Void (*glUseProgram)(UInt program);
     Void (*glDeleteVertexArrays)(Int n, const UInt *arrays);
     Void (*glDeleteBuffers)(Int n, const UInt *buffers);
@@ -59,8 +59,8 @@ struct OpenGLFunctions
     Void (*glUniform2fv)(Int location, Int count, const Float *value);
     Void (*glUniform3fv)(Int location, Int count, const Float *value);
     Void (*glUniform4fv)(Int location, Int count, const Float *value);
-    Void (*glUniformMatrix3fv)(Int location, Int count, Bool transpose, const Float *value);
-    Void (*glUniformMatrix4fv)(Int location, Int count, Bool transpose, const Float *value);
+    Void (*glUniformMatrix3fv)(Int location, Int count, B8 transpose, const Float *value);
+    Void (*glUniformMatrix4fv)(Int location, Int count, B8 transpose, const Float *value);
     
     Void (*glPolygonMode)(Enum face, Enum mode);
     Void (*glLineWidth)(Float width);

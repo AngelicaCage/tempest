@@ -180,6 +180,8 @@ ui_draw_debug_text(GameState *game_state, V2 pos, Float scale, String string, Co
 Void
 ui_draw_log(GameState *game_state, Log *log, Float scale)
 {
+    // TODO: fix
+    return;
     Int entries_drawn = 0;
     for(Int i = log->entries.length - 1; entries_drawn < 30 && i >= 0; i--)
     {
