@@ -2,6 +2,7 @@
 #include <windowsx.h>
 #include <xaudio2.h>
 #include "khr/khrplatform.h"
+#include "glad/glad.c"
 #include <gl/gl.h>
 #include "gl/glext.h"
 #include "gl/wglext.h"
@@ -10,12 +11,6 @@
 
 #if 0
 {
-#include "glad/glad.c"
-#define GLFW_DLL
-#include "glfw/glfw3.h"
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include "glfw/glfw3native.h"
-    
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui/imgui.h"
 #include "imgui/imgui.cpp"
@@ -615,6 +610,17 @@ register_window_class(HINSTANCE hInstance)
 }
 
 
+Void
+load_opengl_functions()
+{
+#if 1
+    if(!gladLoadGLLoader((GLADloadproc)wglGetProcAddress))
+    {
+        ASSERT(false);
+        log_error("failed to initialize GLAD");
+    }
+#endif
+}
 
 Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
@@ -662,6 +668,8 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         return 1;
     }
     
+    load_opengl_functions();
+#if 1
     PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = nullptr;
     wglChoosePixelFormatARB = reinterpret_cast<PFNWGLCHOOSEPIXELFORMATARBPROC>(wglGetProcAddress("wglChoosePixelFormatARB"));
     if (wglChoosePixelFormatARB == nullptr) {
@@ -674,6 +682,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         log_error("wglGetProcAddress() failed.");
         return 1;
     }
+#endif
     
     // Now create real window
     
@@ -712,8 +721,8 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     SetPixelFormat(DC, pixelFormatID, &PFD);
     
     
-    const int major_min = 4, minor_min = 5;
-    int  contextAttribs[] = {
+    const int major_min = 4, minor_min = 6;
+    int contextAttribs[] = {
         WGL_CONTEXT_MAJOR_VERSION_ARB, major_min,
         WGL_CONTEXT_MINOR_VERSION_ARB, minor_min,
         WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
@@ -776,6 +785,8 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     game_memory.write_file_contents = write_file_contents;
     game_memory.get_time = get_time;
     game_memory.sleep = sleep;
+    //game_memory.load_opengl_functions = load_opengl_functions;
+    
     game_memory.d_time = 0.06f;
     
     XAudio2Data xaudio2_data = initialize_xaudio2(&game_memory.audio_buffer);
@@ -785,13 +796,15 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         {
             game_memory.input.d_scroll = 0;
             Float prev_mouse_pos[2];
-            prev_mouse_pos[0] = game_memory.input.mouse_pos[0];
-            prev_mouse_pos[1] = game_memory.input.mouse_pos[1];
+            game_memory.input.prev_mouse_pos[0] = game_memory.input.mouse_pos[0];
+            game_memory.input.prev_mouse_pos[1] = game_memory.input.mouse_pos[1];
             
             process_window_messages(&game_memory.game_running, &game_memory.input);
             
-            game_memory.input.d_mouse_pos[0] = game_memory.input.mouse_pos[0] - prev_mouse_pos[0];
-            game_memory.input.d_mouse_pos[1] = game_memory.input.mouse_pos[1] - prev_mouse_pos[1];
+            POINT new_mouse_pos;
+            GetCursorPos(&new_mouse_pos);
+            game_memory.input.mouse_pos[0] = float(new_mouse_pos.x);
+            game_memory.input.mouse_pos[1] = float(new_mouse_pos.y);
         }
         
         if(game_memory.input.keys.mouse_left.is_down)

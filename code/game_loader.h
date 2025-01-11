@@ -6,6 +6,67 @@
 #include "base.h"
 #include "log.h"
 
+struct OpenGLFunctions
+{
+    UInt (*glCreateShader)(Enum shaderType);
+    Void (*glShaderSource)(UInt shader, UInt count, const Char **string, const Int *length);
+    Void (*glCompileShader)(UInt shader);
+    Void (*glGetShaderiv)(UInt shader, Enum pname, Int *params);
+    Void (*glGetShaderInfoLog)(UInt shader, Int maxLength, Int *length, Char *infoLog);
+    UInt (*glCreateProgram)();
+    Void (*glAttachShader)(UInt program, UInt shader);
+    Void (*glDetachShader)(UInt program, UInt shader);
+    Void (*glLinkProgram)(UInt program);
+    Void (*glValidateProgram)(UInt program);
+    Void (*glGetProgramiv)(UInt program, Enum pname, Int *params);
+    Void (*glGetProgramInfoLog)(UInt program, Int maxLength, Int *length, Char *infoLog);
+    Void (*glGetActiveUniform)(UInt program, UInt index, Int bufSize, Int *length, Int *size, Enum *type, Char *name);
+    Void (*glGenBuffers)(Int n, UInt *buffers);
+    Void (*glGenVertexArrays)(Int n, UInt *arrays);
+    Void (*glGetAttribLocation)(UInt program, const Char *name);
+    Int (*glGetUniformLocation)(UInt program, const Char *name);
+    Void (*glBindVertexArray)(UInt array);
+    Void (*glEnableVertexAttribArray)(UInt index);
+    Void (*glVertexAttribPointer)(UInt index, Int size, Enum type, Bool normalized, Int stride, const Void *pointer);
+    Void (*glBindBuffer)(Enum target, UInt buffer);
+    Void (*glBufferData)(Enum target, U64 size, const Void *data, Enum usage);
+    Void (*glUseProgram)(UInt program);
+    Void (*glDeleteVertexArrays)(Int n, const UInt *arrays);
+    Void (*glDeleteBuffers)(Int n, const UInt *buffers);
+    Void (*glDeleteProgram)(UInt program);
+    Void (*glDeleteShader)(UInt shader);
+    
+    Void (*glUniform1i)(Int location, Int v0);
+    Void (*glUniform1f)(Int location, Float v0);
+    Void (*glUniform3f)(Int location, Float v0, Float v1, Float v2);
+    Void (*glUniform2fv)(Int location, Int count, const Float *value);
+    Void (*glUniform3fv)(Int location, Int count, const Float *value);
+    Void (*glUniform4fv)(Int location, Int count, const Float *value);
+    Void (*glUniformMatrix3fv)(Int location, Int count, Bool transpose, const Float *value);
+    Void (*glUniformMatrix4fv)(Int location, Int count, Bool transpose, const Float *value);
+    
+    Void (*glPolygonMode)(Enum face, Enum mode);
+    Void (*glLineWidth)(Float width);
+    Void (*glDrawArrays)(Enum mode, Int first, Int count);
+    Void (*glDrawElements)(Enum mode, Int count, Enum type, const Void *indices);
+    
+    Enum (*glGetError)();
+    
+    Void (*glGenTextures)(Int n, UInt *textures);
+    Void (*glBindTexture)(Enum target, UInt texture);
+    Void (*glTexImage2D)(Enum target, Int level, Int internalformat, Int width, Int height, Int border, Enum format, Enum type, const Void * data);
+    Void (*glTexParameterf)(Enum target, Enum pname, Float param);
+    Void (*glTexParameteri)(Enum target, Enum pname, Int param);
+    Void (*glActiveTexture)(Enum texture);
+    
+    Void (*glBlendEquationSeparate)(Enum modeRGB, Enum modeAlpha);
+    Void (*glClear)(UInt mask);
+    Void (*glClearColor)(Float red, Float green, Float blue, Float alpha);
+    Void (*glEnable)(Enum cap);
+    Void (*glDisable)(Enum cap);
+    Void (*glBlendFunc)(Enum sfactor, Enum dfactor);
+};
+
 struct KeyData
 {
     Bool just_pressed;
@@ -139,7 +200,7 @@ struct Keys
 struct Input
 {
     Float mouse_pos[2];
-    Float d_mouse_pos[2];
+    Float prev_mouse_pos[2];
     Float d_scroll;
     Keys keys;
 };

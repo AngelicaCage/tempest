@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include <cstdarg>
 
-
 typedef float F32;
 typedef double F64;
 typedef uint8_t  U8;
@@ -29,6 +28,7 @@ typedef char Char;
 typedef I32 Int;
 typedef U32 UInt;
 typedef F32 Float;
+typedef U32 Enum;
 
 #define kilobytes(x) (x * 1000)
 #define megabytes(x) (x * 1000000)

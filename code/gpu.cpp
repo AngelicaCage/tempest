@@ -1,7 +1,7 @@
 
-GLenum glCheckError_(const char *file, int line)
+ Enum glCheckError_(const char *file, int line)
 {
-    GLenum errorCode;
+    Enum errorCode;
     while ((errorCode = glGetError()) != GL_NO_ERROR)
     {
         const Char *error;
@@ -40,7 +40,7 @@ gpu_compile_shader_from_path(Shader *shader)
     else
         shader->id = glCreateShader(GL_GEOMETRY_SHADER);
     
-    glShaderSource(shader->id, 1, (Char **)(&file_read_result.data), (I32 *)(&file_read_result.size));
+    glShaderSource(shader->id, 1, (const Char **)(&file_read_result.data), (I32 *)(&file_read_result.size));
     glCompileShader(shader->id);
     
     free(file_read_result.data);
@@ -107,9 +107,9 @@ gpu_shader_program_set_uniform_name_location_pairs(ShaderProgram *program)
         Char name_buffer[64];
         
         Int uniform_size;
-        GLenum uniform_type;
+        Enum uniform_type;
         
-        glGetActiveUniform(program->id, (GLuint)i, name_buffer_size, NULL,
+        glGetActiveUniform(program->id, i, name_buffer_size, NULL,
                            &uniform_size, &uniform_type, name_buffer);
         Int uniform_location = glGetUniformLocation(program->id, name_buffer);
         
@@ -357,7 +357,7 @@ gpu_vao_attach_vbo_attribute(UInt vao_id, UInt vbo_id, UInt index, UInt attribut
 }
 
 Void
-gpu_set_texture_parameter_int(UInt texture_id, GLenum parameter, GLint value)
+gpu_set_texture_parameter_int(UInt texture_id, Enum parameter, Int value)
 {
     gpu_bind_texture(texture_id);
     glTexParameteri(GL_TEXTURE_2D, parameter, value);
@@ -387,7 +387,7 @@ gpu_set_texture_unit(Int unit_index, UInt texture_id)
 // DRAWING //
 
 Void
-gpu_draw_indices(UInt vao_id, GLenum type, UInt vertex_count)
+gpu_draw_indices(UInt vao_id, Enum type, UInt vertex_count)
 {
     glBindVertexArray(vao_id);
     glDrawElements(type, vertex_count, GL_UNSIGNED_INT, 0);
@@ -395,7 +395,7 @@ gpu_draw_indices(UInt vao_id, GLenum type, UInt vertex_count)
 }
 
 Void
-gpu_draw_vertices(UInt vao_id, GLenum type, UInt vertex_count)
+gpu_draw_vertices(UInt vao_id, Enum type, UInt vertex_count)
 {
     glBindVertexArray(vao_id);
     glDrawArrays(type, 0, vertex_count);

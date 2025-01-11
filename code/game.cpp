@@ -1,15 +1,8 @@
-#include "glad/glad.c"
-//#include "glfw/glfw3.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
-//#define STB_PERLIN_IMPLEMENTATION
-//#include "stb/stb_perlin.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
-
-//#define DR_WAV_IMPLEMENTATION
-//#include "dr_libs/dr_wav.h"
 #define DR_MP3_IMPLEMENTATION
 #include "dr_libs/dr_mp3.h"
 
@@ -42,6 +35,8 @@ Void (*sleep)(F64);
 #include "input.h"
 #include "gpu.h"
 #include "game.h"
+
+#include "opengl_functions_and_enums.h"
 
 
 #include "math/vectors.cpp"
@@ -97,15 +92,7 @@ update_and_render(GameMemory *game_memory)
         write_file_contents = game_memory->write_file_contents;
         get_time = game_memory->get_time;
         sleep = game_memory->sleep;
-        
-#if 0
-        glfwMakeContextCurrent(game_memory->window);
-        if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-        {
-            log_error("failed to initialize GLAD");
-            ASSERT(false);
-        }
-#endif
+        //game_memory->load_opengl_functions();
     }
     
     GameState *game_state = (GameState *)game_memory->memory;
@@ -381,7 +368,7 @@ update_and_render(GameMemory *game_memory)
     
     gpu_update_camera_in_shaders(game_state);
     
-    glShadeModel(GL_SMOOTH);
+    //glShadeModel(GL_SMOOTH);
     glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);

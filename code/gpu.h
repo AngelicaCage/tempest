@@ -29,7 +29,7 @@ SPUniformData
     String name;
     //const Char *name;
     Int location;
-    GLenum type;
+    Enum type;
     Int size;
 };
 
