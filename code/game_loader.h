@@ -6,10 +6,27 @@
 #include "base.h"
 #include "log.h"
 
+typedef unsigned int GLenum;
+typedef unsigned char GLboolean;
+typedef unsigned int GLbitfield;
+typedef signed char GLbyte;
+typedef short GLshort;
+typedef int GLint;
+typedef int GLsizei;
+typedef unsigned char GLubyte;
+typedef unsigned short GLushort;
+typedef unsigned int GLuint;
+typedef float GLfloat;
+typedef float GLclampf;
+typedef double GLdouble;
+typedef double GLclampd;
+typedef void GLvoid;
+typedef char GLchar;
+
 struct OpenGLFunctions
 {
     UInt (*glCreateShader)(Enum shaderType);
-    Void (*glShaderSource)(UInt shader, UInt count, const Char **string, const Int *length);
+    Void (*glShaderSource)(UInt shader, Int count, const Char **string, const Int *length);
     Void (*glCompileShader)(UInt shader);
     Void (*glGetShaderiv)(UInt shader, Enum pname, Int *params);
     Void (*glGetShaderInfoLog)(UInt shader, Int maxLength, Int *length, Char *infoLog);
@@ -258,6 +275,7 @@ struct GameMemory
     Log *global_log;
     Input input;
     
+    OpenGLFunctions opengl_functions;
     // Later: put names in the arguments?
     U64 (*get_file_last_write_time)(const Char *);
     FileContents (*read_file_contents)(const Char *);

@@ -61,6 +61,14 @@ Void (*glEnable)(Enum cap);
 Void (*glDisable)(Enum cap);
 Void (*glBlendFunc)(Enum sfactor, Enum dfactor);
 
+Void
+copy_opengl_functions(GameMemory *memory)
+{
+    OpenGLFunctions *functions = &memory->opengl_functions;
+    glCreateShader = functions->glCreateShader;
+    //gl = functions->gl
+    Int a = 2;
+}
 
 
 #define GL_BLEND_DST_RGB                  0x80C8

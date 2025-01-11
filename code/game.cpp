@@ -92,7 +92,8 @@ update_and_render(GameMemory *game_memory)
         write_file_contents = game_memory->write_file_contents;
         get_time = game_memory->get_time;
         sleep = game_memory->sleep;
-        //game_memory->load_opengl_functions();
+        
+        copy_opengl_functions(game_memory);
     }
     
     GameState *game_state = (GameState *)game_memory->memory;

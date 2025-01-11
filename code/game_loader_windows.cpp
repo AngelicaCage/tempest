@@ -2,7 +2,6 @@
 #include <windowsx.h>
 #include <xaudio2.h>
 #include "khr/khrplatform.h"
-#include "glad/glad.c"
 #include <gl/gl.h>
 #include "gl/glext.h"
 #include "gl/wglext.h"
@@ -609,21 +608,56 @@ register_window_class(HINSTANCE hInstance)
     return RegisterClassEx(&wcex);
 }
 
+#define LOAD_OPENGL_FUNCTION(_function_name, _function_proc) { \
+functions->_function_name = reinterpret_cast<PFNGL##_function_proc##PROC>(wglGetProcAddress(#_function_name));\
+ASSERT(functions->_function_name);\
+}
 
 Void
-load_opengl_functions()
+load_opengl_functions(OpenGLFunctions *functions)
 {
-#if 1
-    if(!gladLoadGLLoader((GLADloadproc)wglGetProcAddress))
-    {
-        ASSERT(false);
-        log_error("failed to initialize GLAD");
-    }
-#endif
+    //wglChoosePixelFormatARB = reinterpret_cast<PFNWGLCHOOSEPIXELFORMATARBPROC>(wglGetProcAddress("wglChoosePixelFormatARB"));
+    
+    //LOAD_OPENGL_FUNCTION(glShaderSource, SHADERSOURCE);
+    LOAD_OPENGL_FUNCTION(glCreateShader, CREATESHADER);
+    LOAD_OPENGL_FUNCTION(glCompileShader, COMPILESHADER);
+    LOAD_OPENGL_FUNCTION(glGetShaderiv, GETSHADERIV);
+    LOAD_OPENGL_FUNCTION(glGetShaderInfoLog, GETSHADERINFOLOG);
+    LOAD_OPENGL_FUNCTION(glCreateProgram, CREATEPROGRAM);
+    LOAD_OPENGL_FUNCTION(glAttachShader, ATTACHSHADER);
+    LOAD_OPENGL_FUNCTION(glDetachShader, DETACHSHADER);
+    LOAD_OPENGL_FUNCTION(glLinkProgram, LINKPROGRAM);
+    LOAD_OPENGL_FUNCTION(glValidateProgram, VALIDATEPROGRAM);
+    LOAD_OPENGL_FUNCTION(glGetProgramiv, GETPROGRAMIV);
+    LOAD_OPENGL_FUNCTION(glGetProgramInfoLog, GETPROGRAMINFOLOG);
+    LOAD_OPENGL_FUNCTION(glGetActiveUniform, GETACTIVEUNIFORM);
+    LOAD_OPENGL_FUNCTION(glGenBuffers, GENBUFFERS);
+    LOAD_OPENGL_FUNCTION(glGenVertexArrays, GENVERTEXARRAYS);
+    //LOAD_OPENGL_FUNCTION(gl, );
 }
 
 Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+    
+    GameMemory game_memory = {0};
+    game_memory.game_running = true;
+    game_memory.functions_loaded = false;
+    game_memory.size = megabytes(10);
+    game_memory.memory = mem_alloc(game_memory.size);
+    zero_memory(game_memory.memory, game_memory.size);
+    game_memory.global_log = global_log;
+    game_memory.allocated = true;
+    
+    
+    //game_memory.window = window;
+    game_memory.get_file_last_write_time = get_file_last_write_time;
+    game_memory.read_file_contents = read_file_contents;
+    game_memory.write_file_contents = write_file_contents;
+    game_memory.get_time = get_time;
+    game_memory.sleep = sleep;
+    
+    game_memory.d_time = 0.06f;
+    
     // Open window and initialize OpenGL
     
     register_window_class(hInstance);
@@ -668,7 +702,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         return 1;
     }
     
-    load_opengl_functions();
+    load_opengl_functions(&game_memory.opengl_functions);
 #if 1
     PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = nullptr;
     wglChoosePixelFormatARB = reinterpret_cast<PFNWGLCHOOSEPIXELFORMATARBPROC>(wglGetProcAddress("wglChoosePixelFormatARB"));
@@ -769,25 +803,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         //ASSERT(false);
         //return 1;
     }
-    GameMemory game_memory = {0};
-    game_memory.game_running = true;
-    game_memory.functions_loaded = false;
-    game_memory.size = megabytes(10);
-    game_memory.memory = mem_alloc(game_memory.size);
-    zero_memory(game_memory.memory, game_memory.size);
-    game_memory.global_log = global_log;
-    game_memory.allocated = true;
     
-    
-    //game_memory.window = window;
-    game_memory.get_file_last_write_time = get_file_last_write_time;
-    game_memory.read_file_contents = read_file_contents;
-    game_memory.write_file_contents = write_file_contents;
-    game_memory.get_time = get_time;
-    game_memory.sleep = sleep;
-    //game_memory.load_opengl_functions = load_opengl_functions;
-    
-    game_memory.d_time = 0.06f;
     
     XAudio2Data xaudio2_data = initialize_xaudio2(&game_memory.audio_buffer);
     
@@ -817,7 +833,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         
         update_input(&game_memory.input, game_memory.d_time);
         
-#if 0
+#if 1
 #ifndef TEMPEST_RELEASE
         FILETIME old_dll_last_write_time = dll_last_write_time;
         get_game_dll_last_write_time(&dll_last_write_time);
@@ -840,7 +856,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 #endif
         F64 frame_start_time = get_time();
         
-        //(game_code.update_and_render)(&game_memory);
+        (game_code.update_and_render)(&game_memory);
         
         
         
