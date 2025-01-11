@@ -5,6 +5,8 @@
 
 #include "base.h"
 #include "log.h"
+#include "math/vectors.h"
+#include "math/rects.h"
 
 typedef unsigned int GLenum;
 typedef unsigned char GLboolean;
@@ -87,9 +89,11 @@ struct OpenGLFunctions
 struct KeyData
 {
     Bool just_pressed;
+    // TODO: rename to just "down"
     Bool is_down;
+    Int frames_down;
     Float press_time;
-    Float time_till_next_repeat;
+    //Float time_till_next_repeat;
 };
 
 struct Keys
@@ -216,6 +220,7 @@ struct Keys
 
 struct Input
 {
+    // TODO: convert to V2
     Float mouse_pos[2];
     Float prev_mouse_pos[2];
     Float d_scroll;
@@ -261,6 +266,22 @@ struct AudioBuffer
     }
 };
 
+struct WindowInfo
+{
+    //Bool fullscreen;
+    union
+    {
+        struct {
+            Rect rect;
+        };
+        struct {
+            V2 pos;
+            V2 dim;
+        };
+    };
+    //RectI windowed_rect;
+};
+
 struct GameMemory
 {
     Bool game_running;
@@ -270,9 +291,11 @@ struct GameMemory
     U64 size;
     Bool allocated;
     
+    WindowInfo window_info;
+    
     AudioBuffer audio_buffer;
     // TODO: have global_log stored here? Inline circular array?
-    Log *global_log;
+    Log global_log;
     Input input;
     
     OpenGLFunctions opengl_functions;

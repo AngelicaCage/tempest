@@ -197,9 +197,7 @@ struct GameState
     
     Bool show_debug_interface;
     
-    Bool fullscreen;
-    RectI windowed_rect;
-    V2 window_dim;
+    WindowInfo window_info;
     
     Input input;
     

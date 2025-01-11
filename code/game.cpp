@@ -97,9 +97,9 @@ update_and_render(GameMemory *game_memory)
     }
     
     GameState *game_state = (GameState *)game_memory->memory;
+    game_state->input = game_memory->input;
     
-    
-    global_log = game_memory->global_log;
+    global_log = &game_memory->global_log;
     Camera *camera = &game_state->camera;
     Player *player = &game_state->player;
     Field *field = &game_state->field;
@@ -180,9 +180,6 @@ update_and_render(GameMemory *game_memory)
         
         game_state->last_spawn_time = game_state->time_in_game;
         
-        game_state->fullscreen = false;
-        
-        
         FileContents save_file_contents = read_file_contents("save.tempest_save");
         game_state->save = {0};
         if(save_file_contents.file_found &&
@@ -234,8 +231,7 @@ update_and_render(GameMemory *game_memory)
         load_sound_mp3(game_state, GAME_DATA_DIRECTORY "/audio/test/bell.mp3");
     }
     
-    
-    
+    game_state->window_info = game_memory->window_info;
     
     game_state->target_fps = 144;
     game_state->fps = (sizeof(game_state->frame_profiles)/sizeof(FrameProfile)) /
@@ -260,42 +256,8 @@ update_and_render(GameMemory *game_memory)
     
     player->shot_cooldown_max = 0.15f;
     
-#if 0
-    update_input(input, game_memory->window, d_time);
-    input->d_scroll = d_scroll;
-    d_scroll = 0;
-    
-    if(!game_state->fullscreen)
-    {
-        glfwGetWindowPos(game_memory->window,
-                         &game_state->windowed_rect.x,
-                         &game_state->windowed_rect.y);
-        
-        glfwGetWindowSize(game_memory->window,
-                          &game_state->windowed_rect.w,
-                          &game_state->windowed_rect.h);
-    }
-    
-    if(!game_state->fullscreen)
-        game_state->windowed_rect = window_get_rect(game_memory->window);
-    
-    if(keys->f11.just_pressed)
-        window_toggle_fullscreen(game_memory->window, game_state->windowed_rect, &game_state->fullscreen);
-#endif
-    
     if(keys->f1.just_pressed)
         game_state->show_debug_interface = !game_state->show_debug_interface;
-    
-    F64 new_mouse_pos[2];
-#if 0
-    glfwGetCursorPos(game_memory->window, &new_mouse_pos[0], &new_mouse_pos[1]);
-    input->d_mouse_pos = v2((Float)new_mouse_pos[0] - input->mouse_pos.x,
-                            (Float)new_mouse_pos[1] - input->mouse_pos.y);
-    input->mouse_pos = v2(new_mouse_pos[0], new_mouse_pos[1]);
-    
-    RectI window_rect = window_get_rect(game_memory->window);
-    game_state->window_dim = v2(window_rect.w, window_rect.h);
-#endif
     
     if(game_state->in_game)
     {
@@ -369,7 +331,6 @@ update_and_render(GameMemory *game_memory)
     
     gpu_update_camera_in_shaders(game_state);
     
-    //glShadeModel(GL_SMOOTH);
     glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
@@ -377,6 +338,7 @@ update_and_render(GameMemory *game_memory)
     glEnable(GL_BLEND);
     
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
     
     //draw_axes(game_state);
     
@@ -385,6 +347,9 @@ update_and_render(GameMemory *game_memory)
     Float text_scale = 2.0f;
     
     glDisable(GL_DEPTH_TEST);
+    
+    if(keys->j.just_pressed)
+        log("omg");
     
     ui_draw_log(game_state, global_log, text_scale);
     

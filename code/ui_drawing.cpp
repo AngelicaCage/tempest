@@ -61,8 +61,8 @@ ui_draw_rect(GameState *game_state, Float x, Float y, Float w, Float h, Color fg
     
     gpu_use_shader_program(&game_state->shape_sp);
     
-    V2 scale = dim_ui_to_opengl(game_state->window_dim, v2(w, h));
-    V2 offset = pos_ui_to_opengl(game_state->window_dim, v2(x+w/2, y+h/2));
+    V2 scale = dim_ui_to_opengl(game_state->window_info.dim, v2(w, h));
+    V2 offset = pos_ui_to_opengl(game_state->window_info.dim, v2(x+w/2, y+h/2));
     
     gpu_set_uniform_2f(&game_state->shape_sp, "shape_scale", scale.components);
     gpu_set_uniform_2f(&game_state->shape_sp, "shape_offset", offset.components);
@@ -142,7 +142,7 @@ ui_draw_debug_text(GameState *game_state, V2 pos, Float scale, const Char *text,
     gpu_set_texture_unit(1, game_state->font_texture);
     gpu_set_uniform_i(&game_state->debug_font_sp, "texture1", 1);
     
-    gpu_set_uniform_2f(&game_state->debug_font_sp, "windowSize", game_state->window_dim.components);
+    gpu_set_uniform_2f(&game_state->debug_font_sp, "windowSize", game_state->window_info.dim.components);
     gpu_set_uniform_1f(&game_state->debug_font_sp, "scale", scale);
     
     Float glyph_dim[2] = {7, 8};
@@ -180,18 +180,16 @@ ui_draw_debug_text(GameState *game_state, V2 pos, Float scale, String string, Co
 Void
 ui_draw_log(GameState *game_state, Log *log, Float scale)
 {
-    // TODO: fix
-    return;
     Int entries_drawn = 0;
     for(Int i = log->entries.length - 1; entries_drawn < 30 && i >= 0; i--)
     {
         // TODO: make a macro for debug font width and height
-        V2 pos = v2(0, game_state->window_dim.y - (scale*8 * (entries_drawn+1)));
+        V2 pos = v2(0, game_state->window_info.dim.y - (scale*8 * (entries_drawn+1)));
         //draw_debug_text(game_state, pos, scale, log->entry_at(i).string.data);
         ASSERT(log->entry_at(i).type != LogEntryType::nonexistant);
         
         String str = log->entry_at(i).string;
-        Rect bg_rect = rect(pos.x, pos.y, str.length*7*scale, 8*scale);
+        Rect bg_rect = create_rect(pos.x, pos.y, str.length*7*scale, 8*scale);
         
         //ui_draw_rect(game_state, bg_rect, color(1, 1, 1, 0.3));
         ui_draw_debug_text(game_state, pos, scale, str.data, str.length, Color::white(), color(0, 0, 0, 0.4f));

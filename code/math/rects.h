@@ -59,23 +59,23 @@ RectI
 
 // CONSTRUCTORS //
 inline Rect
-rect(F32 x, F32 y, F32 w, F32 h)
+create_rect(F32 x, F32 y, F32 w, F32 h)
 {
     return {x, y, w, h};
 }
 inline Rect
-rect(V2 pos, V2 dim)
+create_rect(V2 pos, V2 dim)
 {
     return {pos.x, pos.y, dim.x, dim.y};
 }
 
 inline RectI
-recti(I32 x, I32 y, I32 w, I32 h)
+create_recti(I32 x, I32 y, I32 w, I32 h)
 {
     return {x, y, w, h};
 }
 inline RectI
-recti(V2I pos, V2I dim)
+create_recti(V2I pos, V2I dim)
 {
     return {pos.x, pos.y, dim.x, dim.y};
 }

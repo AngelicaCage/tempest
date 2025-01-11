@@ -348,47 +348,26 @@ initialize_xaudio2(AudioBuffer *buffer)
 Void
 update_input(Input *input, Float d_time)
 {
-#if 0
-    input->left_mouse_down = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-    input->right_mouse_down = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
-    
-    
     Keys *keys = &input->keys;
     for(int i = 0; i < sizeof(keys->data) / sizeof(KeyData); i++)
     {
         KeyData *key = &(keys->data[i]);
         
-        if(glfwGetKey(window, key->key_code) == GLFW_PRESS)
+        if(key->is_down)
         {
-            key->is_down = true;
-            if(key->press_time == 0)
-                key->just_pressed = true;
-            else
-                key->just_pressed = false;
-            
+            key->frames_down++;
             key->press_time += d_time;
+            
+            if(key->just_pressed && key->frames_down > 1)
+                key->just_pressed = false;
         }
         else
         {
-            key->is_down = false;
             key->just_pressed = false;
+            key->frames_down = 0;
             key->press_time = 0;
-            key->time_till_next_repeat = 0;
-        }
-        
-        if(key->just_pressed || key->press_time >= input->key_first_repeat_time)
-        {
-            if(key->time_till_next_repeat <= 0)
-            {
-                key->time_till_next_repeat = input->key_repeat_speed;
-            }
-            else
-            {
-                key->time_till_next_repeat -= d_time;
-            }
         }
     }
-#endif
 }
 
 
@@ -512,7 +491,10 @@ process_window_messages(Bool *game_running, Input *input)
         {
             KeyData *key = get_key_data_for_key_code(input, message.wParam);
             if(key)
+            {
+                key->just_pressed = true;
                 key->is_down = true;
+            }
         }
         else if(message.message == WM_KEYUP)
         {
@@ -695,8 +677,9 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     game_memory.size = megabytes(10);
     game_memory.memory = mem_alloc(game_memory.size);
     zero_memory(game_memory.memory, game_memory.size);
-    game_memory.global_log = global_log;
     game_memory.allocated = true;
+    
+    global_log = &game_memory.global_log;
     
     
     //game_memory.window = window;
@@ -774,7 +757,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
                             "Core", "OpenGL Window",       // class name, window name
                             WS_CAPTION | WS_SYSMENU | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, // style
                             0, 0,      // posx, posy
-                            500, 300,   // width, height
+                            1920, 1080,   // width, height
                             NULL, NULL,                    // parent window, menu
                             hInstance, NULL);              // instance, param
     HDC DC = GetDC(WND);
@@ -832,9 +815,6 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     
     // End of window and OpenGL setup
     
-    Log _global_log;
-    global_log = &_global_log;
-    
     GameCode game_code = {0};
     HINSTANCE module_handle = 0;
     
@@ -873,16 +853,16 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
             game_memory.input.mouse_pos[1] = float(new_mouse_pos.y);
         }
         
-        if(game_memory.input.keys.mouse_left.is_down)
-            glClearColor(0.129f, 0.586f, 0.949f, 1.0f); // rgb(33,150,243)
-        else
-            glClearColor(0, 0, 0, 1.0f); // rgb(33,150,243)
-        
-        glClear(GL_COLOR_BUFFER_BIT);
-        
         update_input(&game_memory.input, game_memory.d_time);
         
-#if 1
+        // TODO: account for titlebar
+        RECT window_rect;
+        GetWindowRect(WND, &window_rect);
+        game_memory.window_info.rect = create_rect(Float(window_rect.left),
+                                                   Float(window_rect.top),
+                                                   Float(window_rect.right - window_rect.left),
+                                                   Float(window_rect.bottom - window_rect.top));
+        
 #ifndef TEMPEST_RELEASE
         FILETIME old_dll_last_write_time = dll_last_write_time;
         get_game_dll_last_write_time(&dll_last_write_time);
@@ -907,8 +887,6 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         
         (game_code.update_and_render)(&game_memory);
         
-        
-        
         // Update xaudio2
         {
             XAUDIO2_VOICE_STATE xaudio2_voice_state = {0};
@@ -922,7 +900,7 @@ Int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         game_memory.d_time = frame_end_time - frame_start_time;
         if(game_memory.d_time < 0)
             game_memory.d_time = 0.001f;
-#endif
+        
         SwapBuffers(DC);
     }
     
