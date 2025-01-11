@@ -712,8 +712,6 @@ initialize_window_and_opengl(HINSTANCE hInstance, HWND *window_handle, HDC *devi
     }
     
     // Now create real window
-    
-    //DWORD window_style = WS_CAPTION | WS_SYSMENU | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
     DWORD window_style = WS_CAPTION
         | WS_SYSMENU
         | WS_MAXIMIZEBOX

@@ -140,7 +140,7 @@ ui_draw_debug_text(GameState *game_state, V2 pos, Float scale, const Char *text,
     gpu_use_shader_program(&game_state->debug_font_sp);
     
     gpu_set_texture_unit(1, game_state->font_texture);
-    gpu_set_uniform_i(&game_state->debug_font_sp, "texture1", 1);
+    gpu_set_uniform_1i(&game_state->debug_font_sp, "texture1", 1);
     
     gpu_set_uniform_2f(&game_state->debug_font_sp, "windowSize", game_state->window_info.dim.components);
     gpu_set_uniform_1f(&game_state->debug_font_sp, "scale", scale);

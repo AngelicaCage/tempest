@@ -54,15 +54,6 @@ gpu_compile_shader_from_path(Shader *shader)
         glGetShaderInfoLog(shader->id, 512, NULL, info_log);
         log_warning("shader compilation error: %s", info_log);
         free(info_log);
-        
-        //ASSERT(false);
-        
-        if(shader->type == ShaderType::fragment)
-            shader->id = fragment_shader_fallback_id;
-        else if(shader->type == ShaderType::vertex)
-            shader->id = vertex_shader_fallback_id;
-        
-        shader->using_fallback = true;
     }
     
     shader->loaded = true;
@@ -148,9 +139,9 @@ gpu_create_shader_program(const Char *vs_path, const Char *fs_path, Bool is_3d)
     
     gpu_shader_program_set_uniform_name_location_pairs(&result);
     
-    if(!result.vertex_shader.using_fallback)
+    if(result.vertex_shader.loaded)
         gpu_delete_shader(result.id, &result.vertex_shader);
-    if(!result.fragment_shader.using_fallback)
+    if(result.fragment_shader.loaded)
         gpu_delete_shader(result.id, &result.fragment_shader);
     
     return result;
@@ -199,8 +190,7 @@ gpu_update_camera_in_shaders(GameState *game_state)
 }
 
 Void
-// TODO: rename to 1i
-gpu_set_uniform_i(ShaderProgram *program, const Char *name, Int value)
+gpu_set_uniform_1i(ShaderProgram *program, const Char *name, Int value)
 {
     glUniform1i(program->get_uniform_location(name), value);
 }
@@ -224,8 +214,6 @@ gpu_set_uniform_4f(ShaderProgram *program, const Char *name, Float *value)
 Void
 gpu_set_uniform_mat4x4(ShaderProgram *program, const Char *name, Float *value)
 {
-    // TODO: cache uniform locations
-    //glUniformMatrix4fv(glGetUniformLocation(program->id, name), 1, GL_FALSE, value);
     glUniformMatrix4fv(program->get_uniform_location(name), 1, GL_FALSE, value);
 }
 

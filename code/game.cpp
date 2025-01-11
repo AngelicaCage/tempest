@@ -114,8 +114,6 @@ update_and_render(GameMemory *game_memory)
         game_state->paused = false;
         game_state->should_quit = false;
         
-        compile_fallback_shaders();
-        
         game_state->shape_sp = gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/2d_shape.vs",
                                                          GAME_DATA_DIRECTORY "/shaders/2d_shape.fs", false);
         game_state->field_sp = gpu_create_shader_program(GAME_DATA_DIRECTORY "/shaders/3d_vertex_shader.vs",
@@ -346,8 +344,7 @@ update_and_render(GameMemory *game_memory)
     
     glDisable(GL_DEPTH_TEST);
     
-    if(keys->j.just_pressed)
-        log("omg");
+    //log("%f, %f", game_state->window_info.dim.x, game_state->window_info.dim.y);
     
     ui_draw_log(game_state, global_log, text_scale);
     

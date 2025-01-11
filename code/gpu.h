@@ -15,7 +15,6 @@ struct
 Shader
 {
     Bool loaded;
-    Bool using_fallback;
     U64 file_last_write_time;
     const Char *path;
     
@@ -27,7 +26,6 @@ struct
 SPUniformData
 {
     String name;
-    //const Char *name;
     Int location;
     Enum type;
     Int size;
