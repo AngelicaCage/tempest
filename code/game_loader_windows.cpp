@@ -187,6 +187,7 @@ read_file_contents(const Char *path)
     
     if(file_handle == INVALID_HANDLE_VALUE)
     {
+        //ASSERT(false);
         log_warning("couldn't open file");
         return result;
     }

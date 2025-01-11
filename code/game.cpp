@@ -3,13 +3,15 @@
 #include "glm/gtc/type_ptr.hpp"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "stb/stb_truetype.h"
 #define DR_MP3_IMPLEMENTATION
 #include "dr_libs/dr_mp3.h"
-
 
 #include "base.h"
 #include "log.h"
 #include "game_loader.h"
+#include "opengl_functions_and_enums.h"
 
 #ifndef TEMPEST_RELEASE
 #define GAME_DATA_DIRECTORY "../data"
@@ -34,8 +36,6 @@ F64 (*get_time)();
 #include "input.h"
 #include "gpu.h"
 #include "game.h"
-
-#include "opengl_functions_and_enums.h"
 
 
 #include "math/vectors.cpp"
@@ -76,6 +76,38 @@ write_to_save_file(GameState *game_state)
     *(I32 *)data_pointer = game_state->save.highest_kills;
     
     Bool success = write_file_contents("save.tempest_save", save_file_buffer, size);
+}
+
+Void
+load_font(Font *font, const Char *path)
+{
+    return;
+    FileContents font_file_contents = read_file_contents(path);
+    
+#if 0
+    stbtt_fontinfo font_info;
+    ASSERT(stbtt_InitFont(&font_info, font_file_contents.data, 0));
+#endif
+    
+    float font_height = 16;
+    
+    V2I font_bitmap_dim = v2i(font_height*256, font_height);
+    U8 *font_bitmap = (U8 *)mem_alloc(font_bitmap_dim.x*font_bitmap_dim.y);
+    stbtt_bakedchar *baked_char_data = (stbtt_bakedchar *)mem_alloc(256*sizeof(stbtt_bakedchar));
+    
+    Int bake_bitmap_result = stbtt_BakeFontBitmap(font_file_contents.data, 0,  // font location (use offset=0 for plain .ttf)
+                                                  font_height,                     // height of font in pixels
+                                                  font_bitmap, font_bitmap_dim.x, font_bitmap_dim.y,  // bitmap to be filled in
+                                                  0, 256,          // characters to bake
+                                                  baked_char_data);             // you allocate this, it's num_chars long
+    // if return is positive, the first unused row of the bitmap
+    // if return is negative, returns the negative of the number of characters that fit
+    // if return is 0, no characters fit and no rows were used
+    // This uses a very crappy packing.
+    
+    ASSERT(bake_bitmap_result != 0);
+    
+    mem_free(font_file_contents.data);
 }
 
 #include "gameplay.cpp"
@@ -220,11 +252,7 @@ update_and_render(GameMemory *game_memory)
         
         game_state->show_debug_interface = true;
         
-        Sound *new_sound_ptr = load_sound_mp3(game_state,
-                                              GAME_DATA_DIRECTORY "/audio/test/bunker_1.mp3");
-        play_sound(game_state, new_sound_ptr, true);
-        
-        load_sound_mp3(game_state, GAME_DATA_DIRECTORY "/audio/test/bell.mp3");
+        //load_font(&game_state->debug_font, GAME_DATA_DIRECTORY "/fonts/freesans_regular.ttf");
     }
     
     game_state->window_info = game_memory->window_info;
@@ -292,9 +320,6 @@ update_and_render(GameMemory *game_memory)
         update_main_menu(game_state);
     }
     
-    if(keys->j.just_pressed)
-        play_sound(game_state, &game_state->sounds[1], false);
-    
     start_timing_section(&game_state->frame_profiles.last(), "update_field_data");
     update_field_data(game_state, &(game_state->field));
     end_timing_section(&game_state->frame_profiles.last());
@@ -346,11 +371,12 @@ update_and_render(GameMemory *game_memory)
     
     //log("%f, %f", game_state->window_info.dim.x, game_state->window_info.dim.y);
     
+#ifndef TEMPEST_RELEASE
     ui_draw_log(game_state, global_log, text_scale);
     
     if(game_state->show_debug_interface)
         ui_draw_debug_interface(game_state, game_memory, text_scale);
+#endif
     
     update_frame_timing_end(game_state);
-    
 }

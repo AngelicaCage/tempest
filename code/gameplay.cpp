@@ -229,7 +229,6 @@ update_gameplay(GameState *game_state)
                 player->shot_cooldown = player->shot_cooldown_max;
                 game_state->player_bullets.add(bullet(player->pos, bullet_vel,
                                                       0.15f, color(0.88f, 0.42f, 0.88f, 1.0f)));
-                
             }
         }
         else

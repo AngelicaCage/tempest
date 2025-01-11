@@ -182,6 +182,10 @@ struct SaveData
     I32 highest_kills;
 };
 
+struct Font
+{
+};
+
 struct GameState
 {
     Bool initialized;
@@ -259,6 +263,8 @@ struct GameState
     
     InplaceList<Sound, 32> sounds;
     InplaceList<PlayingSound, 32> playing_sounds;
+    
+    Font debug_font;
 };
 
 #endif //GAME_H

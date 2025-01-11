@@ -61,33 +61,11 @@ write_song_data(GameState *game_state, AudioBuffer *buffer)
 }
 
 
-#if 0
-Sound *
-load_sound_wav(GameState *game_state, const Char *path)
-{
-    
-    FileContents audio_file_contents = read_file_contents(path);
-    
-    UInt channels;
-    UInt sample_rate;
-    U64 frame_count;
-    drwav_int16* samples = drwav_open_memory_and_read_pcm_frames_s16(audio_file_contents.data, audio_file_contents.size,
-                                                                     &channels, &sample_rate, &frame_count, NULL);
-    
-    Sound sound;
-    sound.frame_count = frame_count;
-    sound.samples_per_frame = channels;
-    sound.samples = samples;
-    
-    return game_state->sounds.add(sound);
-}
-#endif
-
 Sound *
 load_sound_mp3(GameState *game_state, const Char *path)
 {
-    
     FileContents audio_file_contents = read_file_contents(path);
+    ASSERT(audio_file_contents.allocated);
     
     UInt sample_rate;
     U64 frame_count;
@@ -101,9 +79,10 @@ load_sound_mp3(GameState *game_state, const Char *path)
     sound.frame_count = frame_count;
     sound.samples = samples;
     
+    mem_free(audio_file_contents.data);
+    
     return game_state->sounds.add(sound);
 }
-
 
 Void
 play_sound(GameState *game_state, Sound *sound, Bool loop)
@@ -114,7 +93,6 @@ play_sound(GameState *game_state, Sound *sound, Bool loop)
     playing_sound.loop = loop;
     game_state->playing_sounds.add(playing_sound);
 }
-
 
 Void
 write_frame_audio(GameState *game_state, AudioBuffer *buffer)
@@ -140,7 +118,7 @@ write_frame_audio(GameState *game_state, AudioBuffer *buffer)
     U64 write_cursor_copy = buffer->write_cursor_absolute;
     
     F64 volume = 0.2;
-    volume = 0;
+    //volume = 0;
     
     write_cursor_copy = buffer->write_cursor_absolute;
     
