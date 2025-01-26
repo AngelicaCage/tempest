@@ -2,5 +2,6 @@ Made by: AngelicaCage
 
 
 Font: https://www.dafont.com/5x5.font
-GLFW: https://www.glfw.org/
 GLAD: https://github.com/Dav1dde/glad
+stb_image, stb_truetype: https://github.com/nothings/stb
+dr_mp3: https://github.com/mackron/dr_libs
